@@ -40,10 +40,7 @@ function connectViaProxy(
       const header = responseBuffer.subarray(0, headerEnd).toString("utf8");
       socket.removeListener("data", onData);
 
-      if (
-        !header.startsWith("HTTP/1.1 200") &&
-        !header.startsWith("HTTP/1.0 200")
-      ) {
+      if (!/^HTTP\/1\.[01] 200/.test(header)) {
         reject(new Error(`Proxy CONNECT failed: ${header.split("\r\n")[0]}`));
         socket.destroy();
         return;

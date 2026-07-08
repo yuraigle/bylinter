@@ -1,18 +1,25 @@
+import "dotenv/config";
 import readline from "node:readline";
 import { connect } from "./connection.js";
 
-const MUD_SERVER = "bylins.su";
-const MUD_PORT = 4000;
-const PROXY: string | null = "http://10.10.11.30:3128";
+const MUD_SERVER = requireEnv("MUD_SERVER");
+const MUD_PORT = Number(requireEnv("MUD_PORT"));
+const PROXY = process.env.PROXY || undefined;
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required env variable: ${name}`);
+  }
+  return value;
+}
 
 async function main() {
-  const socket = await connect(MUD_SERVER, MUD_PORT, PROXY ?? undefined);
-
-  socket.on("connect", () => {
-    console.log(
-      `Connected to ${MUD_SERVER}:${MUD_PORT}${PROXY ? ` via proxy ${PROXY}` : ""}`,
-    );
-  });
+  const socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
+  console.log(
+    `Connected to ${MUD_SERVER}:${MUD_PORT}` +
+      (PROXY ? ` via proxy ${PROXY}` : ""),
+  );
 
   socket.on("data", (chunk: Buffer) => {
     const clean = stripTelnetIAC(chunk);
