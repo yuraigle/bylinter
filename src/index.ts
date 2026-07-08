@@ -6,6 +6,12 @@ const MUD_SERVER = requireEnv("MUD_SERVER");
 const MUD_PORT = Number(requireEnv("MUD_PORT"));
 const PROXY = process.env.PROXY || undefined;
 
+const COLOR = {
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
+  reset: "\x1b[0m",
+} as const;
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -16,10 +22,7 @@ function requireEnv(name: string): string {
 
 async function main() {
   const socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
-  console.log(
-    `Connected to ${MUD_SERVER}:${MUD_PORT}` +
-      (PROXY ? ` via proxy ${PROXY}` : ""),
-  );
+  systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
   socket.on("data", (chunk: Buffer) => {
     const clean = stripTelnetIAC(chunk);
@@ -27,19 +30,21 @@ async function main() {
   });
 
   socket.on("close", () => {
-    console.log("Connection closed");
+    systemMessage("Connection closed");
     process.exit(0);
   });
 
-  socket.on("error", (err) => {
-    console.error("Socket error:", err.message);
-  });
+  socket.on("error", (err) => systemError("Socket error: " + err.message));
 
-  const rl = readline.createInterface({ input: process.stdin });
-  rl.on("line", (line) => {
-    socket.write(line + "\r\n", "utf8");
-  });
+  readline
+    .createInterface({ input: process.stdin })
+    .on("line", (line) => socket.write(line + "\r\n", "utf8"));
 }
+
+main().catch((err) => {
+  systemError("Failed to connect: " + err.message);
+  process.exit(1);
+});
 
 function stripTelnetIAC(buf: Buffer): Buffer {
   const out: number[] = [];
@@ -58,7 +63,10 @@ function stripTelnetIAC(buf: Buffer): Buffer {
   return Buffer.from(out);
 }
 
-main().catch((err) => {
-  console.error("Failed to connect:", err.message);
-  process.exit(1);
-});
+function systemMessage(message: string) {
+  process.stdout.write(`${COLOR.yellow}> ${message}${COLOR.reset}\r\n`);
+}
+
+function systemError(message: string) {
+  process.stdout.write(`${COLOR.red}> ${message}${COLOR}\r\n`);
+}
