@@ -1,30 +1,20 @@
 import "dotenv/config";
 import readline from "node:readline";
-import { connect } from "./connection.js";
+import { Socket } from "node:net";
 
-const MUD_SERVER = requireEnv("MUD_SERVER");
-const MUD_PORT = Number(requireEnv("MUD_PORT"));
+import { connect } from "./connection";
+import { systemError, systemMessage } from "./utils";
+
+const MUD_SERVER = process.env.MUD_SERVER || "";
+const MUD_PORT = Number(process.env.MUD_PORT || 4000);
 const PROXY = process.env.PROXY || undefined;
-
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
 
-const COLOR = {
-  red: "\x1b[31m",
-  yellow: "\x1b[33m",
-  reset: "\x1b[0m",
-} as const;
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required env variable: ${name}`);
-  }
-  return value;
-}
+let socket: Socket;
 
 async function main() {
-  const socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
+  socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
   systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
   let partialLine = "";
@@ -47,10 +37,9 @@ async function main() {
 
     // Эти промпты без GA
     if (text.includes("Using keytable")) {
-      socket.write("5\r\n");
-    }
-    if (text.includes("Введите имя персонажа ") && CHAR_NAME) {
-      socket.write(`${CHAR_NAME}${CHAR_PASS ? " " + CHAR_PASS : ""}\r\n`);
+      sendl("5");
+    } else if (text.includes("Введите имя персонажа ") && CHAR_NAME) {
+      sendl(`${CHAR_NAME}${CHAR_PASS ? " " + CHAR_PASS : ""}`);
     }
   });
 
@@ -63,7 +52,7 @@ async function main() {
 
   readline
     .createInterface({ input: process.stdin })
-    .on("line", (line) => socket.write(line + "\r\n", "utf8"));
+    .on("line", (line) => sendl(line));
 }
 
 main().catch((err) => {
@@ -71,7 +60,11 @@ main().catch((err) => {
   process.exit(1);
 });
 
-function promptHook(prompt: string, lines: string[]) {}
+function promptHook(prompt: string, lines: string[]) {
+  if (prompt.includes("ANYKEY нажмите ENTER")) {
+    sendl("");
+  }
+}
 
 function stripTelnetIAC(buf: Buffer): { text: string; hasGA: boolean } {
   const out: number[] = [];
@@ -96,10 +89,10 @@ function stripTelnetIAC(buf: Buffer): { text: string; hasGA: boolean } {
   return { text: Buffer.from(out).toString("utf8"), hasGA };
 }
 
-function systemMessage(message: string) {
-  process.stdout.write(`${COLOR.yellow}> ${message}${COLOR.reset}\r\n`);
-}
-
-function systemError(message: string) {
-  process.stdout.write(`${COLOR.red}> ${message}${COLOR.reset}\r\n`);
+function sendl(command: string) {
+  if (socket) {
+    socket.write(command + "\r\n", "utf8");
+  } else {
+    systemError("Not connected to server");
+  }
 }
