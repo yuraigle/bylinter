@@ -1,9 +1,8 @@
 import "dotenv/config";
 import readline from "node:readline";
-import { Socket } from "node:net";
 
 import { connect } from "./connection";
-import { systemError, systemMessage } from "./utils";
+import { systemError, systemMessage, createSender } from "./utils";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
@@ -11,10 +10,9 @@ const PROXY = process.env.PROXY || undefined;
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
 
-let socket: Socket;
-
 async function main() {
-  socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
+  const socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
+  const sendl = createSender(socket);
   systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
   let partialLine = "";
@@ -30,7 +28,7 @@ async function main() {
     partialLine = parts[parts.length - 1];
 
     if (hasGA) {
-      promptHook(partialLine, lines);
+      promptHook(partialLine, lines, sendl);
       partialLine = "";
       lines = [];
     }
@@ -60,7 +58,7 @@ main().catch((err) => {
   process.exit(1);
 });
 
-function promptHook(prompt: string, lines: string[]) {
+function promptHook(prompt: string, lines: string[], sendl: (command: string) => void) {
   if (prompt.includes("ANYKEY нажмите ENTER")) {
     sendl("");
   }
@@ -87,12 +85,4 @@ function stripTelnetIAC(buf: Buffer): { text: string; hasGA: boolean } {
   }
 
   return { text: Buffer.from(out).toString("utf8"), hasGA };
-}
-
-function sendl(command: string) {
-  if (socket) {
-    socket.write(command + "\r\n", "utf8");
-  } else {
-    systemError("Not connected to server");
-  }
 }
