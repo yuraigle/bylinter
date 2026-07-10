@@ -1,7 +1,7 @@
 import "dotenv/config";
 import readline from "node:readline";
 
-import { connect } from "./connection";
+import { conn } from "./connection";
 import { systemError, systemMessage, createSender } from "./utils";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
@@ -11,7 +11,7 @@ const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
 
 async function main() {
-  const socket = await connect(MUD_SERVER, MUD_PORT, PROXY);
+  const socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
   const sendl = createSender(socket);
   systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
@@ -46,7 +46,7 @@ async function main() {
     process.exit(0);
   });
 
-  socket.on("error", (err) => systemError("Socket error: " + err.message));
+  socket.on("error", (e) => systemError("Socket error: " + e.message));
 
   readline
     .createInterface({ input: process.stdin })

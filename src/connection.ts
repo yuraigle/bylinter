@@ -1,28 +1,26 @@
-import net from "node:net";
+import type { Socket } from "node:net";
+import { connect } from "node:net";
 
-function parseProxy(proxyUrl: string): { host: string; port: number } {
-  const url = new URL(proxyUrl);
-  return { host: url.hostname, port: Number(url.port) };
-}
-
-export function connect(
+export function conn(
   host: string,
   port: number,
-  proxy?: string,
-): Promise<net.Socket> {
-  if (!proxy) {
-    return Promise.resolve(net.connect(port, host));
-  }
-  return connectViaProxy(host, port, parseProxy(proxy));
+  proxy?: string
+): Promise<Socket> {
+  return proxy
+    ? connectViaProxy(host, port, proxy)
+    : Promise.resolve(connect(port, host));
 }
 
 function connectViaProxy(
   host: string,
   port: number,
-  proxy: { host: string; port: number },
-): Promise<net.Socket> {
+  proxy: string
+): Promise<Socket> {
+  const proxyUrl = new URL(proxy);
+  const proxyObj = { host: proxyUrl.hostname, port: Number(proxyUrl.port) };
+
   return new Promise((resolve, reject) => {
-    const socket = net.connect(proxy.port, proxy.host, () => {
+    const socket = connect(proxyObj.port, proxyObj.host, () => {
       socket.write(
         `CONNECT ${host}:${port} HTTP/1.1\r\n` +
           `Host: ${host}:${port}\r\n` +
