@@ -1,8 +1,8 @@
 import type { Socket } from "node:net";
 
-import { systemError, systemMessage, COLOR } from "./utils";
 import { conn } from "./connection";
-import { promptHook, lineHook } from "./hook";
+import { runPromptHooks, runTriggers } from "./triggers";
+import { systemError, systemMessage, COLOR } from "./utils";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
@@ -17,7 +17,6 @@ export async function connect() {
   socket.on("close", () => {
     systemMessage("Connection closed");
     socket = null;
-
   });
   socket.on("error", (e) => systemError("Socket error: " + e.message));
 
@@ -33,11 +32,10 @@ export async function connect() {
     lines.push(...chunkLines.slice(0, -1).map((l) => l.replace(/\r$/, "")));
     partialLine = chunkLines[chunkLines.length - 1];
 
-    chunkLines.slice(0, -1).forEach((line) => lineHook(line));
+    chunkLines.slice(0, -1).forEach((line) => runTriggers(line));
 
     if (hasGA) {
-      const prompt = partialLine; // last line is prompt
-      promptHook(prompt, lines);
+      runPromptHooks(partialLine, lines);
       partialLine = "";
       lines = [];
     }

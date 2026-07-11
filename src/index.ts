@@ -1,4 +1,6 @@
 import "dotenv/config";
+import "./config";
+
 import readline from "node:readline";
 
 import { connect, sendl } from "./mud";
