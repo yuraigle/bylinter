@@ -12,8 +12,12 @@ registerTrigger(/^\s+Посетите наш сайт/, () => {
   }
 });
 
+registerTrigger(/^Вы пропали в пустоте этого мира\./, () => sendl(""));
+
 registerPromptHook((prompt, lines) => {
   if (prompt.includes("ANYKEY нажмите ENTER")) {
     sendl("");
   }
-});
+
+  return false;
+}, 0);
