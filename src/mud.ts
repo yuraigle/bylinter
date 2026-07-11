@@ -3,16 +3,23 @@ import type { Socket } from "node:net";
 import { conn } from "./connection";
 import { runPromptHooks, runTriggers } from "./triggers";
 import { systemError, systemMessage, COLOR } from "./utils";
+import { stripTelnetIAC } from "./telnet";
+import { broadcast, addOutputSink } from "./output";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
 const PROXY = process.env.PROXY || undefined;
+const CONSOLE_OUTPUT = Number(process.env.CONSOLE_OUTPUT || 1);
 
 let socket: Socket | null = null;
 
 export async function connect() {
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
   systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
+
+  if (CONSOLE_OUTPUT > 0) {
+    addOutputSink((text) => process.stdout.write(text));
+  }
 
   socket.on("close", () => {
     systemMessage("Connection closed");
@@ -25,7 +32,7 @@ export async function connect() {
 
   socket.on("data", (chunk: Buffer) => {
     const { text, hasGA } = stripTelnetIAC(chunk);
-    process.stdout.write(text);
+    broadcast(text);
 
     partialLine += text;
     const chunkLines = partialLine.split("\n");
@@ -35,42 +42,29 @@ export async function connect() {
     chunkLines.slice(0, -1).forEach((line) => runTriggers(line));
 
     if (hasGA) {
-      runPromptHooks(partialLine, lines);
+      const prompt = partialLine;
+      runPromptHooks(prompt, lines);
       partialLine = "";
       lines = [];
     }
   });
 }
 
+// Команда от консоли или от триггера — с эхом всем приёмникам
 export function sendl(command: string) {
   if (socket != null) {
     socket.write(command + "\r\n", "utf8");
     const echo = COLOR.yellow + "[" + command + "]" + COLOR.reset + "\r\n";
-    process.stdout.write(echo);
+    broadcast(echo); // раньше было process.stdout.write(echo)
   } else {
     systemError("Not connected to server");
   }
 }
 
-function stripTelnetIAC(buf: Buffer): { text: string; hasGA: boolean } {
-  const out: number[] = [];
-  let hasGA = false;
-
-  for (let i = 0; i < buf.length; i++) {
-    if (buf[i] === 0xff) {
-      const cmd = buf[i + 1];
-      if (cmd === 0xf9) {
-        hasGA = true; // IAC GA: Go Ahead
-        i += 1;
-      } else if (cmd === 0xfb || cmd === 0xfc || cmd === 0xfd || cmd === 0xfe) {
-        i += 2;
-      } else {
-        i += 1;
-      }
-      continue;
-    }
-    out.push(buf[i]);
+// Сырой ввод от внешнего клиента — идёт на сервер как есть, без своего эха
+// (клиент вроде Mudlet сам себе показывает то, что печатает)
+export function sendRaw(data: string) {
+  if (socket != null) {
+    socket.write(data, "utf8");
   }
-
-  return { text: Buffer.from(out).toString("utf8"), hasGA };
 }
