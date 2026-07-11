@@ -2,8 +2,7 @@ import type { Socket } from "node:net";
 
 import { conn } from "./connection";
 import { runPromptHooks, runTriggers } from "./triggers";
-import { systemError, systemMessage, COLOR } from "./utils";
-import { stripTelnetIAC } from "./telnet";
+import { systemError, systemMessage, stripTelnetIAC, COLOR } from "./utils";
 import { broadcast, addOutputSink } from "./output";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
