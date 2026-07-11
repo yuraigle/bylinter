@@ -1,5 +1,3 @@
-import { Socket } from "node:net";
-
 export const COLOR = {
   yellow: "\x1b[33m",
   red: "\x1b[31m",
@@ -12,10 +10,4 @@ export function systemMessage(message: string) {
 
 export function systemError(message: string) {
   process.stdout.write(`${COLOR.red}> ${message}${COLOR.reset}\r\n`);
-}
-
-export function createSender(socket: Socket) {
-  return function sendl(command: string) {
-    socket.write(command + "\r\n", "utf8");
-  };
 }
