@@ -51,13 +51,16 @@ export async function connect() {
 
 // Команда от консоли или от триггера — с эхом всем приёмникам
 export function sendl(command: string) {
-  if (socket != null) {
-    socket.write(command + "\r\n", "utf8");
-    const echo = COLOR.yellow + "[" + command + "]" + COLOR.reset + "\r\n";
-    broadcast(echo); // раньше было process.stdout.write(echo)
-  } else {
+  if (socket == null) {
     systemError("Not connected to server");
+    return;
   }
+
+  const s = socket;
+  command.split(/;/).forEach((cmd) => s.write(cmd + "\r\n", "utf8"));
+
+  const echo = COLOR.yellow + "[" + command + "]" + COLOR.reset + "\r\n";
+  broadcast(echo);
 }
 
 // Сырой ввод от внешнего клиента — идёт на сервер как есть, без своего эха
