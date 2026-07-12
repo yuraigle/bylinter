@@ -2,7 +2,8 @@ import { createServer } from "node:net";
 
 import { sendRaw } from "./mud";
 import { addOutputSink } from "./output";
-import { systemMessage, stripTelnetIAC } from "./utils";
+import { systemMessage } from "./utils";
+import { stripTelnetIAC } from "./telnet";
 
 export function startLocalServer(port: number): void {
   const server = createServer((client) => {
