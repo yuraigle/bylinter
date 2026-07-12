@@ -1,10 +1,14 @@
-import { sendl } from "../mud";
+import { sendl, sendMsdp } from "../mud";
 import { registerPromptHook, registerTrigger } from "../triggers";
 
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
 
-registerTrigger(/Using keytable/, () => sendl("5"));
+registerTrigger(/Using keytable/, () => {
+  sendl("5");
+  // sendMsdp("LIST", "REPORTABLE_VARIABLES");
+  sendMsdp("REPORT", "ROOM");
+});
 
 registerTrigger(/^\s+Посетите наш сайт/, () => {
   if (CHAR_NAME) {
