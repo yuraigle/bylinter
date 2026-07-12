@@ -34,15 +34,22 @@ const OPTION_NAMES: Record<number, string> = {
   0x69: "GMCP",
 };
 
+const COMPRESS2_OPTION = 0x56;
+
 export function describeOption(option: number): string {
   return OPTION_NAMES[option] ?? `0x${option.toString(16)}`;
 }
 
-export function stripTelnetIAC(buf: Buffer): {
+export interface TelnetParseResult {
   text: string;
   hasGA: boolean;
   events: TelnetEvent[];
-} {
+  // Если посреди этого буфера начался MCCP2 — здесь лежат байты после
+  // маркера, их нужно пропустить через zlib inflate, а не через telnet-парсер
+  compressedTail: Buffer | null;
+}
+
+export function stripTelnetIAC(buf: Buffer): TelnetParseResult {
   const out: number[] = [];
   const events: TelnetEvent[] = [];
   let hasGA = false;
@@ -63,11 +70,21 @@ export function stripTelnetIAC(buf: Buffer): {
         });
         i += 2;
       } else if (cmd === 0xfa) {
-        // Subnegotiation: IAC SB <option> <payload...> IAC SE
         const option = buf[i + 2];
         const seIndex = findSubnegotiationEnd(buf, i + 2);
         const payload = Buffer.from(buf.subarray(i + 3, seIndex - 1));
         events.push({ kind: "subnegotiation", option, payload });
+
+        if (option === COMPRESS2_OPTION) {
+          const tail = buf.subarray(seIndex + 1);
+          return {
+            text: decode(Buffer.from(out)),
+            hasGA,
+            events,
+            compressedTail: Buffer.from(tail),
+          };
+        }
+
         i = seIndex;
       } else {
         i += 1;
@@ -77,10 +94,14 @@ export function stripTelnetIAC(buf: Buffer): {
     out.push(buf[i]);
   }
 
-  return { text: decode(Buffer.from(out)), hasGA, events };
+  return {
+    text: decode(Buffer.from(out)),
+    hasGA,
+    events,
+    compressedTail: null,
+  };
 }
 
-// Возвращает индекс байта SE (0xF0) в паре IAC SE
 function findSubnegotiationEnd(buf: Buffer, from: number): number {
   for (let i = from + 1; i < buf.length - 1; i++) {
     if (buf[i] === 0xff && buf[i + 1] === 0xf0) {

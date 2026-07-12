@@ -1,5 +1,4 @@
 import { registerMsdpHook, registerPromptHook } from "../client/triggers";
-import { systemMessage } from "../client/utils";
 
 export interface RoomExits {
   [direction: string]: number; // "n" -> vnum
