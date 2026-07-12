@@ -21,32 +21,13 @@ const COMMAND_NAMES: Record<number, TelnetNegotiation["command"]> = {
   0xfe: "DONT",
 };
 
-const OPTION_NAMES: Record<number, string> = {
-  0x00: "BINARY",
-  0x01: "ECHO",
-  0x03: "SGA",
-  0x1f: "NAWS",
-  0x18: "TTYPE",
-  0x45: "MSDP",
-  0x46: "MSSP",
-  0x55: "COMPRESS",
-  0x56: "COMPRESS2",
-  0x69: "GMCP",
-};
-
 const COMPRESS2_OPTION = 0x56;
-
-export function describeOption(option: number): string {
-  return OPTION_NAMES[option] ?? `0x${option.toString(16)}`;
-}
 
 export interface TelnetParseResult {
   text: string;
   hasGA: boolean;
   events: TelnetEvent[];
-  // Если посреди этого буфера начался MCCP2 — здесь лежат байты после
-  // маркера, их нужно пропустить через zlib inflate, а не через telnet-парсер
-  compressedTail: Buffer | null;
+  compressedTail: Buffer | null; // на случай если MCCP2 посреди чанка
 }
 
 export function stripTelnetIAC(buf: Buffer): TelnetParseResult {

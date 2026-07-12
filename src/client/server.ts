@@ -1,6 +1,7 @@
 import { createServer } from "node:net";
 
 import { addOutputSink } from "./output";
+import { encode } from "./encoding";
 import { systemMessage } from "./utils";
 import { stripTelnetIAC } from "./telnet";
 
@@ -14,7 +15,7 @@ export function startLocalServer(
     );
 
     const removeSink = addOutputSink((text) => {
-      if (!client.destroyed) client.write(text, "utf8");
+      if (!client.destroyed) client.write(encode(text));
     });
 
     client.on("data", (chunk: Buffer) => {

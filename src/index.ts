@@ -1,8 +1,7 @@
 import "dotenv/config";
 import readline from "node:readline";
 
-import { connect, sendl } from "./client/mud";
-import { startLocalServer } from "./client/localServer";
+import { startLocalServer } from "./client/server";
 import { handleInput } from "./client/input";
 import "./config";
 

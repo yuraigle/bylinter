@@ -9,11 +9,11 @@ export interface Trigger {
 
 export interface PromptHook {
   handler: (prompt: string, lines: string[]) => boolean;
-  priority: number; // больше значит раньше остальных сработает
+  priority: number;
 }
 
 const triggers: Trigger[] = [];
-const hooks: PromptHook[] = [];
+const promptHooks: PromptHook[] = [];
 const msdpHooks: MsdpHandler[] = [];
 
 export function registerTrigger(pattern: RegExp, handler: LineHandler): void {
@@ -24,8 +24,8 @@ export function registerPromptHook(
   handler: PromptHandler,
   priority: number,
 ): void {
-  hooks.push({ handler, priority });
-  hooks.sort((a, b) => b.priority - a.priority);
+  promptHooks.push({ handler, priority });
+  promptHooks.sort((a, b) => b.priority - a.priority);
 }
 
 export function registerMsdpHook(handler: MsdpHandler): void {
@@ -41,7 +41,7 @@ export function runTriggers(line: string): void {
 }
 
 export function runPromptHooks(prompt: string, lines: string[]): void {
-  for (const hook of hooks) {
+  for (const hook of promptHooks) {
     const handled = hook.handler(prompt, lines);
     if (handled) break;
   }

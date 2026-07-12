@@ -22,13 +22,13 @@ let inflate: Inflate | null = null;
 let lines: string[] = [];
 let partialLine = "";
 
+if (CONSOLE_OUTPUT > 0) {
+  addOutputSink((text) => process.stdout.write(text));
+}
+
 export async function connect() {
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
   systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
-
-  if (CONSOLE_OUTPUT > 0) {
-    addOutputSink((text) => process.stdout.write(text));
-  }
 
   socket.on("close", () => {
     systemMessage("Connection closed");
@@ -36,6 +36,7 @@ export async function connect() {
     inflate?.destroy();
     inflate = null;
   });
+
   socket.on("error", (e) => systemError("Socket error: " + e.message));
 
   socket.on("data", (chunk: Buffer) => {
@@ -130,11 +131,9 @@ function handleTelnetEvent(event: TelnetEvent): void {
 
   if (event.kind === "negotiation") {
     if (event.command === "WILL" && event.option === MSDP_OPTION) {
-      socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION]));
-      debug("[telnet] IAC DO MSDP");
+      socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION])); // IAC DO COMPRESS2
     } else if (event.command === "WILL" && event.option === COMPRESS2_OPTION) {
       socket.write(Buffer.from([0xff, 0xfd, COMPRESS2_OPTION]));
-      debug("[telnet] IAC DO COMPRESS2");
     }
     return;
   }
