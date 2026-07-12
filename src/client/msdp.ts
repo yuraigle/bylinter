@@ -1,4 +1,4 @@
-import { decode } from "./encoding";
+import { decode, encode } from "./encoding";
 
 const MSDP_VAR = 1;
 const MSDP_VAL = 2;
@@ -85,8 +85,8 @@ function readArray(payload: Buffer, start: number): [MsdpValue[], number] {
 export function encodeMsdpVar(name: string, value: string): Buffer {
   return Buffer.concat([
     Buffer.from([MSDP_VAR]),
-    Buffer.from(name, "utf8"),
+    encode(name),
     Buffer.from([MSDP_VAL]),
-    Buffer.from(value, "utf8"),
+    encode(value),
   ]);
 }
