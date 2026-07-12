@@ -1,10 +1,10 @@
 import type { Socket } from "node:net";
 
 import { conn } from "./connection";
-import { runPromptHooks, runTriggers } from "./triggers";
+import { runPromptHooks, runTriggers, runMsdpHooks } from "./triggers";
 import { systemError, systemMessage, debug, COLOR } from "./utils";
 import { broadcast, addOutputSink } from "./output";
-import { stripTelnetIAC, describeOption, type TelnetEvent } from "./telnet";
+import { stripTelnetIAC, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
@@ -108,6 +108,7 @@ function handleTelnetEvent(event: TelnetEvent): void {
 
   if (event.option === MSDP_OPTION) {
     const data = parseMsdp(event.payload);
-    debug(`[MSDP] ${JSON.stringify(data)}`);
+    // debug(`[MSDP] ${JSON.stringify(data)}`);
+    runMsdpHooks(data);
   }
 }

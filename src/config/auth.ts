@@ -1,5 +1,5 @@
-import { sendl, sendMsdp } from "../mud";
-import { registerPromptHook, registerTrigger } from "../triggers";
+import { sendl, sendMsdp } from "../client/mud";
+import { registerPromptHook, registerTrigger } from "../client/triggers";
 
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;

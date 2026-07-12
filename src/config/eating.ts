@@ -1,5 +1,5 @@
-import { sendl } from "../mud";
-import { registerPromptHook, registerTrigger } from "../triggers";
+import { sendl } from "../client/mud";
+import { registerPromptHook, registerTrigger } from "../client/triggers";
 
 let charIsHungry: boolean = false;
 let lastEat: number = 0;

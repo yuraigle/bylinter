@@ -1,9 +1,9 @@
 import "dotenv/config";
 import readline from "node:readline";
 
-import { connect, sendl } from "./mud";
-import { startLocalServer } from "./localServer";
-import { systemError } from "./utils";
+import { connect, sendl } from "./client/mud";
+import { startLocalServer } from "./client/localServer";
+import { systemError } from "./client/utils";
 import "./config";
 
 const localPort = Number(process.env.LOCAL_PORT || 0);
