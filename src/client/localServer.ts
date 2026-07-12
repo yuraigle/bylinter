@@ -1,11 +1,13 @@
 import { createServer } from "node:net";
 
-import { sendRaw } from "./mud";
 import { addOutputSink } from "./output";
 import { systemMessage } from "./utils";
 import { stripTelnetIAC } from "./telnet";
 
-export function startLocalServer(port: number): void {
+export function startLocalServer(
+  port: number,
+  onInput: (text: string) => void,
+): void {
   const server = createServer((client) => {
     systemMessage(
       `Client connected: ${client.remoteAddress}:${client.remotePort}`,
@@ -17,7 +19,7 @@ export function startLocalServer(port: number): void {
 
     client.on("data", (chunk: Buffer) => {
       const { text } = stripTelnetIAC(chunk);
-      sendRaw(text);
+      onInput(text);
     });
 
     client.on("close", () => {
