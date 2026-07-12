@@ -5,7 +5,7 @@ const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
 
 registerTrigger(/Using keytable/, () => {
-  sendl("5");
+  sendl("0");
   // sendMsdp("LIST", "REPORTABLE_VARIABLES");
   sendMsdp("REPORT", "ROOM");
 });

@@ -1,3 +1,5 @@
+import { decode } from "./encoding";
+
 export interface TelnetNegotiation {
   kind: "negotiation";
   command: "WILL" | "WONT" | "DO" | "DONT";
@@ -75,7 +77,7 @@ export function stripTelnetIAC(buf: Buffer): {
     out.push(buf[i]);
   }
 
-  return { text: Buffer.from(out).toString("utf8"), hasGA, events };
+  return { text: decode(Buffer.from(out)), hasGA, events };
 }
 
 // Возвращает индекс байта SE (0xF0) в паре IAC SE

@@ -1,3 +1,5 @@
+import { decode } from "./encoding";
+
 const MSDP_VAR = 1;
 const MSDP_VAL = 2;
 const MSDP_TABLE_OPEN = 3;
@@ -32,7 +34,7 @@ function readUntilMarker(payload: Buffer, start: number): [string, number] {
   while (i < payload.length && payload[i] > MSDP_ARRAY_CLOSE) {
     i++;
   }
-  return [payload.subarray(start, i).toString("utf8"), i];
+  return [decode(payload.subarray(start, i)), i];
 }
 
 function readValue(payload: Buffer, start: number): [MsdpValue, number] {

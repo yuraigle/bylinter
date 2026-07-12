@@ -1,6 +1,7 @@
 import type { Socket } from "node:net";
 
 import { conn } from "./connection";
+import { encode } from "./encoding";
 import { runPromptHooks, runTriggers, runMsdpHooks } from "./triggers";
 import { systemError, systemMessage, debug, COLOR } from "./utils";
 import { broadcast, addOutputSink } from "./output";
@@ -60,7 +61,7 @@ export async function connect() {
 
 export function sendRaw(data: string) {
   if (socket != null) {
-    socket.write(data, "utf8");
+    socket.write(encode(data));
   }
 }
 
@@ -71,7 +72,7 @@ export function sendl(command: string) {
   }
 
   const s = socket;
-  command.split(/;/).forEach((cmd) => s.write(cmd + "\r\n", "utf8"));
+  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\r\n")));
 
   const echo = COLOR.yellow + "[" + command + "]" + COLOR.reset + "\r\n";
   broadcast(echo);
