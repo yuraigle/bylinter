@@ -2,7 +2,12 @@ import type { Socket } from "node:net";
 import { createInflate, type Inflate } from "node:zlib";
 
 import { conn } from "./connection";
-import { runPromptHooks, runTriggers, runMsdpHooks } from "./triggers";
+import {
+  runPromptHooks,
+  runTriggers,
+  runMsdpHooks,
+  applySubstitutes,
+} from "./triggers";
 import { showme, COLOR, showerr } from "./utils";
 import { broadcast, addOutputSink } from "./output";
 import { stripTelnetIAC, type TelnetEvent } from "./telnet";
@@ -62,7 +67,6 @@ export function disconnect(): void {
 
 function processIncoming(chunk: Buffer): void {
   const { text, hasGA, events, compressedTail } = stripTelnetIAC(chunk);
-  broadcast(text);
 
   for (const event of events) {
     handleTelnetEvent(event);
@@ -85,6 +89,8 @@ function processIncoming(chunk: Buffer): void {
   if (compressedTail !== null) {
     startCompression(compressedTail);
   }
+
+  broadcast(applySubstitutes(text));
 }
 
 function startCompression(tail: Buffer): void {
