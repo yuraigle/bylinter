@@ -1,7 +1,7 @@
 import { registerAlias } from "../client/input";
 import { connect } from "../client/mud";
-import { systemError } from "../client/utils";
+import { showerr } from "../client/utils";
 
 registerAlias("кон", () => {
-  connect().catch((err) => systemError("Failed to connect: " + err.message));
+  connect().catch((err) => showerr("Failed to connect: " + err.message, true));
 });

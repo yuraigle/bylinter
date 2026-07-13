@@ -1,5 +1,5 @@
 import { connect, disconnect, sendl } from "./mud";
-import { systemError } from "./utils";
+import { showerr } from "./utils";
 
 export type AliasHandler = (args: string[]) => void;
 export type CommandHandler = (args: string[]) => void;
@@ -41,7 +41,7 @@ registerCommand("/q", () => {
 });
 
 registerCommand("/connect", () => {
-  connect().catch((err) => systemError("Failed to connect: " + err.message));
+  connect().catch((err) => showerr(`Failed to connect: ` + err.message, true));
 });
 
 registerCommand("/dc", () => {

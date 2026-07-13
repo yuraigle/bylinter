@@ -3,7 +3,7 @@ import { createInflate, type Inflate } from "node:zlib";
 
 import { conn } from "./connection";
 import { runPromptHooks, runTriggers, runMsdpHooks } from "./triggers";
-import { showme, COLOR } from "./utils";
+import { showme, COLOR, showerr } from "./utils";
 import { broadcast, addOutputSink } from "./output";
 import { stripTelnetIAC, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
@@ -39,7 +39,7 @@ export async function connect() {
   });
 
   socket.on("error", (e) => {
-    showme(`${COLOR.red}Socket error: ${e.message}`, false);
+    showerr(`Socket error: ${e.message}`, false);
   });
 
   socket.on("data", (chunk: Buffer) => {
@@ -56,7 +56,7 @@ export function disconnect(): void {
     socket.destroy();
     socket = null;
   } else {
-    showme(`${COLOR.red}Not connected to a server.`, false);
+    showerr("Not connected to a server.", false);
   }
 }
 
@@ -95,7 +95,7 @@ function startCompression(tail: Buffer): void {
 
   inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
   inf.on("error", (err) => {
-    showme(`${COLOR.red}MCCP inflate error: ${err.message}`, false);
+    showerr(`MCCP inflate error: ${err.message}`, false);
     inf.destroy();
     inflate = null;
   });
@@ -112,7 +112,7 @@ export function sendRaw(data: string) {
 
 export function sendl(command: string) {
   if (socket == null) {
-    showme(`${COLOR.red}Can't send text: not connected to a server.`, false);
+    showerr("Can't send text: not connected to a server.", false);
     return;
   }
 
@@ -125,7 +125,7 @@ export function sendl(command: string) {
 
 export function sendMsdp(name: string, value: string): void {
   if (socket == null) {
-    showme(`${COLOR.red}Can't send msdp: not connected to a server.`, false);
+    showerr("Can't send msdp: not connected to a server.", false);
     return;
   }
 
