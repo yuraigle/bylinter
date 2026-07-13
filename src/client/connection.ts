@@ -6,6 +6,7 @@ export function conn(
   port: number,
   proxy?: string
 ): Promise<Socket> {
+  // setStatus(`Connected to ${host}:${port}`);
   return proxy
     ? connectViaProxy(host, port, proxy)
     : Promise.resolve(connect(port, host));

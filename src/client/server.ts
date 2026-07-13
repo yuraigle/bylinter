@@ -2,7 +2,7 @@ import { createServer } from "node:net";
 
 import { addOutputSink } from "./output";
 import { encode } from "./encoding";
-import { systemMessage } from "./utils";
+import { showme } from "./utils";
 import { stripTelnetIAC } from "./telnet";
 
 export function startLocalServer(
@@ -10,9 +10,7 @@ export function startLocalServer(
   onInput: (text: string) => void,
 ): void {
   const server = createServer((client) => {
-    systemMessage(
-      `Client connected: ${client.remoteAddress}:${client.remotePort}`,
-    );
+    showme(`Client connected: ${client.remoteAddress}`, true);
 
     const removeSink = addOutputSink((text) => {
       if (!client.destroyed) client.write(encode(text));
@@ -24,7 +22,7 @@ export function startLocalServer(
     });
 
     client.on("close", () => {
-      systemMessage("Client disconnected");
+      showme("Client disconnected", true);
       removeSink();
     });
 
@@ -32,6 +30,6 @@ export function startLocalServer(
   });
 
   server.listen(port, () => {
-    systemMessage(`Local proxy listening on port ${port}`);
+    showme(`Local proxy listening on port ${port}`, false);
   });
 }

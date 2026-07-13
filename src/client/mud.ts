@@ -3,7 +3,7 @@ import { createInflate, type Inflate } from "node:zlib";
 
 import { conn } from "./connection";
 import { runPromptHooks, runTriggers, runMsdpHooks } from "./triggers";
-import { systemError, systemMessage, debug, COLOR } from "./utils";
+import { showme, COLOR } from "./utils";
 import { broadcast, addOutputSink } from "./output";
 import { stripTelnetIAC, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
@@ -28,16 +28,19 @@ if (CONSOLE_OUTPUT > 0) {
 
 export async function connect() {
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
-  systemMessage(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
+  // setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
   socket.on("close", () => {
-    systemMessage("Connection closed");
+    // setStatus("Not connected");
+    showme("Connection closed", true);
     socket = null;
     inflate?.destroy();
     inflate = null;
   });
 
-  socket.on("error", (e) => systemError("Socket error: " + e.message));
+  socket.on("error", (e) => {
+    showme(`${COLOR.red}Socket error: ${e.message}`, false);
+  });
 
   socket.on("data", (chunk: Buffer) => {
     if (inflate) {
@@ -46,6 +49,15 @@ export async function connect() {
       processIncoming(chunk);
     }
   });
+}
+
+export function disconnect(): void {
+  if (socket != null) {
+    socket.destroy();
+    socket = null;
+  } else {
+    showme(`${COLOR.red}Not connected to a server.`, false);
+  }
 }
 
 function processIncoming(chunk: Buffer): void {
@@ -76,19 +88,19 @@ function processIncoming(chunk: Buffer): void {
 }
 
 function startCompression(tail: Buffer): void {
-  if (inflate) return; // уже включено, повторный маркер игнорируем
+  if (inflate) return;
 
   const inf = createInflate();
   inflate = inf;
 
   inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
   inf.on("error", (err) => {
-    systemError("MCCP inflate error: " + err.message);
+    showme(`${COLOR.red}MCCP inflate error: ${err.message}`, false);
     inf.destroy();
     inflate = null;
   });
 
-  debug("[telnet] MCCP2 compression started");
+  showme("MCCP2 compression started", true);
   if (tail.length > 0) inf.write(tail);
 }
 
@@ -100,7 +112,7 @@ export function sendRaw(data: string) {
 
 export function sendl(command: string) {
   if (socket == null) {
-    systemError("Not connected to server");
+    showme(`${COLOR.red}Can't send text: not connected to a server.`, false);
     return;
   }
 
@@ -113,7 +125,7 @@ export function sendl(command: string) {
 
 export function sendMsdp(name: string, value: string): void {
   if (socket == null) {
-    systemError("Not connected to server");
+    showme(`${COLOR.red}Can't send msdp: not connected to a server.`, false);
     return;
   }
 
