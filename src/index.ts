@@ -1,4 +1,3 @@
-import "dotenv/config";
 import readline from "node:readline";
 
 import { startLocalServer } from "./client/server";
@@ -7,7 +6,8 @@ import "./config";
 
 const localPort = Number(process.env.LOCAL_PORT || 0);
 
-console.log(`Добро пожаловать!\r\nВведите 'кон' для подключения к серверу Былин\r\n`);
+console.log("Добро пожаловать!");
+console.log("Введите 'кон' для подключения к серверу Былин");
 
 if (localPort > 0) startLocalServer(localPort, handleInput);
 
