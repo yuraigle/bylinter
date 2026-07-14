@@ -1,5 +1,4 @@
-import { sendl } from "../../client/mud";
-import { registerPromptHook, registerTrigger } from "../../client/triggers";
+import { sendl, registerPromptHook } from "../../client";
 
 const lastCry: number = 0;
 

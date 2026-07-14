@@ -1,5 +1,4 @@
-import { registerBindkey } from "../client/bindkeys";
-import { sendl } from "../client/mud";
+import { registerBindkey, sendl } from "../client";
 
 registerBindkey("M-up", () => sendl("n"));
 registerBindkey("M-down", () => sendl("s"));

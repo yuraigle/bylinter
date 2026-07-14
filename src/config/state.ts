@@ -1,4 +1,4 @@
-import { registerMsdpHook, registerPromptHook } from "../client/triggers";
+import { registerMsdpHook } from "../client";
 
 export interface RoomExits {
   [direction: string]: number; // "n" -> vnum
