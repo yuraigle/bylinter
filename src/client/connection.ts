@@ -1,12 +1,14 @@
 import type { Socket } from "node:net";
 import { connect } from "node:net";
 import { showme } from "./utils";
+import { setStatus } from "./tui";
 
 export function conn(
   host: string,
   port: number,
   proxy?: string
 ): Promise<Socket> {
+  setStatus(`Connected to ${host}:${port}`);
   showme(`Connected to ${host}:${port}`, true);
   return proxy
     ? connectViaProxy(host, port, proxy)

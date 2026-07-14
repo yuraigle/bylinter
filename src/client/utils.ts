@@ -1,3 +1,5 @@
+import { tuiLog } from "./tui";
+
 export const COLOR = {
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -9,11 +11,11 @@ export const COLOR = {
 const prefix = `${COLOR.red}-${COLOR.green}:${COLOR.red}-${COLOR.reset} `;
 
 export function showme(message: string, newline: boolean): void {
-  process.stdout.write((newline ? "\n" : "") + prefix + message + "\n");
+  tuiLog((newline ? "\n" : "") + prefix + message + "\n");
 }
 
 export function showerr(message: string, newline: boolean): void {
-  process.stdout.write(
+  tuiLog(
     (newline ? "\n" : "") + prefix + `${COLOR.red}${message} ${COLOR.reset}\n`,
   );
 }

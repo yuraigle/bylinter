@@ -13,6 +13,7 @@ import { broadcast, addOutputSink } from "./output";
 import { stripTelnetIAC, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
+import { tuiLog } from "./tui";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
@@ -28,7 +29,7 @@ let lines: string[] = [];
 let partialLine = "";
 
 if (CONSOLE_OUTPUT > 0) {
-  addOutputSink((text) => process.stdout.write(text));
+  addOutputSink((text) => tuiLog(text));
 }
 
 export async function connect() {
