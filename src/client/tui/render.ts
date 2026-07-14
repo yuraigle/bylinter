@@ -1,16 +1,5 @@
 import { state, MAX_BUFFER_LINES } from "./state";
-
-const ENTER_ALT_SCREEN = "\x1b[?1049h";
-const EXIT_ALT_SCREEN = "\x1b[?1049l";
-const HIDE_CURSOR = "\x1b[?25l";
-const SHOW_CURSOR = "\x1b[?25h";
-const CLEAR_LINE = "\x1b[2K";
-const RESET = "\x1b[0m";
-const BG_YELLOW_BLACK = "\x1b[43m\x1b[30m";
-
-function moveTo(row: number, col: number): string {
-  return `\x1b[${row};${col}H`;
-}
+import { COLOR, SCREEN, moveTo } from "../ansi";
 
 function getLayout() {
   const width = process.stdout.columns || 80;
@@ -25,16 +14,16 @@ function getLayout() {
 }
 
 export function enterScreen(): void {
-  process.stdout.write(ENTER_ALT_SCREEN);
+  process.stdout.write(SCREEN.enterAlt);
 }
 
 export function exitScreen(): void {
-  process.stdout.write(SHOW_CURSOR + EXIT_ALT_SCREEN);
+  process.stdout.write(SCREEN.showCursor + SCREEN.exitAlt);
 }
 
 export function redraw(): void {
   const { width, logHeight, statusRow, inputRow } = getLayout();
-  let out = HIDE_CURSOR;
+  let out = SCREEN.hideCursor;
 
   const visibleRows = state.wrappedRows.slice(
     Math.max(0, state.wrappedRows.length - logHeight - state.scrollOffset),
@@ -42,14 +31,18 @@ export function redraw(): void {
   );
 
   for (let i = 0; i < logHeight; i++) {
-    out += moveTo(i + 1, 1) + CLEAR_LINE;
+    out += moveTo(i + 1, 1) + SCREEN.clearLine;
     out += visibleRows[i] ?? "";
   }
 
-  out += moveTo(statusRow, 1) + CLEAR_LINE;
-  out += BG_YELLOW_BLACK + state.statusText.padEnd(width).slice(0, width) + RESET;
+  out += moveTo(statusRow, 1) + SCREEN.clearLine;
+  out +=
+    COLOR.bgYellow +
+    COLOR.black +
+    state.statusText.padEnd(width).slice(0, width) +
+    COLOR.reset;
 
-  out += moveTo(inputRow, 1) + CLEAR_LINE;
+  out += moveTo(inputRow, 1) + SCREEN.clearLine;
 
   let viewStart = 0;
   if (state.inputBuffer.length >= width) {
@@ -59,7 +52,7 @@ export function redraw(): void {
   const visibleCursorCol = state.cursorPos - viewStart;
 
   out += visibleInput;
-  out += moveTo(inputRow, visibleCursorCol + 1) + SHOW_CURSOR;
+  out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
 
   process.stdout.write(out);
 }
@@ -158,7 +151,10 @@ function rewrapLastLine(): void {
   const removeCount = state.rowCounts[state.rowCounts.length - 1] ?? 0;
   state.wrappedRows.splice(state.wrappedRows.length - removeCount, removeCount);
 
-  const rows = wrapLine(state.logLines[state.logLines.length - 1], state.wrapWidth);
+  const rows = wrapLine(
+    state.logLines[state.logLines.length - 1],
+    state.wrapWidth,
+  );
   state.wrappedRows.push(...rows);
   state.rowCounts[state.rowCounts.length - 1] = rows.length;
 }

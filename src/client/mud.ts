@@ -8,17 +8,19 @@ import {
   runMsdpHooks,
   applySubstitutes,
 } from "./triggers";
-import { showme, COLOR, showerr } from "./utils";
+import { showme, showerr } from "./utils";
+import { COLOR, stripBold } from "./ansi";
 import { broadcast, addOutputSink } from "./output";
 import { stripTelnetIAC, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
-import { tuiLog } from "./tui";
+import { tuiLog, setStatus } from "./tui";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
 const PROXY = process.env.PROXY || undefined;
-const CONSOLE_OUTPUT = Number(process.env.CONSOLE_OUTPUT || 1);
+const CONSOLE_OUTPUT = process.env.CONSOLE_OUTPUT === "1";
+const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
 
 const MSDP_OPTION = 0x45;
 const COMPRESS2_OPTION = 0x56;
@@ -28,16 +30,16 @@ let inflate: Inflate | null = null;
 let lines: string[] = [];
 let partialLine = "";
 
-if (CONSOLE_OUTPUT > 0) {
+if (CONSOLE_OUTPUT) {
   addOutputSink((text) => tuiLog(text));
 }
 
 export async function connect() {
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
-  // setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
+  setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
   socket.on("close", () => {
-    // setStatus("Not connected");
+    setStatus("Not connected");
     showme("Connection closed", true);
     socket = null;
     inflate?.destroy();
@@ -69,6 +71,8 @@ export function disconnect(): void {
 function processIncoming(chunk: Buffer): void {
   const { text, hasGA, events, compressedTail } = stripTelnetIAC(chunk);
 
+  // showme(`[raw] ${JSON.stringify(text)}`, true);
+
   for (const event of events) {
     handleTelnetEvent(event);
   }
@@ -91,7 +95,8 @@ function processIncoming(chunk: Buffer): void {
     startCompression(compressedTail);
   }
 
-  broadcast(applySubstitutes(text));
+  const text2show = DISABLE_BOLD_FONT ? stripBold(text) : text;
+  broadcast(applySubstitutes(text2show));
 }
 
 function startCompression(tail: Buffer): void {
