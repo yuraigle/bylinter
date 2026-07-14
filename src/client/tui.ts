@@ -1,5 +1,7 @@
 import readline from "node:readline";
 
+import { dispatchBindkey } from "./bindkeys";
+
 type KeyInfo = {
   name?: string;
   ctrl: boolean;
@@ -17,35 +19,6 @@ const CLEAR_LINE = "\x1b[2K"; // стереть содержимое текущ�
 const RESET = "\x1b[0m";
 const BG_YELLOW_BLACK = "\x1b[43m\x1b[30m";
 
-const RESERVED_KEY_NAMES = new Set([
-  "return",
-  "backspace",
-  "left",
-  "right",
-  "up",
-  "down",
-  "pageup",
-  "pagedown",
-  "escape",
-  "tab",
-  "delete",
-  "home",
-  "end",
-  "insert",
-  "f1",
-  "f2",
-  "f3",
-  "f4",
-  "f5",
-  "f6",
-  "f7",
-  "f8",
-  "f9",
-  "f10",
-  "f11",
-  "f12",
-]);
-
 // --- Состояние ---
 const MAX_BUFFER_LINES = 2000;
 let logLines: string[] = [];
@@ -53,8 +26,13 @@ let scrollOffset = 0; // 0 = внизу, показываем самые све�
 let statusText = "Not connected";
 let inputBuffer = "";
 let cursorPos = 0; // позиция курсора внутри inputBuffer
-let keyHandler: ((key: KeyInfo) => void) | null = null;
 let inputHandler: ((line: string) => void) | null = null;
+
+// --- История команд ---
+let history: string[] = [];
+const MAX_HISTORY = 100;
+let historyPos = 0; // последняя запись history.length — черновик
+let draft = ""; // сохранённый недописанный ввод, пока листаем историю вверх
 
 function moveTo(row: number, col: number): string {
   return `\x1b[${row};${col}H`;
@@ -112,6 +90,16 @@ export function initTui(): void {
       const line = inputBuffer;
       inputBuffer = "";
       cursorPos = 0;
+
+      if (line.trim().length > 0 && line !== history[history.length - 1]) {
+        history.push(line);
+        if (history.length > MAX_HISTORY) {
+          history = history.slice(history.length - MAX_HISTORY);
+        }
+      }
+      historyPos = history.length;
+      draft = "";
+
       if (inputHandler) inputHandler(line);
       redraw();
       return;
@@ -139,7 +127,31 @@ export function initTui(): void {
       return;
     }
 
-    if (key.name === "pageup") {
+    if (key.name === "up" && !key.ctrl && !key.meta) {
+      if (historyPos === history.length) {
+        draft = inputBuffer;
+      }
+      if (historyPos > 0) {
+        historyPos--;
+        inputBuffer = history[historyPos];
+        cursorPos = inputBuffer.length;
+        redraw();
+      }
+      return;
+    }
+
+    if (key.name === "down" && !key.ctrl && !key.meta) {
+      if (historyPos < history.length) {
+        historyPos++;
+        inputBuffer =
+          historyPos === history.length ? draft : history[historyPos];
+        cursorPos = inputBuffer.length;
+        redraw();
+      }
+      return;
+    }
+
+    if (key.name === "pageup" && !key.ctrl && !key.meta) {
       scrollOffset = Math.min(
         scrollOffset + 10,
         Math.max(0, logLines.length - 1),
@@ -148,30 +160,23 @@ export function initTui(): void {
       return;
     }
 
-    if (key.name === "pagedown") {
+    if (key.name === "pagedown" && !key.ctrl && !key.meta) {
       scrollOffset = Math.max(scrollOffset - 10, 0);
       redraw();
       return;
     }
 
-    // Печатные символы (включая кириллицу) — без ctrl/meta,
-    // и это не служебная именованная клавиша из списка выше
-    if (
-      !key.ctrl &&
-      !key.meta &&
-      str &&
-      str.length > 0 &&
-      !RESERVED_KEY_NAMES.has(key.name ?? "")
-    ) {
+    if (dispatchBindkey(key, str)) {
+      return;
+    }
+
+    if (!key.ctrl && !key.meta && isPrintable(str)) {
       inputBuffer =
         inputBuffer.slice(0, cursorPos) + str + inputBuffer.slice(cursorPos);
       cursorPos += str.length;
       redraw();
       return;
     }
-
-    // Всё остальное (F1-F12 итд) — наружу, для регистрации игровых хоткеев
-    if (keyHandler) keyHandler(key);
   });
 
   process.stdout.on("resize", () => redraw());
@@ -237,6 +242,11 @@ export function onInput(handler: (line: string) => void): void {
   inputHandler = handler;
 }
 
-export function onKeyPress(handler: (key: KeyInfo) => void): void {
-  keyHandler = handler;
+function isPrintable(str: string | undefined): str is string {
+  if (!str) return false;
+  const code = str.codePointAt(0);
+  if (code === undefined) return false;
+  if (code === 0x1b) return false; // ESC или начало escape-последовательности
+  if (code < 0x20) return false; // прочие control-символы (Tab и т.п.)
+  return true;
 }
