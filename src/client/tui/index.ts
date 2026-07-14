@@ -1,9 +1,16 @@
 import { state } from "./state";
-import { enterScreen, exitScreen, redraw, appendLog } from "./render";
+import {
+  enterScreen,
+  exitScreen,
+  redraw,
+  appendLog,
+  rewrapAll,
+} from "./render";
 import { initInput, destroyInput } from "./input";
 
 export function initTui(onLine: (line: string) => void): void {
   enterScreen();
+  rewrapAll();
   initInput(onLine);
   redraw();
 }

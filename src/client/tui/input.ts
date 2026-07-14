@@ -2,7 +2,7 @@ import readline from "node:readline";
 
 import { dispatchBindkey, type KeyInfo } from "../bindkeys";
 import { state, MAX_HISTORY } from "./state";
-import { redraw } from "./render";
+import { redraw, rewrapAll } from "./render";
 
 let inputHandler: ((line: string) => void) | null = null;
 
@@ -59,6 +59,25 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
   if (key.name === "right" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.min(state.inputBuffer.length, state.cursorPos + 1);
+    redraw();
+    return;
+  }
+
+  if (key.name === "home" && !key.ctrl && !key.meta) {
+    state.cursorPos = 0;
+    redraw();
+    return;
+  }
+
+  if (key.name === "end" && !key.ctrl && !key.meta) {
+    state.cursorPos = state.inputBuffer.length;
+    redraw();
+    return;
+  }
+
+  if (key.name === "u" && key.ctrl && !key.meta) {
+    state.inputBuffer = "";
+    state.cursorPos = 0;
     redraw();
     return;
   }
@@ -129,7 +148,10 @@ export function initInput(onLine: (line: string) => void): void {
   process.stdin.setEncoding("utf8");
 
   process.stdin.on("keypress", handleKeypress);
-  process.stdout.on("resize", () => redraw());
+  process.stdout.on("resize", () => {
+    rewrapAll();
+    redraw();
+  });
 }
 
 export function destroyInput(): void {
