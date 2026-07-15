@@ -8,3 +8,4 @@ export {
 } from "./triggers";
 export { sendl, sendMsdp, connect, disconnect } from "./mud";
 export { showme, showerr } from "./utils";
+export { stripColors } from './ansi';

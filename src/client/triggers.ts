@@ -1,4 +1,6 @@
-export type LineHandler = (line: string) => void;
+import { stripColors } from "./ansi";
+
+export type LineHandler = (clean: string, colored: string, m: string[]) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
 export type MsdpHandler = (data: Record<string, unknown>) => void;
 export type SubstituteHandler = (text: string) => string;
@@ -47,9 +49,11 @@ export function registerSubstitute(
 }
 
 export function runTriggers(line: string): void {
+  const clean = stripColors(line);
   for (const trigger of triggers) {
-    if (trigger.pattern.test(line)) {
-      trigger.handler(line);
+    const match = clean.match(trigger.pattern);
+    if (match) {
+      trigger.handler(clean, line, match);
     }
   }
 }

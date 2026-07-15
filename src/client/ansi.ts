@@ -52,3 +52,7 @@ const BOLD_IN_COMBINED_RE = /\x1b\[1;/g;
 export function stripBold(text: string): string {
   return text.replace(BOLD_IN_COMBINED_RE, "\x1b[").replace(BOLD_RE, "");
 }
+
+export function stripColors(text: string): string {
+  return text.replaceAll(/\x1b\[[0-9;]*m/g, '');
+}

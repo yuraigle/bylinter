@@ -3,13 +3,10 @@ import { handleInput } from "./client/input";
 import { initTui } from "./client/tui";
 import { showme } from "./client/utils";
 
-import "./config";
-
 const localPort = Number(process.env.LOCAL_PORT || 0);
+if (localPort > 0) startLocalServer(localPort, handleInput);
 
 initTui(handleInput);
+showme("Bylinter v0.1 by Yuri Orlov", false);
 
-showme("Добро пожаловать!", false);
-showme("Введите 'кон' для подключения к серверу Былин", false);
-
-if (localPort > 0) startLocalServer(localPort, handleInput);
+import "./config";

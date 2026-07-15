@@ -78,8 +78,8 @@ function processIncoming(chunk: Buffer): void {
   }
 
   partialLine += text;
-  const chunkLines = partialLine.split("\n");
-  lines.push(...chunkLines.slice(0, -1).map((l) => l.replace(/\r$/, "")));
+  const chunkLines = partialLine.split("\n").map((l) => l.replace(/\r$/, ""));
+  lines.push(...chunkLines.slice(0, -1));
   partialLine = chunkLines[chunkLines.length - 1];
 
   chunkLines.slice(0, -1).forEach((line) => runTriggers(line));
@@ -129,9 +129,9 @@ export function sendl(command: string) {
   }
 
   const s = socket;
-  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\r\n")));
+  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
-  const echo = COLOR.yellow + "[" + command + "]" + COLOR.reset + "\r\n";
+  const echo = COLOR.brightYellow + command + COLOR.reset + "\n";
   broadcast(echo);
 }
 
