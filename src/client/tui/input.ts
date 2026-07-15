@@ -51,6 +51,16 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     return;
   }
 
+  if (key.name === "delete") {
+    if (state.cursorPos < state.inputBuffer.length) {
+      state.inputBuffer =
+        state.inputBuffer.slice(0, state.cursorPos) +
+        state.inputBuffer.slice(state.cursorPos + 1);
+      redraw();
+    }
+    return;
+  }
+
   if (key.name === "left" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.max(0, state.cursorPos - 1);
     redraw();

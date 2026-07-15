@@ -151,6 +151,11 @@ function handleTelnetEvent(event: TelnetEvent): void {
 
   if (event.option === MSDP_OPTION) {
     const data = parseMsdp(event.payload);
+
+    // if (data && !data['ROOM']) {
+    //   showme(JSON.stringify(data), true);
+    // }
+
     runMsdpHooks(data);
   }
 }
