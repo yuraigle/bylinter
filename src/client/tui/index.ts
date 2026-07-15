@@ -28,3 +28,18 @@ export function setStatus(text: string): void {
   state.statusText = text;
   redraw();
 }
+
+export function setSidebar(lines: string[], start: number, end: number): void {
+  const requiredLength = Math.max(state.sidebarLines.length, end + 1);
+  if (state.sidebarLines.length < requiredLength) {
+    state.sidebarLines = state.sidebarLines.concat(
+      new Array(requiredLength - state.sidebarLines.length).fill(""),
+    );
+  }
+
+  for (let i = start; i <= end; i++) {
+    state.sidebarLines[i] = lines[i - start] ?? "";
+  }
+
+  redraw();
+}

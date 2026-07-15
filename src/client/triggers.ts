@@ -1,4 +1,5 @@
 import { stripColors } from "./ansi";
+import { showme } from "./utils";
 
 export type LineHandler = (clean: string, colored: string, m: string[]) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
@@ -10,18 +11,13 @@ export interface Trigger {
   handler: LineHandler;
 }
 
-export interface Substitute {
-  pattern: RegExp;
-  handler: SubstituteHandler;
-}
-
 export interface PromptHook {
   handler: (prompt: string, lines: string[]) => boolean;
   priority: number;
 }
 
 const triggers: Trigger[] = [];
-const substitutes: Substitute[] = [];
+const substitutes: SubstituteHandler[] = [];
 const promptHooks: PromptHook[] = [];
 const msdpHooks: MsdpHandler[] = [];
 
@@ -41,11 +37,8 @@ export function registerMsdpHook(handler: MsdpHandler): void {
   msdpHooks.push(handler);
 }
 
-export function registerSubstitute(
-  pattern: RegExp,
-  handler: SubstituteHandler,
-): void {
-  substitutes.push({ pattern, handler });
+export function registerSubstitute(handler: SubstituteHandler): void {
+  substitutes.push(handler);
 }
 
 export function runTriggers(line: string): void {
@@ -60,9 +53,7 @@ export function runTriggers(line: string): void {
 
 export function applySubstitutes(text: string): string {
   for (const subst of substitutes) {
-    if (subst.pattern.test(text)) {
-      text = subst.handler(text);
-    }
+    text = subst(text);
   }
   return text;
 }

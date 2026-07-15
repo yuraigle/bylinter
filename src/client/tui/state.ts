@@ -11,6 +11,8 @@ export const state = {
   wrappedRows: [] as string[],
   rowCounts: [] as number[], // физических строк на каждую логическую строку, параллельно logLines
   wrapWidth: 0,
+
+  sidebarLines: [] as string[],
 };
 
 export const MAX_BUFFER_LINES = 2000;

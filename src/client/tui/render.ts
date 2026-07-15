@@ -1,15 +1,31 @@
 import { state, MAX_BUFFER_LINES } from "./state";
 import { COLOR, SCREEN, moveTo } from "../ansi";
 
+const SIDEBAR_WIDTH = 50;
+const SIDEBAR_DIVIDER_WIDTH = 1;
+const MIN_WIDTH_FOR_SIDEBAR = 160;
+const DIVIDER_CHAR = "│";
+
 function getLayout() {
   const width = process.stdout.columns || 80;
   const height = process.stdout.rows || 24;
+  const showSidebar = width > MIN_WIDTH_FOR_SIDEBAR;
+  const logWidth = showSidebar
+    ? width - SIDEBAR_WIDTH - SIDEBAR_DIVIDER_WIDTH
+    : width;
+  const dividerCol = logWidth + 1;
+  const sidebarCol = dividerCol + SIDEBAR_DIVIDER_WIDTH;
+
   return {
     width,
     height,
     logHeight: height - 2,
     statusRow: height - 1,
     inputRow: height,
+    showSidebar,
+    logWidth,
+    dividerCol,
+    sidebarCol,
   };
 }
 
@@ -22,7 +38,15 @@ export function exitScreen(): void {
 }
 
 export function redraw(): void {
-  const { width, logHeight, statusRow, inputRow } = getLayout();
+  const {
+    width,
+    logHeight,
+    statusRow,
+    inputRow,
+    showSidebar,
+    dividerCol,
+    sidebarCol,
+  } = getLayout();
   let out = SCREEN.hideCursor;
 
   const visibleRows = state.wrappedRows.slice(
@@ -33,6 +57,17 @@ export function redraw(): void {
   for (let i = 0; i < logHeight; i++) {
     out += moveTo(i + 1, 1) + SCREEN.clearLine;
     out += visibleRows[i] ?? "";
+
+    if (showSidebar) {
+      out += COLOR.reset;
+      out += moveTo(i + 1, dividerCol) + DIVIDER_CHAR;
+      const sidebarLine = truncateVisible(
+        state.sidebarLines[i] ?? "",
+        SIDEBAR_WIDTH,
+      );
+      out += moveTo(i + 1, sidebarCol) + sidebarLine;
+      out += COLOR.reset;
+    }
   }
 
   out += moveTo(statusRow, 1) + SCREEN.clearLine;
@@ -132,21 +167,19 @@ function wrapLine(line: string, width: number): string[] {
   return rows;
 }
 
-// Полный пересчёт — только при смене ширины терминала (редко)
 export function rewrapAll(): void {
-  const { width } = getLayout();
-  state.wrapWidth = width;
+  const { logWidth } = getLayout();
+  state.wrapWidth = logWidth;
   state.wrappedRows = [];
   state.rowCounts = [];
 
   for (const line of state.logLines) {
-    const rows = wrapLine(line, width);
+    const rows = wrapLine(line, logWidth);
     state.wrappedRows.push(...rows);
     state.rowCounts.push(rows.length);
   }
 }
 
-// Последняя логическая строка изменилась (дописали текст без \n) — пересчитываем только её
 function rewrapLastLine(): void {
   const removeCount = state.rowCounts[state.rowCounts.length - 1] ?? 0;
   state.wrappedRows.splice(state.wrappedRows.length - removeCount, removeCount);
@@ -159,9 +192,26 @@ function rewrapLastLine(): void {
   state.rowCounts[state.rowCounts.length - 1] = rows.length;
 }
 
-// Новая логическая строка (после \n) — просто добавляем её перенос в хвост
 function appendWrappedLine(line: string): void {
   const rows = wrapLine(line, state.wrapWidth);
   state.wrappedRows.push(...rows);
   state.rowCounts.push(rows.length);
+}
+
+function truncateVisible(str: string, width: number): string {
+  const tokens = str.match(TOKEN_RE) ?? [];
+  let out = "";
+  let visibleLen = 0;
+
+  for (const token of tokens) {
+    if (token.startsWith("\x1b[")) {
+      out += token;
+      continue;
+    }
+    if (visibleLen >= width) break;
+    out += token;
+    visibleLen++;
+  }
+
+  return out;
 }

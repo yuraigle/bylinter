@@ -22,9 +22,6 @@ const PROXY = process.env.PROXY || undefined;
 const CONSOLE_OUTPUT = process.env.CONSOLE_OUTPUT === "1";
 const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
 
-const MSDP_OPTION = 0x45;
-const COMPRESS2_OPTION = 0x56;
-
 let socket: Socket | null = null;
 let inflate: Inflate | null = null;
 let lines: string[] = [];
@@ -71,21 +68,28 @@ export function disconnect(): void {
 function processIncoming(chunk: Buffer): void {
   const { text, hasGA, events, compressedTail } = stripTelnetIAC(chunk);
 
-  // showme(`[raw] ${JSON.stringify(text)}`, true);
-
   for (const event of events) {
     handleTelnetEvent(event);
   }
 
   partialLine += text;
   const chunkLines = partialLine.split("\n").map((l) => l.replace(/\r$/, ""));
-  lines.push(...chunkLines.slice(0, -1));
+  const completedLines = chunkLines.slice(0, -1);
+  lines.push(...completedLines);
   partialLine = chunkLines[chunkLines.length - 1];
 
-  chunkLines.slice(0, -1).forEach((line) => runTriggers(line));
+  completedLines.forEach((line) => runTriggers(line));
+
+  if (completedLines.length > 0) {
+    let out = completedLines.join("\r\n") + "\r\n";
+    out = DISABLE_BOLD_FONT ? stripBold(out) : out;
+    out = applySubstitutes(out);
+    broadcast(out);
+  }
 
   if (hasGA) {
     const prompt = partialLine;
+    broadcast(prompt);
     runPromptHooks(prompt, lines);
     partialLine = "";
     lines = [];
@@ -94,26 +98,6 @@ function processIncoming(chunk: Buffer): void {
   if (compressedTail !== null) {
     startCompression(compressedTail);
   }
-
-  const text2show = DISABLE_BOLD_FONT ? stripBold(text) : text;
-  broadcast(applySubstitutes(text2show));
-}
-
-function startCompression(tail: Buffer): void {
-  if (inflate) return;
-
-  const inf = createInflate();
-  inflate = inf;
-
-  inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
-  inf.on("error", (err) => {
-    showerr(`MCCP inflate error: ${err.message}`, false);
-    inf.destroy();
-    inflate = null;
-  });
-
-  showme("MCCP2 compression started", true);
-  if (tail.length > 0) inf.write(tail);
 }
 
 export function sendRaw(data: string) {
@@ -143,7 +127,7 @@ export function sendMsdp(name: string, value: string): void {
 
   socket.write(
     Buffer.concat([
-      Buffer.from([0xff, 0xfa, MSDP_OPTION]),
+      Buffer.from([0xff, 0xfa, 0x45]),
       encodeMsdpVar(name, value),
       Buffer.from([0xff, 0xf0]),
     ]),
@@ -153,9 +137,12 @@ export function sendMsdp(name: string, value: string): void {
 function handleTelnetEvent(event: TelnetEvent): void {
   if (socket == null) return;
 
+  const MSDP_OPTION = 0x45;
+  const COMPRESS2_OPTION = 0x56;
+
   if (event.kind === "negotiation") {
     if (event.command === "WILL" && event.option === MSDP_OPTION) {
-      socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION])); // IAC DO COMPRESS2
+      socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION]));
     } else if (event.command === "WILL" && event.option === COMPRESS2_OPTION) {
       socket.write(Buffer.from([0xff, 0xfd, COMPRESS2_OPTION]));
     }
@@ -166,4 +153,21 @@ function handleTelnetEvent(event: TelnetEvent): void {
     const data = parseMsdp(event.payload);
     runMsdpHooks(data);
   }
+}
+
+function startCompression(tail: Buffer): void {
+  if (inflate) return;
+
+  const inf = createInflate();
+  inflate = inf;
+
+  inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
+  inf.on("error", (err) => {
+    showerr(`MCCP inflate error: ${err.message}`, false);
+    inf.destroy();
+    inflate = null;
+  });
+
+  showme("MCCP2 compression started", true);
+  if (tail.length > 0) inf.write(tail);
 }
