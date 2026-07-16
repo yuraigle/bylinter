@@ -1,4 +1,4 @@
-import { sendl, registerPromptHook, registerTrigger } from "../client";
+import { registerPromptHook, registerTrigger, sendline } from "../client";
 
 let charIsHungry: boolean = false;
 let lastEat: number = 0;
@@ -19,7 +19,7 @@ registerTrigger(
 
 registerPromptHook(() => {
   if (charIsHungry && Date.now() - lastEat > EAT_COOLDOWN_MS) {
-    sendl("пить боч.синим");
+    sendline("пить боч.синим");
     lastEat = Date.now();
     return true;
   }

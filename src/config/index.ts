@@ -11,6 +11,7 @@ import "./aliases";
 import "./connect";
 import "./auth";
 import "./movement";
+import "./bot";
 import "./eating";
 
 import "./skills/drunk";
@@ -22,7 +23,7 @@ showme("Введите кон для подключения к Былинам", 
 
 // карта комнат в сайдбаре
 const mapLines: string[] = [];
-registerTrigger(/^:/, (a, colored: string) => {
+registerTrigger(/^:/, (m, colored: string) => {
   mapLines.push(colored.substring(1));
 });
 

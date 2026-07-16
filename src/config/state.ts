@@ -1,8 +1,19 @@
-import { registerMsdpHook, setSidebar, showme } from "../client";
+import {
+  registerMsdpHook,
+  registerTrigger,
+  sendMsdp,
+  setSidebar,
+  showme,
+} from "../client";
 import { COLOR } from "../client/ansi";
 
 export interface RoomExits {
   [direction: string]: number; // "n" -> vnum
+}
+
+export interface Character {
+  name: string;
+  prof: string;
 }
 
 export interface Room {
@@ -28,11 +39,13 @@ export interface GroupMember {
 }
 
 export interface GameState {
+  me: Character;
   msdpRoom: Room | null;
   msdpGroup: GroupMember[];
 }
 
 const state: GameState = {
+  me: { name: "", prof: "" },
   msdpRoom: null,
   msdpGroup: [],
 };
@@ -41,16 +54,24 @@ export function getState(): Readonly<GameState> {
   return state;
 }
 
+registerTrigger(/^Using keytable$/, () => {
+  // для неумеющих парсить текст есть msdp. отключу. меньше трафика - быстрее
+  // ["ROOM","EXPERIENCE","GOLD","LEVEL","MAX_HIT","MAX_MOVE","STATE","GROUP"]
+  // sendMsdp("LIST", "REPORTABLE_VARIABLES");
+  // sendMsdp("REPORT", "ROOM");
+  // sendMsdp("REPORT", "EXPERIENCE");
+  // sendMsdp("REPORT", "GOLD");
+  // sendMsdp("REPORT", "LEVEL");
+  // sendMsdp("REPORT", "MAX_HIT");
+  // sendMsdp("REPORT", "MAX_MOVE");
+  // sendMsdp("REPORT", "STATE");
+  sendMsdp("REPORT", "GROUP"); // а вот это полезно
+});
+
 registerMsdpHook((data) => {
   if (data.ROOM && typeof data.ROOM === "object" && !Array.isArray(data.ROOM)) {
     state.msdpRoom = parseRoom(data.ROOM as Record<string, unknown>);
-  }
-
-  if (data.GROUP) {
-    showme("msdp updated: GROUP", true);
-  }
-
-  if (Array.isArray(data.GROUP)) {
+  } else if (data.GROUP && Array.isArray(data.GROUP)) {
     state.msdpGroup = data.GROUP.map((member) =>
       parseGroupMember(member as Record<string, unknown>),
     );
@@ -58,6 +79,8 @@ registerMsdpHook((data) => {
     groupLines.push(GROUP_LINES_HEADER);
     groupLines.push(...state.msdpGroup.map(formatGroupLine));
     setSidebar(groupLines, 22, 44);
+  } else {
+    showme(`[msdp] ${JSON.stringify(data)}`, true);
   }
 });
 
@@ -93,13 +116,13 @@ function parseGroupMember(raw: Record<string, unknown>): GroupMember {
   };
 }
 
-const GROUP_LINES_HEADER = "Имя           тут  хп движ   мем афф.   позиция";
+const GROUP_LINES_HEADER = "Имя           тут  хп движ   мем афф.    позиция";
 
 function formatGroupLine(member: GroupMember): string {
   const name = member.name.slice(0, 14).padEnd(14);
 
   const hereColor = member.isHere ? COLOR.black : COLOR.red;
-  const here = hereColor + `${member.isHere ? '+' : '-'}` + COLOR.reset;
+  const here = hereColor + `${member.isHere ? "+" : "-"}` + COLOR.reset;
 
   let healthColor: string = COLOR.green;
   if (member.health < 100) healthColor = COLOR.brightGreen;
@@ -119,8 +142,15 @@ function formatGroupLine(member: GroupMember): string {
 
   const affects = member.affects.slice(0, 5).padEnd(5);
 
-  const posColor = member.position === "Стоит" ? "" : COLOR.brightRed;
-  const position = posColor + member.position.slice(0, 8).padStart(8);
+  const posColor = ["Стоит", "Сражается"].includes(member.position)
+    ? ""
+    : COLOR.brightRed;
+  const position = posColor + member.position.slice(0, 9).padStart(9);
 
   return [name, here, health, move, memTime, affects, position].join(" ");
 }
+
+registerTrigger(/^  Вы ([А-ЯЁ][а-яё]+), ([а-я]+)\. Ваши показатели:/, (m) => {
+  state.me.name = m[1];
+  state.me.prof = m[2];
+});

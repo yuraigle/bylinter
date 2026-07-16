@@ -1,5 +1,9 @@
 import { registerSubstitute } from "../client/triggers";
 
+// Какой-то дебаг мне Стрибог добавил
+registerSubstitute((line) => line.replaceAll(/^\x1b\[1;33mСкилл: .*\r?\n/gm, ''));
+registerSubstitute((line) => line.replaceAll(/^(\x1b\[[0-9;]*m)?Дамага .*\r?\n/gm, ''));
+
 // registerSubstitute(/\.\.\.окружен.? огненным щитом\s*/, (text: string) => {
 //   return text.replaceAll(
 //     /\r?\n\.\.\.окружен.? огненным щитом\s*\r?\n/g,

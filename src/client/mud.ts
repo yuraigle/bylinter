@@ -78,13 +78,19 @@ function processIncoming(chunk: Buffer): void {
   lines.push(...completedLines);
   partialLine = chunkLines[chunkLines.length - 1];
 
-  completedLines.forEach((line) => runTriggers(line));
-
   if (completedLines.length > 0) {
+    // completedLines.forEach((line) => {
+    //   runTriggers(line);
+    //   let out = applySubstitutes(line);
+    //   out =  DISABLE_BOLD_FONT ? stripBold(out) : out;
+    //   broadcast(out + "\r\n");
+    // });
+
     let out = completedLines.join("\r\n") + "\r\n";
-    out = DISABLE_BOLD_FONT ? stripBold(out) : out;
     out = applySubstitutes(out);
+    out = DISABLE_BOLD_FONT ? stripBold(out) : out;
     broadcast(out);
+    completedLines.forEach((line) => runTriggers(line));
   }
 
   if (hasGA) {
@@ -116,6 +122,20 @@ export function sendl(command: string) {
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
   const echo = COLOR.brightYellow + command + COLOR.reset + "\n";
+  broadcast(echo);
+}
+
+export function sendline(command: string) {
+  if (socket == null) {
+    showerr("Can't send text: not connected to a server.", false);
+    return;
+  }
+
+  const s = socket;
+  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
+
+  const echo =
+    "\r\n" + COLOR.brightYellow + "[" + command + "]" + COLOR.reset + "\r\n";
   broadcast(echo);
 }
 
@@ -151,11 +171,6 @@ function handleTelnetEvent(event: TelnetEvent): void {
 
   if (event.option === MSDP_OPTION) {
     const data = parseMsdp(event.payload);
-
-    // if (data && !data['ROOM']) {
-    //   showme(JSON.stringify(data), true);
-    // }
-
     runMsdpHooks(data);
   }
 }
