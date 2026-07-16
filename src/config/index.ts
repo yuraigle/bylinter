@@ -11,6 +11,7 @@ import "./connect";
 import "./auth";
 import "./movement";
 import "./bot";
+import "./assist";
 import "./eating";
 
 import "./skills/drunk";
