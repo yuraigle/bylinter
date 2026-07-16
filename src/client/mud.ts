@@ -68,38 +68,44 @@ export function disconnect(): void {
 }
 
 function processIncoming(chunk: Buffer): void {
-  const { text, hasGA, events, compressedTail } = telnetParser.feed(chunk);
+  const { segments, events, compressedTail } = telnetParser.feed(chunk);
 
   for (const event of events) {
     handleTelnetEvent(event);
   }
 
+  for (const segment of segments) {
+    processSegment(segment.text, segment.hasGA);
+  }
+
+  if (compressedTail !== null) {
+    startCompression(compressedTail);
+  }
+}
+
+function processSegment(text: string, hasGA: boolean): void {
   partialLine += text;
   const chunkLines = partialLine.split("\n").map((l) => l.replace(/\r$/, ""));
   const completedLines = chunkLines.slice(0, -1);
   lines.push(...completedLines);
   partialLine = chunkLines[chunkLines.length - 1];
 
+  // showme(`[raw] ${JSON.stringify(text)}`, false);
+
   if (completedLines.length > 0) {
-    let out = completedLines.join("\r\n") + "\r\n";
+    let out = "\r\n" + completedLines.join("\r\n");
     out = applySubstitutes(out);
     out = DISABLE_BOLD_FONT ? stripBold(out) : out;
     broadcast(out);
-
-    // completedLines.forEach((line) => showme(`[raw] ${JSON.stringify(line)}`, true));
     completedLines.forEach((line) => runTriggers(line));
   }
 
   if (hasGA) {
     const prompt = partialLine;
-    broadcast(prompt);
+    broadcast("\r\n" + prompt);
     runPromptHooks(prompt, lines);
     partialLine = "";
     lines = [];
-  }
-
-  if (compressedTail !== null) {
-    startCompression(compressedTail);
   }
 }
 

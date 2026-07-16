@@ -25,10 +25,14 @@ export const COMPRESS_OPTION = 0x55;
 export const COMPRESS2_OPTION = 0x56;
 
 export interface TelnetParseResult {
-  text: string;
-  hasGA: boolean;
+  segments: TelnetSegment[];
   events: TelnetEvent[];
   compressedTail: Buffer | null;
+}
+
+export interface TelnetSegment {
+  text: string;
+  hasGA: boolean;
 }
 
 // Возвращает индекс байта SE (0xF0), либо -1, если IAC SE ещё не пришёл
@@ -43,19 +47,18 @@ function findSubnegotiationEnd(buf: Buffer, from: number): number {
 }
 
 export function createTelnetParser() {
-  let pending = Buffer.alloc(0); // недообработанный хвост с прошлого вызова
+  let pending = Buffer.alloc(0);
 
   function feed(chunk: Buffer): TelnetParseResult {
     const buf = pending.length > 0 ? Buffer.concat([pending, chunk]) : chunk;
     pending = Buffer.alloc(0);
 
-    const out: number[] = [];
+    const segments: TelnetSegment[] = [];
     const events: TelnetEvent[] = [];
-    let hasGA = false;
+    let out: number[] = []; // накопитель текущего (ещё не закрытого GA) сегмента
 
     for (let i = 0; i < buf.length; i++) {
       if (buf[i] === 0xff) {
-        // Одинокий IAC на конце буфера — команда ещё не пришла целиком
         if (i + 1 >= buf.length) {
           pending = Buffer.from(buf.subarray(i));
           break;
@@ -64,13 +67,14 @@ export function createTelnetParser() {
         const cmd = buf[i + 1];
 
         if (cmd === 0xf9) {
-          hasGA = true;
+          // GA
+          segments.push({ text: decode(Buffer.from(out)), hasGA: true });
+          out = [];
           i += 1;
           continue;
         }
 
         if (cmd in COMMAND_NAMES) {
-          // IAC WILL/WONT/DO/DONT без байта опции ещё не завершён
           if (i + 2 >= buf.length) {
             pending = Buffer.from(buf.subarray(i));
             break;
@@ -94,7 +98,6 @@ export function createTelnetParser() {
           const seIndex = findSubnegotiationEnd(buf, i + 2);
 
           if (seIndex === -1) {
-            // IAC SE ещё не пришёл — весь блок откладываем целиком
             pending = Buffer.from(buf.subarray(i));
             break;
           }
@@ -103,32 +106,27 @@ export function createTelnetParser() {
           events.push({ kind: "subnegotiation", option, payload });
 
           if (option === COMPRESS2_OPTION) {
+            segments.push({ text: decode(Buffer.from(out)), hasGA: false });
             const tail = buf.subarray(seIndex + 1);
-            return {
-              text: decode(Buffer.from(out)),
-              hasGA,
-              events,
-              compressedTail: Buffer.from(tail),
-            };
+            return { segments, events, compressedTail: Buffer.from(tail) };
           }
 
           i = seIndex;
           continue;
         }
 
-        // Неизвестная однобайтовая команда
         i += 1;
         continue;
       }
       out.push(buf[i]);
     }
 
-    return {
-      text: decode(Buffer.from(out)),
-      hasGA,
-      events,
-      compressedTail: null,
-    };
+    // Остаток без GA (незавершённый хвост) — тоже отдельный сегмент
+    if (out.length > 0 || segments.length === 0) {
+      segments.push({ text: decode(Buffer.from(out)), hasGA: false });
+    }
+
+    return { segments, events, compressedTail: null };
   }
 
   return { feed };
