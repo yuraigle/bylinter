@@ -11,7 +11,7 @@ import {
 import { showme, showerr } from "./utils";
 import { COLOR, stripBold } from "./ansi";
 import { broadcast, addOutputSink } from "./output";
-import { stripTelnetIAC, type TelnetEvent } from "./telnet";
+import { createTelnetParser, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
 import { tuiLog, setStatus } from "./tui";
@@ -22,6 +22,7 @@ const PROXY = process.env.PROXY || undefined;
 const CONSOLE_OUTPUT = process.env.CONSOLE_OUTPUT === "1";
 const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
 
+let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
 let inflate: Inflate | null = null;
 let lines: string[] = [];
@@ -32,6 +33,7 @@ if (CONSOLE_OUTPUT) {
 }
 
 export async function connect() {
+  telnetParser = createTelnetParser();
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
   setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
 
@@ -66,7 +68,7 @@ export function disconnect(): void {
 }
 
 function processIncoming(chunk: Buffer): void {
-  const { text, hasGA, events, compressedTail } = stripTelnetIAC(chunk);
+  const { text, hasGA, events, compressedTail } = telnetParser.feed(chunk);
 
   for (const event of events) {
     handleTelnetEvent(event);
@@ -79,13 +81,6 @@ function processIncoming(chunk: Buffer): void {
   partialLine = chunkLines[chunkLines.length - 1];
 
   if (completedLines.length > 0) {
-    // completedLines.forEach((line) => {
-    //   runTriggers(line);
-    //   let out = applySubstitutes(line);
-    //   out =  DISABLE_BOLD_FONT ? stripBold(out) : out;
-    //   broadcast(out + "\r\n");
-    // });
-
     let out = completedLines.join("\r\n") + "\r\n";
     out = applySubstitutes(out);
     out = DISABLE_BOLD_FONT ? stripBold(out) : out;

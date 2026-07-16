@@ -3,7 +3,7 @@ import { createServer } from "node:net";
 import { addOutputSink } from "./output";
 import { encode } from "./encoding";
 import { showme } from "./utils";
-import { stripTelnetIAC } from "./telnet";
+import { createTelnetParser } from "./telnet";
 
 export function startLocalServer(
   port: number,
@@ -12,12 +12,14 @@ export function startLocalServer(
   const server = createServer((client) => {
     showme(`Client connected: ${client.remoteAddress}`, true);
 
+    const parser = createTelnetParser();
+
     const removeSink = addOutputSink((text) => {
       if (!client.destroyed) client.write(encode(text));
     });
 
     client.on("data", (chunk: Buffer) => {
-      const { text } = stripTelnetIAC(chunk);
+      const { text } = parser.feed(chunk);
       onInput(text);
     });
 
