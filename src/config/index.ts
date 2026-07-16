@@ -1,5 +1,4 @@
 import {
-  registerPromptHook,
   registerSubstitute,
   registerTrigger,
   setSidebar,
@@ -16,6 +15,8 @@ import "./eating";
 
 import "./skills/drunk";
 import "./skills/warcry";
+import "./skills/rage";
+import "./skills/mounted";
 
 import "./highlights";
 
@@ -35,12 +36,13 @@ registerTrigger(/^\s*$/, () => {
 
     // "@" всегда по центру
     const result: string[] = [];
-    for (let offset = -10; offset <= 10; offset++) {
+    for (let offset = -9; offset <= 9; offset++) {
       result.push(mapLines[markerIndex + offset] ?? "");
     }
-    setSidebar(result, 0, 21);
+
+    setSidebar(result, 0, 19);
   }
   mapLines.length = 0;
 });
 
-registerSubstitute((text) => text.replaceAll(/^:[^\r\n]*\r?\n/gm, ''));
+registerSubstitute((text) => text.replaceAll(/^:[^\r\n]*\r?\n/gm, ""));

@@ -1,8 +1,4 @@
-import {
-  registerPromptHook,
-  registerTrigger,
-  sendline,
-} from "../client";
+import { registerPromptHook, registerTrigger, sendline } from "../client";
 
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;
@@ -20,9 +16,6 @@ registerTrigger(/^\s+Посетите наш сайт/, () => {
 registerTrigger(/^Вы пропали в пустоте этого мира\./, () => sendline(""));
 
 registerPromptHook((prompt) => {
-  if (prompt.includes("ANYKEY нажмите ENTER")) {
-    sendline("");
-  }
-
+  if (prompt.includes("ANYKEY нажмите ENTER")) sendline("");
   return false;
 }, 0);

@@ -85,6 +85,8 @@ function processIncoming(chunk: Buffer): void {
     out = applySubstitutes(out);
     out = DISABLE_BOLD_FONT ? stripBold(out) : out;
     broadcast(out);
+
+    // completedLines.forEach((line) => showme(`[raw] ${JSON.stringify(line)}`, true));
     completedLines.forEach((line) => runTriggers(line));
   }
 

@@ -1,14 +1,25 @@
 import {
   registerMsdpHook,
+  registerPromptHook,
   registerTrigger,
+  sendline,
   sendMsdp,
   setSidebar,
   showme,
+  stripColors,
 } from "../client";
-import { COLOR } from "../client/ansi";
+import { formatRuTime } from "./utils";
 
-export interface RoomExits {
-  [direction: string]: number; // "n" -> vnum
+import { type GroupMember, type Room } from "./msdp/types";
+import { parseRoom } from "./msdp/room";
+import { formatGroupLines, parseGroupMember } from "./msdp/group";
+
+export interface GameState {
+  me: Character;
+  condition: Condition | null;
+  msdpRoom: Room | null;
+  msdpGroup: GroupMember[];
+  lastTick: number;
 }
 
 export interface Character {
@@ -16,55 +27,35 @@ export interface Character {
   prof: string;
 }
 
-export interface Room {
-  vnum: number;
-  name: string;
-  area: string;
-  zone: number;
-  fromRoom: number;
-  fromDirection: string;
-  terrain: string;
-  exits: RoomExits;
-}
-
-export interface GroupMember {
-  name: string;
-  health: number;
-  move: number;
-  isHere: boolean;
-  memTime: number;
-  affects: string;
-  role: string;
-  position: string;
-}
-
-export interface GameState {
-  me: Character;
-  msdpRoom: Room | null;
-  msdpGroup: GroupMember[];
+export interface Condition {
+  isDrunk: boolean;
+  isHangover: boolean;
 }
 
 const state: GameState = {
   me: { name: "", prof: "" },
+  condition: null,
   msdpRoom: null,
   msdpGroup: [],
+  lastTick: 0,
 };
+
+const DEFAULT_CONDITION: Condition = {
+  isDrunk: false,
+  isHangover: false,
+};
+
+export function setCondition(patch: Partial<Condition>): void {
+  state.condition = { ...(state.condition ?? DEFAULT_CONDITION), ...patch };
+}
 
 export function getState(): Readonly<GameState> {
   return state;
 }
 
+// для неумеющих парсить текст есть msdp
 registerTrigger(/^Using keytable$/, () => {
-  // для неумеющих парсить текст есть msdp. отключу. меньше трафика - быстрее
   // ["ROOM","EXPERIENCE","GOLD","LEVEL","MAX_HIT","MAX_MOVE","STATE","GROUP"]
-  // sendMsdp("LIST", "REPORTABLE_VARIABLES");
-  // sendMsdp("REPORT", "ROOM");
-  // sendMsdp("REPORT", "EXPERIENCE");
-  // sendMsdp("REPORT", "GOLD");
-  // sendMsdp("REPORT", "LEVEL");
-  // sendMsdp("REPORT", "MAX_HIT");
-  // sendMsdp("REPORT", "MAX_MOVE");
-  // sendMsdp("REPORT", "STATE");
   sendMsdp("REPORT", "GROUP"); // а вот это полезно
 });
 
@@ -72,85 +63,58 @@ registerMsdpHook((data) => {
   if (data.ROOM && typeof data.ROOM === "object" && !Array.isArray(data.ROOM)) {
     state.msdpRoom = parseRoom(data.ROOM as Record<string, unknown>);
   } else if (data.GROUP && Array.isArray(data.GROUP)) {
-    state.msdpGroup = data.GROUP.map((member) =>
-      parseGroupMember(member as Record<string, unknown>),
-    );
-    const groupLines: string[] = [];
-    groupLines.push(GROUP_LINES_HEADER);
-    groupLines.push(...state.msdpGroup.map(formatGroupLine));
-    setSidebar(groupLines, 22, 44);
+    state.msdpGroup = data.GROUP.map((m) => parseGroupMember(m));
+    setSidebar(formatGroupLines(state.msdpGroup), 31, 53);
   } else {
     showme(`[msdp] ${JSON.stringify(data)}`, true);
   }
 });
 
-function parseRoom(raw: Record<string, unknown>): Room {
-  const rawExits = (raw.EXITS as Record<string, string>) ?? {};
-  const exits: RoomExits = {};
-  for (const [dir, vnum] of Object.entries(rawExits)) {
-    exits[dir] = Number(vnum);
-  }
+registerPromptHook(() => {
+  // 10 строк под описание state
+  const lines: string[] = [];
+  lines[0] = state.me.name + " " + state.me.prof;
 
-  return {
-    vnum: Number(raw.VNUM ?? 0),
-    name: String(raw.NAME ?? ""),
-    area: String(raw.AREA ?? ""),
-    zone: Number(raw.ZONE ?? 0),
-    fromRoom: Number(raw.FROM_ROOM ?? 0),
-    fromDirection: String(raw.FROM_DIRECTION ?? ""),
-    terrain: String(raw.TERRAIN ?? ""),
-    exits,
-  };
-}
+  let drunkLine = "";
+  if (state.condition?.isDrunk) drunkLine += "Пьян ";
+  if (state.condition?.isHangover) drunkLine += "Отходняк ";
 
-function parseGroupMember(raw: Record<string, unknown>): GroupMember {
-  return {
-    name: String(raw.NAME ?? ""),
-    health: Number(raw.HEALTH ?? 0),
-    move: Number(raw.MOVE ?? 0),
-    isHere: raw.IS_HERE === "1",
-    memTime: Number(raw.MEM_TIME ?? 0),
-    affects: String(raw.AFFECTS ?? ""),
-    role: String(raw.ROLE ?? ""),
-    position: String(raw.POSITION ?? ""),
-  };
-}
+  lines[1] = drunkLine;
 
-const GROUP_LINES_HEADER = "Имя           тут  хп движ   мем афф.    позиция";
+  lines[2] = "-";
+  lines[3] = "-";
+  lines[4] = "-";
+  lines[5] = "-";
+  lines[6] = "-";
+  lines[7] = "-";
+  lines[8] = "-";
 
-function formatGroupLine(member: GroupMember): string {
-  const name = member.name.slice(0, 14).padEnd(14);
+  // let timeInfo = 'Сейчас ' + formatRuTime(Date.now());
+  // timeInfo += ', тик через ';
 
-  const hereColor = member.isHere ? COLOR.black : COLOR.red;
-  const here = hereColor + `${member.isHere ? "+" : "-"}` + COLOR.reset;
+  lines[9] = "-";
 
-  let healthColor: string = COLOR.green;
-  if (member.health < 100) healthColor = COLOR.brightGreen;
-  if (member.health < 80) healthColor = COLOR.yellow;
-  if (member.health < 60) healthColor = COLOR.brightYellow;
-  if (member.health < 40) healthColor = COLOR.brightRed;
-  if (member.health < 20) healthColor = COLOR.red;
-  const health = healthColor + `${member.health}%`.padStart(4) + COLOR.reset;
+  setSidebar(lines, 20, 30);
+  return false;
+}, 0);
 
-  const moveColor = member.move < 40 ? COLOR.yellow : COLOR.black;
-  const move = moveColor + `${member.move}%`.padStart(4) + COLOR.reset;
-
-  const memTime =
-    member.memTime > 0
-      ? String(member.memTime).slice(0, 4).padStart(4) + "с"
-      : "     ";
-
-  const affects = member.affects.slice(0, 5).padEnd(5);
-
-  const posColor = ["Стоит", "Сражается"].includes(member.position)
-    ? ""
-    : COLOR.brightRed;
-  const position = posColor + member.position.slice(0, 9).padStart(9);
-
-  return [name, here, health, move, memTime, affects, position].join(" ");
-}
+registerTrigger(/^Минул час\.$/, () => (state.lastTick = Date.now()));
 
 registerTrigger(/^  Вы ([А-ЯЁ][а-яё]+), ([а-я]+)\. Ваши показатели:/, (m) => {
   state.me.name = m[1];
   state.me.prof = m[2];
 });
+
+// раз в 2 мин жмем аффекты
+let lastAff = 0;
+registerPromptHook((prompt: string) => {
+  const promptUc = stripColors(prompt);
+  if (promptUc.match(/\[/)) return false; // не в бою
+
+  const now = Date.now();
+  if (now - lastAff > 120_000) {
+    sendline("афф");
+    lastAff = now;
+  }
+  return false;
+}, 0);
