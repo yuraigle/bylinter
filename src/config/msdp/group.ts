@@ -16,10 +16,16 @@ export function parseGroupMember(raw: Record<string, unknown>): GroupMember {
 
 const GROUP_LINES_HEADER = "Имя           тут  хп движ   мем афф.    позиция";
 
+const PLAYER_NAME_RE = /^[А-ЯЁ][а-яё]+$/;
+
 export function formatGroupLines(members: GroupMember[]): string[] {
+  const players = members.filter((m) => PLAYER_NAME_RE.test(m.name));
+  const others = members.filter((m) => !PLAYER_NAME_RE.test(m.name));
+
   const groupLines: string[] = [];
   groupLines.push(GROUP_LINES_HEADER);
-  groupLines.push(...members.map(formatGroupLine));
+  groupLines.push(...players.map(formatGroupLine));
+  groupLines.push(...others.map(formatGroupLine));
 
   return groupLines;
 }

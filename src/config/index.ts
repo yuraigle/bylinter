@@ -1,9 +1,4 @@
-import {
-  registerSubstitute,
-  registerTrigger,
-  setSidebar,
-  showme,
-} from "../client";
+import { registerTrigger, setSidebar, showme } from "../client";
 
 import "./state";
 import "./aliases";
@@ -17,6 +12,8 @@ import "./eating";
 import "./skills/drunk";
 import "./skills/warcry";
 import "./skills/rage";
+import "./skills/kick";
+import "./skills/glush";
 import "./skills/mounted";
 
 import "./highlights";

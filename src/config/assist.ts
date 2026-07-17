@@ -22,6 +22,8 @@ const re1: RegExp = new RegExp(
   `^([А-ЯЁ][а-яё]+) (${painLevels.join("|")}) [а-я]+ла? (.*)\\.`,
 );
 
+const re2: RegExp = /^(.+) сражается с (.+?)(,.*)?!/;
+
 registerPromptHook((prompt: string, lines: string[]) => {
   const promptUc = stripColors(prompt);
   if (promptUc.match(/\[/)) return false; // если уже в бою, ничего не надо
@@ -31,13 +33,17 @@ registerPromptHook((prompt: string, lines: string[]) => {
 
   const targets: string[] = [];
   lines.forEach((line) => {
-    const m = line.match(re1);
-    if (m && mates.includes(m[1])) targets.push(m[3]);
+    const m1 = line.match(re1);
+    if (m1 && mates.includes(m1[1])) targets.push(m1[3]);
+
+    const m2 = line.match(re2);
+    if (m2 && mates.some((mate) => m2[1].includes(mate))) targets.push(m2[2]);
   });
 
-  showme(`[targets] ${JSON.stringify(targets)}`, true);
+  const aliases = [...new Set(targets.map(makeAlias).filter(Boolean))];
 
-  const aliases = targets.map(makeAlias);
+  // showme(`[aliases] ${JSON.stringify(aliases)}`, false);
+
   const alias = aliases.find(Boolean); // непустой алиас
   if (alias) {
     sendline(`оглуш ${alias}`);
@@ -62,7 +68,7 @@ function makeAlias(s: string): string {
     if (wordCount >= 2) break;
     if (word.length > 3) {
       if (alias) alias += ".";
-      alias += word.substring(0, 4);
+      alias += word.substring(0, 3);
       wordCount++;
     }
   }

@@ -64,7 +64,7 @@ registerMsdpHook((data) => {
     state.msdpRoom = parseRoom(data.ROOM as Record<string, unknown>);
   } else if (data.GROUP && Array.isArray(data.GROUP)) {
     state.msdpGroup = data.GROUP.map((m) => parseGroupMember(m));
-    setSidebar(formatGroupLines(state.msdpGroup), 31, 53);
+    setSidebar(formatGroupLines(state.msdpGroup), 23, 45);
   } else {
     showme(`[msdp] ${JSON.stringify(data)}`, true);
   }
@@ -94,7 +94,7 @@ registerPromptHook(() => {
 
   lines[9] = "-";
 
-  setSidebar(lines, 20, 30);
+  setSidebar(lines, 20, 22);
   return false;
 }, 0);
 
