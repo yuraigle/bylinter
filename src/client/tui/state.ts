@@ -1,6 +1,27 @@
+export interface WindowState {
+  logLines: string[];
+  wrappedRows: string[];
+  rowCounts: number[];
+  wrapWidth: number;
+  scrollOffset: number;
+  carrySgr: string;
+}
+
+function createWindow(): WindowState {
+  return {
+    logLines: [],
+    wrappedRows: [],
+    rowCounts: [],
+    wrapWidth: 0,
+    scrollOffset: 0,
+    carrySgr: "",
+  };
+}
+
 export const state = {
-  logLines: [] as string[],
-  scrollOffset: 0,
+  currentWindow: 1,
+  windows: new Map<number, WindowState>([[1, createWindow()]]),
+
   statusText: "Not connected",
   inputBuffer: "",
   cursorPos: 0,
@@ -8,12 +29,17 @@ export const state = {
   historyPos: 0,
   draft: "",
 
-  wrappedRows: [] as string[],
-  rowCounts: [] as number[], // физических строк на каждую логическую строку, параллельно logLines
-  wrapWidth: 0,
-
   sidebarLines: [] as string[],
 };
+
+export function getWindow(n: number): WindowState {
+  let win = state.windows.get(n);
+  if (!win) {
+    win = createWindow();
+    state.windows.set(n, win);
+  }
+  return win;
+}
 
 export const MAX_BUFFER_LINES = 2000;
 export const MAX_HISTORY = 100;

@@ -1,8 +1,8 @@
 import readline from "node:readline";
 
 import { dispatchBindkey, type KeyInfo } from "../bindkeys";
-import { state, MAX_HISTORY } from "./state";
-import { redraw, rewrapAll } from "./render";
+import { state, MAX_HISTORY, getWindow } from "./state";
+import { redraw, rewrapAll, switchWindow } from "./render";
 
 let inputHandler: ((line: string) => void) | null = null;
 
@@ -37,6 +37,11 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
     if (inputHandler) inputHandler(line);
     redraw();
+    return;
+  }
+
+  if (key.meta && !key.ctrl && key.name && /^[1-9]$/.test(key.name)) {
+    switchWindow(Number(key.name));
     return;
   }
 
@@ -119,16 +124,18 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   }
 
   if (key.name === "pageup" && !key.ctrl && !key.meta) {
-    state.scrollOffset = Math.min(
-      state.scrollOffset + 10,
-      Math.max(0, state.logLines.length - 1),
+    const win = getWindow(state.currentWindow);
+    win.scrollOffset = Math.min(
+      win.scrollOffset + 10,
+      Math.max(0, win.wrappedRows.length - 1),
     );
     redraw();
     return;
   }
 
   if (key.name === "pagedown" && !key.ctrl && !key.meta) {
-    state.scrollOffset = Math.max(state.scrollOffset - 10, 0);
+    const win = getWindow(state.currentWindow);
+    win.scrollOffset = Math.max(win.scrollOffset - 10, 0);
     redraw();
     return;
   }

@@ -9,7 +9,7 @@ import {
   applySubstitutes,
 } from "./triggers";
 import { showme, showerr } from "./utils";
-import { COLOR, stripBold } from "./ansi";
+import { COLOR } from "./ansi";
 import { broadcast, addOutputSink } from "./output";
 import { createTelnetParser, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
@@ -20,7 +20,6 @@ const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
 const PROXY = process.env.PROXY || undefined;
 const CONSOLE_OUTPUT = process.env.CONSOLE_OUTPUT === "1";
-const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
 
 let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
@@ -92,23 +91,14 @@ function processSegment(text: string, hasGA: boolean): void {
 
   // showme(`[raw] ${JSON.stringify(text)}`, false);
 
-  if (completedLines.length > 0) {
-    // let out = "\r\n" + completedLines.join("\r\n");
-    // out = applySubstitutes(out);
-    // out = DISABLE_BOLD_FONT ? stripBold(out) : out;
-    // broadcast(out);
+  completedLines.forEach((line) => {
+    runTriggers(line);
 
-    completedLines.forEach((line) => {
-      runTriggers(line);
-
-      let out: string | null = applySubstitutes(line);
-      if (out !== null) {
-        out = "\r\n" + out;
-        out = DISABLE_BOLD_FONT ? stripBold(out) : out;
-        broadcast(out);
-      }
-    });
-  }
+    let out: string | null = applySubstitutes(line);
+    if (out !== null) {
+      broadcast("\r\n" + out);
+    }
+  });
 
   if (hasGA) {
     const prompt = partialLine;

@@ -1,10 +1,11 @@
-import { state, MAX_BUFFER_LINES } from "./state";
-import { COLOR, SCREEN, moveTo } from "../ansi";
+import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
+import { COLOR, SCREEN, moveTo, stripBold } from "../ansi";
 
 const SIDEBAR_WIDTH = 50;
 const SIDEBAR_DIVIDER_WIDTH = 1;
 const MIN_WIDTH_FOR_SIDEBAR = 160;
 const DIVIDER_CHAR = "│";
+const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
 
 function getLayout() {
   const width = process.stdout.columns || 80;
@@ -49,9 +50,11 @@ export function redraw(): void {
   } = getLayout();
   let out = SCREEN.hideCursor;
 
-  const visibleRows = state.wrappedRows.slice(
-    Math.max(0, state.wrappedRows.length - logHeight - state.scrollOffset),
-    state.wrappedRows.length - state.scrollOffset || undefined,
+  const win = getWindow(state.currentWindow);
+
+  const visibleRows = win.wrappedRows.slice(
+    Math.max(0, win.wrappedRows.length - logHeight - win.scrollOffset),
+    win.wrappedRows.length - win.scrollOffset || undefined,
   );
 
   for (let i = 0; i < logHeight; i++) {
@@ -71,10 +74,11 @@ export function redraw(): void {
   }
 
   out += moveTo(statusRow, 1) + SCREEN.clearLine;
+  const statusWithWindow = `[${state.currentWindow}] ${state.statusText}`;
   out +=
     COLOR.bgYellow +
     COLOR.black +
-    state.statusText.padEnd(width).slice(0, width) +
+    statusWithWindow.padEnd(width).slice(0, width) +
     COLOR.reset;
 
   out += moveTo(inputRow, 1) + SCREEN.clearLine;
@@ -92,50 +96,32 @@ export function redraw(): void {
   process.stdout.write(out);
 }
 
-// --- Отслеживание цвета для корректного рендеринга при скролле ---
-const SGR_RE = /\x1b\[[0-9;]*m/g;
-let carrySgr = "";
-
-function updateCarrySgr(chunk: string): void {
-  const matches = chunk.match(SGR_RE);
-  if (!matches) return;
-  for (const code of matches) {
-    carrySgr = code === "\x1b[0m" || code === "\x1b[m" ? "" : carrySgr + code;
-  }
-}
-
-export function appendLog(text: string): void {
-  const segments = text.split("\n");
-
-  if (state.logLines.length > 0) {
-    const first = segments.shift() ?? "";
-    state.logLines[state.logLines.length - 1] += first;
-    updateCarrySgr(first);
-    rewrapLastLine();
-  }
-
-  for (const segment of segments) {
-    const prefixed = carrySgr ? carrySgr + segment : segment;
-    state.logLines.push(prefixed);
-    updateCarrySgr(segment);
-    appendWrappedLine(prefixed);
-  }
-
-  if (state.logLines.length > MAX_BUFFER_LINES) {
-    const excess = state.logLines.length - MAX_BUFFER_LINES;
-    let rowsToRemove = 0;
-    for (let i = 0; i < excess; i++) rowsToRemove += state.rowCounts[i];
-
-    state.logLines = state.logLines.slice(excess);
-    state.rowCounts = state.rowCounts.slice(excess);
-    state.wrappedRows = state.wrappedRows.slice(rowsToRemove);
-  }
-
-  state.scrollOffset = 0;
+export function switchWindow(n: number): void {
+  if (n < 1 || n > 9) return;
+  state.currentWindow = n;
   redraw();
 }
 
+// --- Токенизация с учётом ANSI-кодов (используется и для wrap, и для truncate) ---
 const TOKEN_RE = /\x1b\[[0-9;]*m|[\s\S]/g;
+
+function truncateVisible(str: string, width: number): string {
+  const tokens = str.match(TOKEN_RE) ?? [];
+  let out = "";
+  let visibleLen = 0;
+
+  for (const token of tokens) {
+    if (token.startsWith("\x1b[")) {
+      out += token;
+      continue;
+    }
+    if (visibleLen >= width) break;
+    out += token;
+    visibleLen++;
+  }
+
+  return out;
+}
 
 function wrapLine(line: string, width: number): string[] {
   if (width <= 0) return [line];
@@ -167,51 +153,94 @@ function wrapLine(line: string, width: number): string[] {
   return rows;
 }
 
+function updateCarrySgr(win: WindowState, chunk: string): void {
+  const matches = chunk.match(/\x1b\[[0-9;]*m/g);
+  if (!matches) return;
+  for (const code of matches) {
+    win.carrySgr =
+      code === "\x1b[0m" || code === "\x1b[m" ? "" : win.carrySgr + code;
+  }
+}
+
+// Полный пересчёт переноса для конкретного окна — при смене ширины терминала
+function rewrapWindow(win: WindowState, width: number): void {
+  win.wrapWidth = width;
+  win.wrappedRows = [];
+  win.rowCounts = [];
+
+  for (const line of win.logLines) {
+    const rows = wrapLine(line, width);
+    win.wrappedRows.push(...rows);
+    win.rowCounts.push(rows.length);
+  }
+}
+
+// Пересчёт при ресайзе — все окна сразу, чтобы переключение после ресайза не показывало устаревший перенос
 export function rewrapAll(): void {
   const { logWidth } = getLayout();
-  state.wrapWidth = logWidth;
-  state.wrappedRows = [];
-  state.rowCounts = [];
-
-  for (const line of state.logLines) {
-    const rows = wrapLine(line, logWidth);
-    state.wrappedRows.push(...rows);
-    state.rowCounts.push(rows.length);
+  for (const win of state.windows.values()) {
+    rewrapWindow(win, logWidth);
   }
 }
 
-function rewrapLastLine(): void {
-  const removeCount = state.rowCounts[state.rowCounts.length - 1] ?? 0;
-  state.wrappedRows.splice(state.wrappedRows.length - removeCount, removeCount);
+function rewrapLastLine(win: WindowState): void {
+  const removeCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
+  win.wrappedRows.splice(win.wrappedRows.length - removeCount, removeCount);
 
-  const rows = wrapLine(
-    state.logLines[state.logLines.length - 1],
-    state.wrapWidth,
-  );
-  state.wrappedRows.push(...rows);
-  state.rowCounts[state.rowCounts.length - 1] = rows.length;
+  const rows = wrapLine(win.logLines[win.logLines.length - 1], win.wrapWidth);
+  win.wrappedRows.push(...rows);
+  win.rowCounts[win.rowCounts.length - 1] = rows.length;
 }
 
-function appendWrappedLine(line: string): void {
-  const rows = wrapLine(line, state.wrapWidth);
-  state.wrappedRows.push(...rows);
-  state.rowCounts.push(rows.length);
+function appendWrappedLine(win: WindowState, line: string): void {
+  const rows = wrapLine(line, win.wrapWidth);
+  win.wrappedRows.push(...rows);
+  win.rowCounts.push(rows.length);
 }
 
-function truncateVisible(str: string, width: number): string {
-  const tokens = str.match(TOKEN_RE) ?? [];
-  let out = "";
-  let visibleLen = 0;
+// Ядро: дописывает текст (может быть без завершающего \n — тогда "приклеится"
+// к последней логической строке при следующем вызове) в указанное окно
+function appendToWindow(windowNum: number, text: string): void {
+  const win = getWindow(windowNum);
+  const { logWidth } = getLayout();
+  if (win.wrapWidth === 0) win.wrapWidth = logWidth; // первичная инициализация для новых окон
 
-  for (const token of tokens) {
-    if (token.startsWith("\x1b[")) {
-      out += token;
-      continue;
-    }
-    if (visibleLen >= width) break;
-    out += token;
-    visibleLen++;
+  const segments = text.split("\n");
+
+  if (win.logLines.length > 0) {
+    const first = segments.shift() ?? "";
+    win.logLines[win.logLines.length - 1] += first;
+    updateCarrySgr(win, first);
+    rewrapLastLine(win);
   }
 
-  return out;
+  for (const segment of segments) {
+    const prefixed = win.carrySgr ? win.carrySgr + segment : segment;
+    const prefixed1 = DISABLE_BOLD_FONT ? stripBold(prefixed) : prefixed;
+    win.logLines.push(prefixed1);
+    updateCarrySgr(win, segment);
+    appendWrappedLine(win, prefixed1);
+  }
+
+  if (win.logLines.length > MAX_BUFFER_LINES) {
+    const excess = win.logLines.length - MAX_BUFFER_LINES;
+    let rowsToRemove = 0;
+    for (let i = 0; i < excess; i++) rowsToRemove += win.rowCounts[i];
+
+    win.logLines = win.logLines.slice(excess);
+    win.rowCounts = win.rowCounts.slice(excess);
+    win.wrappedRows = win.wrappedRows.slice(rowsToRemove);
+  }
+
+  win.scrollOffset = 0;
+
+  if (windowNum === state.currentWindow) redraw();
+}
+
+export function appendLog(text: string): void {
+  appendToWindow(1, text);
+}
+
+export function wecho(windowNum: number, line: string): void {
+  appendToWindow(windowNum, line + "\r\n");
 }

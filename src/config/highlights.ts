@@ -1,53 +1,23 @@
-import { registerGag, registerSubstitute } from "../client/triggers";
+import { showme, wecho } from "../client";
+import { registerGag, registerTrigger } from "../client";
+import { formatRuTime } from "./utils";
 
 // Какой-то дебаг мне Стрибог добавил
 registerGag(/^\x1b\[1;33mСкилл: /);
 registerGag(/^(\x1b\[[0-9;]*m)?Дамага /);
 
-// registerSubstitute(/\.\.\.окружен.? огненным щитом\s*/, (text: string) => {
-//   return text.replaceAll(
-//     /\r?\n\.\.\.окружен.? огненным щитом\s*\r?\n/g,
-//     " [ОгнЩит]\n",
-//   );
-// });
+function tsfmt() {
+  return "[" + formatRuTime(Date.now()) + "] ";
+}
 
-// registerSubstitute(/\.\.\.окружен.? ледяным щитом\s*/, (text: string) => {
-//   return text.replaceAll(
-//     /\r?\n\.\.\.окружен.? ледяным щитом\s*\r?\n/g,
-//     " [ЛедЩит]\n",
-//   );
-// });
+registerTrigger(/^[А-ЯЁ][а-яё]+ сказал.? : '.+'/, (m, colored) => {
+  wecho(2, tsfmt() + colored);
+});
 
-// registerSubstitute(/\.\.\.окружен.? воздушным щитом\s*/, (text: string) => {
-//   return text.replaceAll(
-//     /\r?\n\.\.\.окружен.? воздушным щитом\s*\r?\n/g,
-//     " [ВоздЩит]\n",
-//   );
-// });
+registerTrigger(/^[А-ЯЁ][а-яё]+ сообщил.? группе : '.+'/, (m, colored) => {
+  wecho(2, tsfmt() + colored);
+});
 
-// registerSubstitute(
-//   /\.\.\.окружен.? воздушным, ледяным щитами\s*/,
-//   (text: string) => {
-//     return text.replaceAll(
-//       /\r?\n\.\.\.окружен.? воздушным, ледяным щитами\s*\r?\n/g,
-//       " [ВоздЩит] [ЛедЩит]\n",
-//     );
-//   },
-// );
-
-// registerSubstitute(
-//   /\.\.\.окружен.? огненным, ледяным щитами\s*/,
-//   (text: string) => {
-//     return text.replaceAll(
-//       /\r?\n\.\.\.окружен.? огненным, ледяным щитами\s*\r?\n/g,
-//       " [ОгнЩит] [ЛедЩит]\n",
-//     );
-//   },
-// );
-
-// registerSubstitute(/\.\.\.окутан сверкающим коконом\s*/, (text: string) => {
-//   return text.replaceAll(
-//     /\r?\n\.\.\.окутан сверкающим коконом\s*\r?\n/g,
-//     " [ЗБ]\n",
-//   );
-// });
+registerTrigger(/^[А-ЯЁ][а-яё]+ сказал. [А-ЯЁ][а-яё]+ : '.+'/, (m, colored) => {
+  wecho(2, tsfmt() + colored);
+});
