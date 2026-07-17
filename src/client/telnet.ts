@@ -67,7 +67,6 @@ export function createTelnetParser() {
         const cmd = buf[i + 1];
 
         if (cmd === 0xf9) {
-          // GA
           segments.push({ text: decode(Buffer.from(out)), hasGA: true });
           out = [];
           i += 1;

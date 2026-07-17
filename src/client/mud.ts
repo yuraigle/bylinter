@@ -93,17 +93,27 @@ function processSegment(text: string, hasGA: boolean): void {
   // showme(`[raw] ${JSON.stringify(text)}`, false);
 
   if (completedLines.length > 0) {
-    let out = "\r\n" + completedLines.join("\r\n");
-    out = applySubstitutes(out);
-    out = DISABLE_BOLD_FONT ? stripBold(out) : out;
-    broadcast(out);
-    completedLines.forEach((line) => runTriggers(line));
+    // let out = "\r\n" + completedLines.join("\r\n");
+    // out = applySubstitutes(out);
+    // out = DISABLE_BOLD_FONT ? stripBold(out) : out;
+    // broadcast(out);
+
+    completedLines.forEach((line) => {
+      runTriggers(line);
+
+      let out: string | null = applySubstitutes(line);
+      if (out !== null) {
+        out = "\r\n" + out;
+        out = DISABLE_BOLD_FONT ? stripBold(out) : out;
+        broadcast(out);
+      }
+    });
   }
 
   if (hasGA) {
     const prompt = partialLine;
-    broadcast("\r\n" + prompt);
     runPromptHooks(prompt, lines);
+    broadcast("\r\n" + prompt);
     partialLine = "";
     lines = [];
   }
@@ -124,7 +134,7 @@ export function sendl(command: string) {
   const s = socket;
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
-  const echo = COLOR.brightYellow + command + COLOR.reset + "\n";
+  const echo = "\r\n" + COLOR.brightYellow + command + COLOR.reset;
   broadcast(echo);
 }
 
@@ -137,8 +147,7 @@ export function sendline(command: string) {
   const s = socket;
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
-  const echo =
-    "\r\n" + COLOR.brightYellow + "[" + command + "]" + COLOR.reset + "\r\n";
+  const echo = "\r\n" + COLOR.brightYellow + "[" + command + "]" + COLOR.reset;
   broadcast(echo);
 }
 

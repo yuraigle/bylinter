@@ -1,8 +1,8 @@
-import { registerSubstitute } from "../client/triggers";
+import { registerGag, registerSubstitute } from "../client/triggers";
 
 // Какой-то дебаг мне Стрибог добавил
-registerSubstitute((line) => line.replaceAll(/^\x1b\[1;33mСкилл: .*\r?\n/gm, ''));
-registerSubstitute((line) => line.replaceAll(/^(\x1b\[[0-9;]*m)?Дамага .*\r?\n/gm, ''));
+registerGag(/^\x1b\[1;33mСкилл: /);
+registerGag(/^(\x1b\[[0-9;]*m)?Дамага /);
 
 // registerSubstitute(/\.\.\.окружен.? огненным щитом\s*/, (text: string) => {
 //   return text.replaceAll(

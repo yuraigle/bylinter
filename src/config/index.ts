@@ -20,6 +20,7 @@ import "./skills/rage";
 import "./skills/mounted";
 
 import "./highlights";
+import { registerGag } from "../client/triggers";
 
 showme("Введите кон для подключения к Былинам", false);
 
@@ -46,4 +47,4 @@ registerTrigger(/^\s*$/, () => {
   mapLines.length = 0;
 });
 
-registerSubstitute((text) => text.replaceAll(/^:[^\r\n]*\r?\n/gm, ""));
+registerGag(/^:.*?/);
