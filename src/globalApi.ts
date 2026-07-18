@@ -1,7 +1,9 @@
 import * as clientApi from "./client";
 
+export type BylinterApi = typeof clientApi;
+
 declare global {
-  var bylinter: typeof clientApi;
+  var bylinter: BylinterApi;
 }
 
 export function exposeGlobalApi(): void {

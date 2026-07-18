@@ -7,7 +7,7 @@ export {
   registerSubstitute,
   registerGag,
 } from "./triggers";
-export { sendl, sendMsdp, connect, disconnect } from "./mud";
+export { sendRaw, sendl, sendMsdp, connect, disconnect } from "./mud";
 export { showme, showerr, echo } from "./utils";
-export { stripColors } from "./ansi";
-export { setSidebar, setStatus, wecho } from "./tui";
+export { stripColors, COLOR } from "./ansi";
+export { setSidebar, wecho } from "./tui";

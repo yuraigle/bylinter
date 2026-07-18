@@ -124,9 +124,9 @@ function processSegment(text: string, hasGA: boolean): void {
   }
 }
 
-export function sendRaw(data: string) {
+export function sendRaw(command: string) {
   if (socket != null) {
-    socket.write(encode(data + "\r\n"));
+    socket.write(encode(command + "\r\n"));
   }
 }
 

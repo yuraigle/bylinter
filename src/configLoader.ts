@@ -2,6 +2,10 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 import { showme } from "./client";
 
+// 1) файл .ts из argv
+// 2) файл config.ts рядом с приложением
+// 3) если нет, то запускаем пустой клиент
+
 export async function loadUserConfig(): Promise<void> {
   const lastArg = process.argv[process.argv.length - 1];
   const isScriptPathItself =
@@ -18,7 +22,7 @@ export async function loadUserConfig(): Promise<void> {
     if (existsSync(candidate)) {
       const absolutePath = path.resolve(candidate);
       await import(absolutePath);
-      showme("Loaded file " + candidate, false);
+      showme("Loaded file " + absolutePath, false);
       return;
     }
   }
