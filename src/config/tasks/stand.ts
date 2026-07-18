@@ -1,4 +1,5 @@
-import { registerPromptHook, sendline } from "../../client";
+import { registerPromptHook } from "../../client";
+import { sendline } from "../utils";
 
 const reSit1: RegExp = /^Пожалуй, вам лучше встать на ноги\./;
 const reSit2: RegExp = /^Нет\.\.\. Вы слишком расслаблены\.\.\./;

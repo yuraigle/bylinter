@@ -1,10 +1,6 @@
-import {
-  registerPromptHook,
-  registerTrigger,
-  sendline,
-  stripColors,
-} from "../../client";
+import { registerPromptHook, registerTrigger, stripColors } from "../../client";
 import { setCondition } from "../state";
+import { sendline } from "../utils";
 
 let lastDrink: number = 0;
 

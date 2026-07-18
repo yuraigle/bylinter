@@ -1,4 +1,5 @@
-import { registerPromptHook, registerTrigger, sendline } from "../../client";
+import { registerPromptHook, registerTrigger } from "../../client";
+import { sendline } from "../utils";
 
 let hasRage: boolean = false;
 let lastRage: number = 0;

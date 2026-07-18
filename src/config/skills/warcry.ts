@@ -1,4 +1,5 @@
-import { sendl, registerPromptHook } from "../../client";
+import { registerPromptHook } from "../../client";
+import { sendline } from "../utils";
 
 const lastCry: number = 0;
 
@@ -8,7 +9,7 @@ registerPromptHook((prompt: string, lines: string[]) => {
     const bk = Number(match[1]);
 
     if (bk > 5 && Date.now() - lastCry > 5000) {
-      sendl("клич мощи;клич битвы");
+      sendline("клич мощи;клич битвы");
     }
   }
 

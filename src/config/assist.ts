@@ -1,5 +1,6 @@
-import { registerPromptHook, sendline, showme, stripColors } from "../client";
+import { registerPromptHook, stripColors } from "../client";
 import { getState } from "./state";
+import { sendline } from "./utils";
 
 const painLevels = [
   "легонько",

@@ -1,9 +1,5 @@
-import {
-  registerPromptHook,
-  registerTrigger,
-  sendline,
-  stripColors,
-} from "../../client";
+import { registerPromptHook, registerTrigger, stripColors } from "../../client";
+import { sendline } from "../utils";
 
 let hasGlush: boolean = false;
 let lastGlush: number = 0;

@@ -1,4 +1,5 @@
-import { registerPromptHook, registerTrigger, sendline } from "../client";
+import { registerPromptHook, registerTrigger } from "../client";
+import { sendline } from "./utils";
 
 const CHAR_NAME = process.env.CHAR_NAME || undefined;
 const CHAR_PASS = process.env.CHAR_PASS || undefined;

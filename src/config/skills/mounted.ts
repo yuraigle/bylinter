@@ -1,5 +1,6 @@
-import { registerTrigger, sendline } from "../../client";
+import { registerTrigger } from "../../client";
 import { getState } from "../state";
+import { sendline } from "../utils";
 
 let mountCommand = "показать фокус"; // шапочка ДНЗ
 registerTrigger(/^Вы взяли и засунули.+ прямо в былинную шляпу фокусов/, () =>

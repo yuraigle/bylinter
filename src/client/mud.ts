@@ -126,7 +126,7 @@ function processSegment(text: string, hasGA: boolean): void {
 
 export function sendRaw(data: string) {
   if (socket != null) {
-    socket.write(encode(data));
+    socket.write(encode(data + "\r\n"));
   }
 }
 
@@ -139,20 +139,7 @@ export function sendl(command: string) {
   const s = socket;
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
-  const echo = "\r\n" + COLOR.brightYellow + command + COLOR.reset;
-  broadcast(echo, true);
-}
-
-export function sendline(command: string) {
-  if (socket == null) {
-    showerr("Can't send text: not connected to a server.", false);
-    return;
-  }
-
-  const s = socket;
-  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
-
-  const echo = "\r\n" + COLOR.brightYellow + "[" + command + "]" + COLOR.reset;
+  const echo = COLOR.brightYellow + command + COLOR.reset;
   broadcast(echo, true);
 }
 

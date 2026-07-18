@@ -1,5 +1,6 @@
-import { registerTrigger, sendline } from "../client";
+import { registerTrigger } from "../client";
 import { getState } from "./state";
+import { sendline } from "./utils";
 
 const LEADER_NAMES: string[] = (process.env.LEADER_NAMES || "").split(",");
 

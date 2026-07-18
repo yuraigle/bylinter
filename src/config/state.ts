@@ -2,14 +2,13 @@ import {
   registerMsdpHook,
   registerPromptHook,
   registerTrigger,
-  sendline,
   sendMsdp,
   setSidebar,
   showme,
   stripColors,
 } from "../client";
-import { formatRuTime } from "./utils";
 
+import { sendline } from "./utils";
 import { type GroupMember, type Room } from "./msdp/types";
 import { parseRoom } from "./msdp/room";
 import { formatGroupLines, parseGroupMember } from "./msdp/group";
@@ -71,28 +70,14 @@ registerMsdpHook((data) => {
 });
 
 registerPromptHook(() => {
-  // 10 строк под описание state
+  // 3 строки под описание state
   const lines: string[] = [];
   lines[0] = state.me.name + " " + state.me.prof;
 
   let drunkLine = "";
   if (state.condition?.isDrunk) drunkLine += "Пьян ";
   if (state.condition?.isHangover) drunkLine += "Отходняк ";
-
   lines[1] = drunkLine;
-
-  lines[2] = "-";
-  lines[3] = "-";
-  lines[4] = "-";
-  lines[5] = "-";
-  lines[6] = "-";
-  lines[7] = "-";
-  lines[8] = "-";
-
-  // let timeInfo = 'Сейчас ' + formatRuTime(Date.now());
-  // timeInfo += ', тик через ';
-
-  lines[9] = "-";
 
   setSidebar(lines, 20, 22);
   return false;
