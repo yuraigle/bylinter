@@ -42,6 +42,20 @@ export const SCREEN = {
   clearLine: "\x1b[2K",
 } as const;
 
+export const BOX = {
+  horizontal: "─",
+  vertical: "│",
+  teeLeft: "┤",
+  teeRight: "├",
+  teeUp: "┴",
+  teeDown: "┬",
+  cross: "┼",
+  cornerTopLeft: "┌",
+  cornerTopRight: "┐",
+  cornerBottomLeft: "└",
+  cornerBottomRight: "┘",
+} as const;
+
 export function moveTo(row: number, col: number): string {
   return `\x1b[${row};${col}H`;
 }
@@ -54,5 +68,5 @@ export function stripBold(text: string): string {
 }
 
 export function stripColors(text: string): string {
-  return text.replaceAll(/\x1b\[[0-9;]*m/g, '');
+  return text.replaceAll(/\x1b\[[0-9;]*m/g, "");
 }

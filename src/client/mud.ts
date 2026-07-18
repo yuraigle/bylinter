@@ -32,21 +32,14 @@ if (CONSOLE_OUTPUT) {
 }
 
 export async function connect() {
-  telnetParser = createTelnetParser();
+  if (socket != null) {
+    socket.removeAllListeners();
+    socket.destroy();
+    resetSession();
+  }
+
   socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
   setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
-
-  socket.on("close", () => {
-    setStatus("Not connected");
-    showme("Connection closed", true);
-    socket = null;
-    inflate?.destroy();
-    inflate = null;
-  });
-
-  socket.on("error", (e) => {
-    showerr(`Socket error: ${e.message}`, false);
-  });
 
   socket.on("data", (chunk: Buffer) => {
     if (inflate) {
@@ -55,6 +48,14 @@ export async function connect() {
       processIncoming(chunk);
     }
   });
+
+  socket.on("close", () => {
+    setStatus("Not connected");
+    showme("Connection closed", true);
+    resetSession();
+  });
+
+  socket.on("error", (e) => showerr(`Socket error: ${e.message}`, false));
 }
 
 export function disconnect(): void {
@@ -64,6 +65,15 @@ export function disconnect(): void {
   } else {
     showerr("Not connected to a server.", false);
   }
+}
+
+function resetSession(): void {
+  socket = null;
+  inflate?.destroy();
+  inflate = null;
+  telnetParser = createTelnetParser();
+  lines = [];
+  partialLine = "";
 }
 
 function processIncoming(chunk: Buffer): void {

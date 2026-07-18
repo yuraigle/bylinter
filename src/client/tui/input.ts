@@ -2,7 +2,7 @@ import readline from "node:readline";
 
 import { dispatchBindkey, type KeyInfo } from "../bindkeys";
 import { state, MAX_HISTORY, getWindow } from "./state";
-import { redraw, rewrapAll, switchWindow } from "./render";
+import { getScrollStep, redraw, rewrapAll, switchWindow } from "./render";
 
 let inputHandler: ((line: string) => void) | null = null;
 
@@ -125,8 +125,12 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
   if (key.name === "pageup" && !key.ctrl && !key.meta) {
     const win = getWindow(state.currentWindow);
+    const step = getScrollStep();
+    const isFirstPress = win.scrollOffset === 0;
+    const delta = isFirstPress ? step * 2 : step;
+
     win.scrollOffset = Math.min(
-      win.scrollOffset + 10,
+      win.scrollOffset + delta,
       Math.max(0, win.wrappedRows.length - 1),
     );
     redraw();
@@ -135,7 +139,8 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
   if (key.name === "pagedown" && !key.ctrl && !key.meta) {
     const win = getWindow(state.currentWindow);
-    win.scrollOffset = Math.max(win.scrollOffset - 10, 0);
+    const step = getScrollStep();
+    win.scrollOffset = Math.max(win.scrollOffset - step, 0);
     redraw();
     return;
   }
