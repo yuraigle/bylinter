@@ -69,6 +69,7 @@ export function applySubstitutes(text: string): string | null {
 }
 
 export function runPromptHooks(prompt: string, lines: string[]): void {
+  // const linesUc =
   for (const hook of promptHooks) {
     const handled = hook.handler(prompt, lines);
     if (handled) break;

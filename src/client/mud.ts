@@ -28,7 +28,7 @@ let lines: string[] = [];
 let partialLine = "";
 
 if (CONSOLE_OUTPUT) {
-  addOutputSink((text) => tuiLog(text));
+  addOutputSink((text, isolated) => tuiLog(text, isolated));
 }
 
 export async function connect() {
@@ -102,6 +102,7 @@ function processSegment(text: string, hasGA: boolean): void {
   // showme(`[raw] ${JSON.stringify(text)}`, false);
 
   completedLines.forEach((line) => {
+    // showme(`[raw] ${JSON.stringify(line)}`, true);
     runTriggers(line);
 
     let out: string | null = applySubstitutes(line);
@@ -135,7 +136,7 @@ export function sendl(command: string) {
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
   const echo = "\r\n" + COLOR.brightYellow + command + COLOR.reset;
-  broadcast(echo);
+  broadcast(echo, true);
 }
 
 export function sendline(command: string) {
@@ -148,7 +149,7 @@ export function sendline(command: string) {
   command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
 
   const echo = "\r\n" + COLOR.brightYellow + "[" + command + "]" + COLOR.reset;
-  broadcast(echo);
+  broadcast(echo, true);
 }
 
 export function sendMsdp(name: string, value: string): void {

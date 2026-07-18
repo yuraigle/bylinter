@@ -240,11 +240,16 @@ function appendWrappedLine(win: WindowState, line: string): void {
   win.rowCounts.push(rows.length);
 }
 
-function appendToWindow(windowNum: number, text: string): void {
+function appendToWindow(
+  windowNum: number,
+  text: string,
+  isolated = false,
+): void {
   const win = getWindow(windowNum);
   const { logWidth } = getLayout();
   if (win.wrapWidth === 0) win.wrapWidth = logWidth;
 
+  const savedCarry = win.carrySgr;
   const rowsBefore = win.wrappedRows.length;
   const wasSplit = win.scrollOffset > 0;
 
@@ -265,6 +270,10 @@ function appendToWindow(windowNum: number, text: string): void {
     appendWrappedLine(win, prefixed1);
   }
 
+  if (isolated) {
+    win.carrySgr = savedCarry; // эхо не должно менять цвет игрового потока
+  }
+
   if (win.logLines.length > MAX_BUFFER_LINES) {
     const excess = win.logLines.length - MAX_BUFFER_LINES;
     let rowsToRemove = 0;
@@ -276,7 +285,6 @@ function appendToWindow(windowNum: number, text: string): void {
   }
 
   if (wasSplit) {
-    // Компенсируем рост массива строк, чтобы история не двигалась
     const rowsAdded = win.wrappedRows.length - rowsBefore;
     win.scrollOffset = Math.min(
       win.scrollOffset + Math.max(0, rowsAdded),
@@ -287,8 +295,8 @@ function appendToWindow(windowNum: number, text: string): void {
   if (windowNum === state.currentWindow) redraw();
 }
 
-export function appendLog(text: string): void {
-  appendToWindow(1, text);
+export function appendLog(text: string, isolated = false): void {
+  appendToWindow(1, text, isolated);
 }
 
 export function wecho(windowNum: number, line: string): void {

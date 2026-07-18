@@ -22,8 +22,8 @@ export function destroyTui(): void {
   destroyInput();
 }
 
-export function tuiLog(text: string): void {
-  appendLog(text);
+export function tuiLog(text: string, isolated = false): void {
+  appendLog(text, isolated);
 }
 
 export function setStatus(text: string): void {

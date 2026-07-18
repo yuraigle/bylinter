@@ -3,11 +3,14 @@ import { registerTrigger, setSidebar, showme } from "../client";
 import "./state";
 import "./aliases";
 import "./connect";
+import "./highlights";
 import "./auth";
 import "./movement";
 import "./bot";
 import "./assist";
-import "./eating";
+
+import "./tasks/eating";
+import "./tasks/stand";
 
 import "./skills/drunk";
 import "./skills/warcry";
@@ -16,7 +19,6 @@ import "./skills/kick";
 import "./skills/glush";
 import "./skills/mounted";
 
-import "./highlights";
 import { registerGag } from "../client/triggers";
 
 showme("Введите кон для подключения к Былинам", false);

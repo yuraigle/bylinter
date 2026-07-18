@@ -1,4 +1,4 @@
-import { registerPromptHook, registerTrigger, sendline } from "../client";
+import { registerPromptHook, registerTrigger, sendline } from "../../client";
 
 let charIsHungry: boolean = false;
 let lastEat: number = 0;
@@ -7,7 +7,6 @@ const EAT_COOLDOWN_MS = 5000;
 registerTrigger(/^Вы голодны\./, () => (charIsHungry = true));
 registerTrigger(/^Вы очень голодны\./, () => (charIsHungry = true));
 registerTrigger(/^Вы готовы сожрать быка\./, () => (charIsHungry = true));
-
 registerTrigger(/^Вас мучает жажда\./, () => (charIsHungry = true));
 registerTrigger(/^Вас сильно мучает жажда\./, () => (charIsHungry = true));
 registerTrigger(/^Вам хочется выпить озеро\./, () => (charIsHungry = true));
