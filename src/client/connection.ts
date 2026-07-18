@@ -3,8 +3,8 @@ import { connect } from "node:net";
 
 export function conn(
   host: string,
-  port: number,
-  proxy?: string
+  port: number = 4000,
+  proxy: string = "",
 ): Promise<Socket> {
   return proxy
     ? connectViaProxy(host, port, proxy)
@@ -14,7 +14,7 @@ export function conn(
 function connectViaProxy(
   host: string,
   port: number,
-  proxy: string
+  proxy: string,
 ): Promise<Socket> {
   const proxyUrl = new URL(proxy);
   const proxyObj = { host: proxyUrl.hostname, port: Number(proxyUrl.port) };

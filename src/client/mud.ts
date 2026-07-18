@@ -16,10 +16,7 @@ import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
 import { tuiLog, setStatus, beginBatch, endBatch } from "./tui";
 
-const MUD_SERVER = process.env.MUD_SERVER || "";
-const MUD_PORT = Number(process.env.MUD_PORT || 4000);
-const PROXY = process.env.PROXY || undefined;
-const CONSOLE_OUTPUT = process.env.CONSOLE_OUTPUT === "1";
+const CONSOLE_OUTPUT = (process.env.CONSOLE_OUTPUT || "1") === "1";
 
 let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
@@ -31,15 +28,19 @@ if (CONSOLE_OUTPUT) {
   addOutputSink((text, isolated) => tuiLog(text, isolated));
 }
 
-export async function connect() {
+export async function connect(
+  host: string,
+  port: number = 4000,
+  proxy: string = "",
+): Promise<void> {
   if (socket != null) {
     socket.removeAllListeners();
     socket.destroy();
     resetSession();
   }
 
-  socket = await conn(MUD_SERVER, MUD_PORT, PROXY);
-  setStatus(`Connected to ${MUD_SERVER}:${MUD_PORT}`);
+  socket = await conn(host, port, proxy);
+  setStatus(`Connected to ${host}:${port}`);
 
   socket.on("data", (chunk: Buffer) => {
     if (inflate) {

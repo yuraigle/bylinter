@@ -11,6 +11,6 @@ const localPort = Number(process.env.LOCAL_PORT || 0);
 if (localPort > 0) startLocalServer(localPort, handleInput);
 
 initTui(handleInput);
-showme("Bylinter v0.1 by Yuri Orlov", false);
+showme("Bylinter v0.2 by Yuri Orlov", false);
 
 await loadUserConfig();

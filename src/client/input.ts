@@ -36,14 +36,29 @@ export function handleInput(raw: string): void {
   sendl(line);
 }
 
-registerCommand("/q", () => {
-  process.exit(0);
-});
+registerCommand("/connect", (args: string[]) => {
+  const [host, portArg, proxy] = args;
 
-registerCommand("/connect", () => {
-  connect().catch((err) => showerr(`Failed to connect: ` + err.message, true));
+  if (!host) {
+    showerr("Usage: /connect <host> <port> [proxy]", true);
+    return;
+  }
+
+  const port = portArg ? Number(portArg) : 4000;
+  if (Number.isNaN(port)) {
+    showerr("Usage: /connect <host> <port> [proxy]", true);
+    return;
+  }
+
+  connect(host, port, proxy).catch((err) =>
+    showerr(`Failed to connect: ` + err.message, true),
+  );
 });
 
 registerCommand("/dc", () => {
   disconnect();
+});
+
+registerCommand("/q", () => {
+  process.exit(0);
 });

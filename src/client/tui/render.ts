@@ -5,7 +5,7 @@ const SIDEBAR_WIDTH = 50;
 const SIDEBAR_DIVIDER_WIDTH = 1;
 const MIN_WIDTH_FOR_SIDEBAR = 160;
 const SPLIT_DIVIDER_ROWS = 1;
-const DISABLE_BOLD_FONT = process.env.DISABLE_BOLD_FONT === "1";
+const DISABLE_BOLD_FONT = (process.env.DISABLE_BOLD_FONT || "0") === "1";
 
 function getLayout() {
   const width = process.stdout.columns || 80;

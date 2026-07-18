@@ -1,5 +1,4 @@
 declare global {
-
   // Триггеры на строки
   type LineHandler = (matches: string[], colored: string) => void;
   function registerTrigger(pattern: RegExp, handler: LineHandler): void;
@@ -31,7 +30,7 @@ declare global {
   function sendl(command: string): void; // с эхом, с разбивкой по ;
   function sendRaw(command: string): void; // без эха
   function sendMsdp(name: string, value: string): void;
-  function connect(): Promise<void>;
+  function connect(host: string, port?: number, proxy?: string): Promise<void>;
   function disconnect(): void;
 
   // Системные сообщения. newline - добавить перенос строки в начале
