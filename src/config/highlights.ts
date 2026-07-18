@@ -1,4 +1,4 @@
-import { showme, wecho } from "../client";
+import { sendline, showme, wecho } from "../client";
 import { registerGag, registerTrigger } from "../client";
 import { formatRuTime } from "./utils";
 

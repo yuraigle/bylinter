@@ -14,7 +14,7 @@ import { broadcast, addOutputSink } from "./output";
 import { createTelnetParser, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
-import { tuiLog, setStatus } from "./tui";
+import { tuiLog, setStatus, beginBatch, endBatch } from "./tui";
 
 const MUD_SERVER = process.env.MUD_SERVER || "";
 const MUD_PORT = Number(process.env.MUD_PORT || 4000);
@@ -99,24 +99,28 @@ function processSegment(text: string, hasGA: boolean): void {
   lines.push(...completedLines);
   partialLine = chunkLines[chunkLines.length - 1];
 
-  // showme(`[raw] ${JSON.stringify(text)}`, false);
+  if (completedLines.length === 0 && !hasGA) return;
 
-  completedLines.forEach((line) => {
-    // showme(`[raw] ${JSON.stringify(line)}`, true);
-    runTriggers(line);
+  beginBatch();
+  try {
+    completedLines.forEach((line) => {
+      runTriggers(line);
 
-    let out: string | null = applySubstitutes(line);
-    if (out !== null) {
-      broadcast("\r\n" + out);
+      const out: string | null = applySubstitutes(line);
+      if (out !== null) {
+        broadcast("\r\n" + out);
+      }
+    });
+
+    if (hasGA) {
+      const prompt = partialLine;
+      runPromptHooks(prompt, lines);
+      broadcast("\r\n" + prompt);
+      partialLine = "";
+      lines = [];
     }
-  });
-
-  if (hasGA) {
-    const prompt = partialLine;
-    runPromptHooks(prompt, lines);
-    broadcast("\r\n" + prompt);
-    partialLine = "";
-    lines = [];
+  } finally {
+    endBatch();
   }
 }
 
