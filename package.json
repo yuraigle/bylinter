@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "bun run src/index.ts",
+    "minaj": "bun run src/index.ts src/minaj/index.ts",
     "build:linux": "bun build --compile src/index.ts --outfile dist/bylinter",
     "build:windows": "bun build --compile src/index.ts --outfile dist/bylinter.exe --target=bun-windows-x64",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,7 +13,7 @@
   "keywords": [],
   "author": "Yuri Orlov",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "@types/blessed": "^0.1.27",
     "@types/node": "^26.1.0",
