@@ -34,9 +34,9 @@ declare global {
   function disconnect(): void;
 
   // Системные сообщения. newline - добавить перенос строки в начале
-  function echo(message: string, newline?: boolean): void;
-  function showme(message: string, newline?: boolean): void;
-  function showerr(message: string, newline?: boolean): void;
+  function echo(message: string): void;
+  function showme(message: string): void;
+  function showerr(message: string): void;
   function wecho(windowNum: number, line: string): void;
 
   // Записать массив строк в sidebar, обновить строки с start по end

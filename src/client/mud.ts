@@ -52,11 +52,11 @@ export async function connect(
 
   socket.on("close", () => {
     setStatus("Not connected");
-    showme("Connection closed", true);
+    showme("Connection closed");
     resetSession();
   });
 
-  socket.on("error", (e) => showerr(`Socket error: ${e.message}`, false));
+  socket.on("error", (e) => showerr(`Socket error: ${e.message}`));
 }
 
 export function disconnect(): void {
@@ -64,7 +64,7 @@ export function disconnect(): void {
     socket.destroy();
     socket = null;
   } else {
-    showerr("Not connected to a server.", false);
+    showerr("Not connected to a server.");
   }
 }
 
@@ -126,7 +126,7 @@ export function sendRaw(command: string) {
 
 export function sendl(command: string) {
   if (socket == null) {
-    showerr("Can't send text: not connected to a server.", false);
+    showerr("Can't send text: not connected to a server.");
     return;
   }
 
@@ -139,7 +139,7 @@ export function sendl(command: string) {
 
 export function sendMsdp(name: string, value: string): void {
   if (socket == null) {
-    showerr("Can't send msdp: not connected to a server.", false);
+    showerr("Can't send msdp: not connected to a server.");
     return;
   }
 
@@ -181,11 +181,11 @@ function startCompression(tail: Buffer): void {
 
   inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
   inf.on("error", (err) => {
-    showerr(`MCCP inflate error: ${err.message}`, false);
+    showerr(`MCCP inflate error: ${err.message}`);
     inf.destroy();
     inflate = null;
   });
 
-  showme("MCCP2 compression started", true);
+  showme("MCCP2 compression started");
   if (tail.length > 0) inf.write(tail);
 }

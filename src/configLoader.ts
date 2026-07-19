@@ -21,11 +21,11 @@ export async function loadUserConfig(): Promise<void> {
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
       const absolutePath = path.resolve(candidate);
+      showme("Using file " + absolutePath);
       await import(absolutePath);
-      showme("Loaded file " + absolutePath, false);
       return;
     }
   }
 
-  showme("No config.ts found", false);
+  showme("No config.ts found");
 }

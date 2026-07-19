@@ -10,7 +10,7 @@ export function startLocalServer(
   onInput: (text: string) => void,
 ): void {
   const server = createServer((client) => {
-    showme(`Client connected: ${client.remoteAddress}`, true);
+    showme(`Client connected: ${client.remoteAddress}`);
 
     const parser = createTelnetParser();
 
@@ -19,12 +19,15 @@ export function startLocalServer(
     });
 
     client.on("data", (chunk: Buffer) => {
-      const { text } = parser.feed(chunk);
-      onInput(text);
+      const { segments } = parser.feed(chunk);
+      const text = segments.map((s) => s.text).join("");
+      if (text.length > 0) {
+        onInput(text);
+      }
     });
 
     client.on("close", () => {
-      showme("Client disconnected", true);
+      showme("Client disconnected");
       removeSink();
     });
 
@@ -32,6 +35,6 @@ export function startLocalServer(
   });
 
   server.listen(port, () => {
-    showme(`Local proxy listening on port ${port}`, false);
+    showme(`Local proxy listening on port ${port}`);
   });
 }

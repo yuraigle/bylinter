@@ -40,18 +40,18 @@ registerCommand("/connect", (args: string[]) => {
   const [host, portArg, proxy] = args;
 
   if (!host) {
-    showerr("Usage: /connect <host> <port> [proxy]", true);
+    showerr("Usage: /connect <host> <port> [proxy]");
     return;
   }
 
   const port = portArg ? Number(portArg) : 4000;
   if (Number.isNaN(port)) {
-    showerr("Usage: /connect <host> <port> [proxy]", true);
+    showerr("Usage: /connect <host> <port> [proxy]");
     return;
   }
 
   connect(host, port, proxy).catch((err) =>
-    showerr(`Failed to connect: ` + err.message, true),
+    showerr(`Failed to connect: ` + err.message),
   );
 });
 
