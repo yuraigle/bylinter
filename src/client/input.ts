@@ -1,4 +1,4 @@
-import { connect, disconnect, sendl } from "./mud";
+import { connect, disconnect, sendl, sendRaw } from "./mud";
 import { showerr } from "./utils";
 
 export type AliasHandler = (args: string[]) => void;
@@ -33,7 +33,8 @@ export function handleInput(raw: string): void {
     return;
   }
 
-  sendl(line);
+  // sendl(line);
+  line.split(/;/).forEach((cmd) => sendRaw(cmd));
 }
 
 registerCommand("/connect", (args: string[]) => {

@@ -130,8 +130,7 @@ export function sendl(command: string) {
     return;
   }
 
-  const s = socket;
-  command.split(/;/).forEach((cmd) => s.write(encode(cmd + "\n")));
+  command.split(/;/).forEach((cmd) => sendRaw(cmd));
 
   const echo = COLOR.brightYellow + command + COLOR.reset;
   broadcast(echo, true);
