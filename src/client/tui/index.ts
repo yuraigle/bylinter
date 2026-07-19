@@ -8,7 +8,7 @@ import {
 } from "./render";
 import { initInput, destroyInput } from "./input";
 
-export { wecho, beginBatch, endBatch } from "./render";
+export { wecho } from "./render";
 
 export function initTui(onLine: (line: string) => void): void {
   enterScreen();

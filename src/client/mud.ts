@@ -14,7 +14,7 @@ import { broadcast, addOutputSink } from "./output";
 import { createTelnetParser, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
-import { tuiLog, setStatus, beginBatch, endBatch } from "./tui";
+import { tuiLog, setStatus } from "./tui";
 
 const CONSOLE_OUTPUT = (process.env.CONSOLE_OUTPUT || "1") === "1";
 
@@ -100,28 +100,21 @@ function processSegment(text: string, hasGA: boolean): void {
   lines.push(...completedLines);
   partialLine = chunkLines[chunkLines.length - 1];
 
-  if (completedLines.length === 0 && !hasGA) return;
+  completedLines.forEach((line) => {
+    runTriggers(line);
 
-  beginBatch();
-  try {
-    completedLines.forEach((line) => {
-      runTriggers(line);
-
-      const out: string | null = applySubstitutes(line);
-      if (out !== null) {
-        broadcast("\r\n" + out);
-      }
-    });
-
-    if (hasGA) {
-      const prompt = partialLine;
-      runPromptHooks(prompt, lines);
-      broadcast("\r\n" + prompt);
-      partialLine = "";
-      lines = [];
+    const out: string | null = applySubstitutes(line);
+    if (out !== null) {
+      broadcast("\r\n" + out);
     }
-  } finally {
-    endBatch();
+  });
+
+  if (hasGA) {
+    const prompt = partialLine;
+    runPromptHooks(prompt, lines);
+    broadcast("\r\n" + prompt);
+    partialLine = "";
+    lines = [];
   }
 }
 

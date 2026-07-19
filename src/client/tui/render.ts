@@ -325,7 +325,7 @@ function appendToWindow(
     );
   }
 
-  if (windowNum === state.currentWindow && batchDepth === 0) requestRedraw();
+  if (windowNum === state.currentWindow) requestRedraw();
 }
 
 export function appendLog(text: string, isolated = false): void {
@@ -334,15 +334,4 @@ export function appendLog(text: string, isolated = false): void {
 
 export function wecho(windowNum: number, line: string): void {
   appendToWindow(windowNum, line + "\r\n");
-}
-
-let batchDepth = 0;
-
-export function beginBatch(): void {
-  batchDepth++;
-}
-
-export function endBatch(): void {
-  batchDepth = Math.max(0, batchDepth - 1);
-  if (batchDepth === 0) requestRedraw();
 }
