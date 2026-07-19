@@ -1,9 +1,9 @@
-import { startLocalServer } from "./client/server";
+import { startLocalServer } from "./client/localServer";
 import { handleInput } from "./client/input";
 import { initTui, tuiLog } from "./client/tui";
 import { showme } from "./client/utils";
 import { exposeGlobalApi } from "./globalApi";
-import { loadUserConfig } from "./configLoader";
+import { loadUserConfig } from "./client/configLoader";
 import { COLOR } from "./client";
 
 exposeGlobalApi();

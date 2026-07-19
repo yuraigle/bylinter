@@ -1,6 +1,6 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { showme } from "./client";
+import { showme } from ".";
 
 // 1) файл .ts из argv
 // 2) файл config.ts рядом с приложением
