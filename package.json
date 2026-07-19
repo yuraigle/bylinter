@@ -4,9 +4,8 @@
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
-    "minaj": "bun run src/index.ts /home/orlov/Games/bylinter-minaj/orlovs/index.ts",
     "build:linux": "bun build --compile src/index.ts --outfile dist/bylinter",
-    "build:windows": "bun build --compile src/index.ts --outfile dist/bylinter.exe --target=bun-windows-x64",
+    "build:windows": "bun build --compile --target=bun-windows-x64 src/index.ts --outfile dist/bylinter.exe",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,8 +13,7 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@types/blessed": "^0.1.27",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "typescript": "^6.0.3"
   },
   "dependencies": {
