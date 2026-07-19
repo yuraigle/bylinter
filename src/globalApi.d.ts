@@ -1,4 +1,5 @@
 declare global {
+
   // Триггеры на строки
   type LineHandler = (matches: string[], colored: string) => void;
   function registerTrigger(pattern: RegExp, handler: LineHandler): void;

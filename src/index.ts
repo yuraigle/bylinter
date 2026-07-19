@@ -13,7 +13,7 @@ if (localPort > 0) startLocalServer(localPort, handleInput);
 
 initTui((cmd: string) => {
   handleInput(cmd);
-  tuiLog(`${COLOR.brightYellow}${cmd}${COLOR.reset}\r\n`);
+  tuiLog(`${COLOR.brightYellow}${cmd}${COLOR.reset}`);
 });
 
 showme("Bylinter v0.2 by Yuri Orlov");
