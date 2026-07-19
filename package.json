@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
-    "minaj": "bun run src/index.ts src/minaj/index.ts",
+    "minaj": "bun run src/index.ts /home/orlov/Games/bylinter-minaj/orlovs/index.ts",
     "build:linux": "bun build --compile src/index.ts --outfile dist/bylinter",
     "build:windows": "bun build --compile src/index.ts --outfile dist/bylinter.exe --target=bun-windows-x64",
     "test": "echo \"Error: no test specified\" && exit 1"

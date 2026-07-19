@@ -53,6 +53,19 @@ export function exitScreen(): void {
   process.stdout.write(SCREEN.showCursor + SCREEN.exitAlt);
 }
 
+let redrawScheduled = false;
+
+// запросить полную перерисовку, отложенно
+export function requestRedraw(): void {
+  if (redrawScheduled) return;
+  redrawScheduled = true;
+  setImmediate(() => {
+    redrawScheduled = false;
+    redraw();
+  });
+}
+
+// полная перерисовка окна (дорого)
 export function redraw(): void {
   const {
     width,
@@ -119,6 +132,26 @@ export function redraw(): void {
     COLOR.black +
     statusWithWindow.padEnd(width).slice(0, width) +
     COLOR.reset;
+
+  out += moveTo(inputRow, 1) + SCREEN.clearLine;
+
+  let viewStart = 0;
+  if (state.inputBuffer.length >= width) {
+    viewStart = Math.max(0, state.cursorPos - width + 1);
+  }
+  const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
+  const visibleCursorCol = state.cursorPos - viewStart;
+
+  out += visibleInput;
+  out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
+
+  process.stdout.write(out);
+}
+
+// перерисовка только инпутбокса (дёшево)
+export function redrawInput(): void {
+  const { width, inputRow } = getLayout();
+  let out = SCREEN.hideCursor;
 
   out += moveTo(inputRow, 1) + SCREEN.clearLine;
 
@@ -292,7 +325,7 @@ function appendToWindow(
     );
   }
 
-  if (windowNum === state.currentWindow && batchDepth === 0) redraw();
+  if (windowNum === state.currentWindow && batchDepth === 0) requestRedraw();
 }
 
 export function appendLog(text: string, isolated = false): void {
@@ -311,5 +344,5 @@ export function beginBatch(): void {
 
 export function endBatch(): void {
   batchDepth = Math.max(0, batchDepth - 1);
-  if (batchDepth === 0) redraw();
+  if (batchDepth === 0) requestRedraw();
 }

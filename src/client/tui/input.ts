@@ -2,7 +2,14 @@ import readline from "node:readline";
 
 import { dispatchBindkey, type KeyInfo } from "../bindkeys";
 import { state, MAX_HISTORY, getWindow } from "./state";
-import { getScrollStep, redraw, rewrapAll, switchWindow } from "./render";
+import {
+  getScrollStep,
+  redraw,
+  redrawInput,
+  requestRedraw,
+  rewrapAll,
+  switchWindow,
+} from "./render";
 
 let inputHandler: ((line: string) => void) | null = null;
 
@@ -36,7 +43,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     state.draft = "";
 
     if (inputHandler) inputHandler(line);
-    redraw();
+    requestRedraw();
     return;
   }
 
@@ -51,7 +58,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
         state.inputBuffer.slice(0, state.cursorPos - 1) +
         state.inputBuffer.slice(state.cursorPos);
       state.cursorPos--;
-      redraw();
+      redrawInput();
     }
     return;
   }
@@ -61,39 +68,39 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.inputBuffer =
         state.inputBuffer.slice(0, state.cursorPos) +
         state.inputBuffer.slice(state.cursorPos + 1);
-      redraw();
+      redrawInput();
     }
     return;
   }
 
   if (key.name === "left" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.max(0, state.cursorPos - 1);
-    redraw();
+    redrawInput();
     return;
   }
 
   if (key.name === "right" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.min(state.inputBuffer.length, state.cursorPos + 1);
-    redraw();
+    redrawInput();
     return;
   }
 
   if (key.name === "home" && !key.ctrl && !key.meta) {
     state.cursorPos = 0;
-    redraw();
+    redrawInput();
     return;
   }
 
   if (key.name === "end" && !key.ctrl && !key.meta) {
     state.cursorPos = state.inputBuffer.length;
-    redraw();
+    redrawInput();
     return;
   }
 
   if (key.name === "u" && key.ctrl && !key.meta) {
     state.inputBuffer = "";
     state.cursorPos = 0;
-    redraw();
+    redrawInput();
     return;
   }
 
@@ -105,7 +112,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.historyPos--;
       state.inputBuffer = state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redraw();
+      redrawInput();
     }
     return;
   }
@@ -118,7 +125,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
           ? state.draft
           : state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redraw();
+      redrawInput();
     }
     return;
   }
@@ -129,19 +136,28 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     const isFirstPress = win.scrollOffset === 0;
     const delta = isFirstPress ? step * 2 : step;
 
-    win.scrollOffset = Math.min(
+    const newOffset = Math.min(
       win.scrollOffset + delta,
       Math.max(0, win.wrappedRows.length - 1),
     );
-    redraw();
+
+    if (newOffset !== win.scrollOffset) {
+      win.scrollOffset = newOffset;
+      requestRedraw();
+    }
     return;
   }
 
   if (key.name === "pagedown" && !key.ctrl && !key.meta) {
     const win = getWindow(state.currentWindow);
     const step = getScrollStep();
-    win.scrollOffset = Math.max(win.scrollOffset - step, 0);
-    redraw();
+
+    const newOffset = Math.max(win.scrollOffset - step, 0);
+
+    if (newOffset !== win.scrollOffset) {
+      win.scrollOffset = newOffset;
+      requestRedraw();
+    }
     return;
   }
 
@@ -155,7 +171,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       str +
       state.inputBuffer.slice(state.cursorPos);
     state.cursorPos += str.length;
-    redraw();
+    redrawInput();
   }
 }
 

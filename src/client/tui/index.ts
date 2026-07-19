@@ -43,5 +43,5 @@ export function setSidebar(lines: string[], start: number, end: number): void {
     state.sidebarLines[i] = lines[i - start] ?? "";
   }
 
-  redraw();
+  // redraw();
 }
