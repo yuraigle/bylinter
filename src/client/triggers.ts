@@ -1,4 +1,5 @@
 import { stripColors } from "./ansi";
+import { showme } from "./utils";
 
 export type LineHandler = (matches: string[], colored: string, ) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
@@ -47,6 +48,9 @@ export function registerGag(re: RegExp): void {
 
 export function runTriggers(line: string): void {
   const clean = stripColors(line);
+
+  // showme(`[raw] ${JSON.stringify(clean)}`);
+
   for (const trigger of triggers) {
     const match = clean.match(trigger.pattern);
     if (match) {

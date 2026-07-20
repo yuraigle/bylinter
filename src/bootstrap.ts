@@ -5,6 +5,8 @@ import { showme } from "./client/utils";
 import { exposeGlobalApi } from "./globalApi";
 import { COLOR } from "./client";
 
+import packageJson from "../package.json" with { type: "json" };
+
 export function bootstrap(): void {
   exposeGlobalApi();
 
@@ -16,5 +18,5 @@ export function bootstrap(): void {
     tuiLog(`${COLOR.brightYellow}${cmd}${COLOR.reset}`);
   });
 
-  showme("Bylinter v0.2 by Yuri Orlov");
+  showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 }

@@ -6,6 +6,9 @@ const SIDEBAR_DIVIDER_WIDTH = 1;
 const MIN_WIDTH_FOR_SIDEBAR = 160;
 const SPLIT_DIVIDER_ROWS = 1;
 const DISABLE_BOLD_FONT = (process.env.DISABLE_BOLD_FONT || "0") === "1";
+const CLR1 = COLOR.yellow;
+const STATUS_BG = COLOR.bgYellow;
+const STATUS_FG = COLOR.black;
 
 function getLayout() {
   const width = process.stdout.columns || 80;
@@ -90,8 +93,7 @@ export function redraw(): void {
     const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
     const topStart = Math.max(0, topEnd - topHeight);
     const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
-    const dividerLine =
-      COLOR.yellow + BOX.horizontal.repeat(logWidth) + COLOR.reset;
+    const dividerLine = CLR1 + BOX.horizontal.repeat(logWidth) + COLOR.reset;
     const bottomRows = win.wrappedRows.slice(
       Math.max(0, win.wrappedRows.length - bottomHeight),
     );
@@ -115,7 +117,7 @@ export function redraw(): void {
     if (showSidebar) {
       out += moveTo(i + 1, dividerCol);
       const junctionChar = i === splitDividerRow ? BOX.teeLeft : BOX.vertical;
-      out += COLOR.yellow + junctionChar + COLOR.reset;
+      out += CLR1 + junctionChar + COLOR.reset;
       const sidebarLine = truncateVisible(
         state.sidebarLines[i] ?? "",
         SIDEBAR_WIDTH,
@@ -127,9 +129,7 @@ export function redraw(): void {
 
   out += moveTo(statusRow, 1) + SCREEN.clearLine;
   const statusWithWindow = `[${state.currentWindow}] ${state.statusText}`;
-  out +=
-    COLOR.bgYellow +
-    COLOR.black +
+  out += STATUS_BG + STATUS_FG +
     statusWithWindow.padEnd(width).slice(0, width) +
     COLOR.reset;
 
@@ -324,6 +324,7 @@ function appendToWindow(
       Math.max(0, win.wrappedRows.length - 1),
     );
   }
+  // todo ошибка, история проматывается вместе с данными от сервера
 
   if (windowNum === state.currentWindow) requestRedraw();
 }
