@@ -15,8 +15,10 @@ import { createTelnetParser, type TelnetEvent } from "./telnet";
 import { parseMsdp, encodeMsdpVar } from "./msdp";
 import { encode } from "./encoding";
 import { tuiLog, setStatus } from "./tui";
+import { writeLog } from "./logger";
 
 const CONSOLE_OUTPUT = (process.env.CONSOLE_OUTPUT || "1") === "1";
+const LOG_PATH = process.env.LOG_PATH || "";
 
 let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
@@ -27,6 +29,10 @@ let partialLine = "";
 if (CONSOLE_OUTPUT) {
   addOutputSink((text, isolated) => tuiLog(text, isolated));
 }
+
+// if (LOG_PATH) {
+//   addOutputSink((text) => writeLog(text, LOG_PATH));
+// }
 
 export async function connect(
   host: string,
@@ -115,6 +121,10 @@ function processSegment(text: string, hasGA: boolean): void {
     broadcast("\r\n" + prompt);
     partialLine = "";
     lines = [];
+  }
+
+  if (LOG_PATH) {
+    writeLog(text, LOG_PATH);
   }
 }
 
