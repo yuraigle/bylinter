@@ -30,10 +30,6 @@ if (CONSOLE_OUTPUT) {
   addOutputSink((text, isolated) => tuiLog(text, isolated));
 }
 
-// if (LOG_PATH) {
-//   addOutputSink((text) => writeLog(text, LOG_PATH));
-// }
-
 export async function connect(
   host: string,
   port: number = 4000,
@@ -124,7 +120,7 @@ function processSegment(text: string, hasGA: boolean): void {
   }
 
   if (LOG_PATH) {
-    writeLog(text, LOG_PATH);
+    writeLog(text + (hasGA ? "\r\n" : ""), LOG_PATH);
   }
 }
 
