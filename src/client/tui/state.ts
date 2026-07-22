@@ -41,5 +41,5 @@ export function getWindow(n: number): WindowState {
   return win;
 }
 
-export const MAX_BUFFER_LINES = 2000;
+export const MAX_BUFFER_LINES = 5000;
 export const MAX_HISTORY = 100;

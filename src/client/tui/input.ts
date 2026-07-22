@@ -187,6 +187,7 @@ export function initInput(onLine: (line: string) => void): void {
 
   process.stdin.on("keypress", handleKeypress);
   process.stdout.on("resize", () => {
+    getWindow(state.currentWindow).scrollOffset = 0;
     rewrapAll();
     redraw();
   });

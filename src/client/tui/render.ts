@@ -23,7 +23,7 @@ function getLayout() {
 
   const topHeight = Math.max(
     1,
-    Math.floor((logHeight - SPLIT_DIVIDER_ROWS) / 2),
+    Math.floor((logHeight - SPLIT_DIVIDER_ROWS) / 1.5),
   );
   const bottomHeight = Math.max(1, logHeight - SPLIT_DIVIDER_ROWS - topHeight);
 
@@ -307,7 +307,7 @@ function appendToWindow(
     win.carrySgr = savedCarry; // эхо не должно менять цвет игрового потока
   }
 
-  if (win.logLines.length > MAX_BUFFER_LINES) {
+  if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
     const excess = win.logLines.length - MAX_BUFFER_LINES;
     let rowsToRemove = 0;
     for (let i = 0; i < excess; i++) rowsToRemove += win.rowCounts[i];
@@ -315,6 +315,10 @@ function appendToWindow(
     win.logLines = win.logLines.slice(excess);
     win.rowCounts = win.rowCounts.slice(excess);
     win.wrappedRows = win.wrappedRows.slice(rowsToRemove);
+  }
+
+  if (win.logLines.length > MAX_BUFFER_LINES * 10 && wasSplit) {
+    win.scrollOffset = 0; // слишком много строк добавлено
   }
 
   if (wasSplit) {
