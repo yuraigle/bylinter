@@ -1,11 +1,10 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
 import { COLOR, SCREEN, BOX, moveTo, stripBold } from "../ansi";
 
-const SIDEBAR_WIDTH = 50;
+const SIDEBAR_WIDTH = 49;
 const SIDEBAR_DIVIDER_WIDTH = 1;
 const MIN_WIDTH_FOR_SIDEBAR = 160;
 const SPLIT_DIVIDER_ROWS = 1;
-const DISABLE_BOLD_FONT = (process.env.DISABLE_BOLD_FONT || "0") === "1";
 const CLR1 = COLOR.yellow;
 const STATUS_BG = COLOR.bgYellow;
 const STATUS_FG = COLOR.black;
@@ -13,7 +12,7 @@ const STATUS_FG = COLOR.black;
 function getLayout() {
   const width = process.stdout.columns || 80;
   const height = process.stdout.rows || 24;
-  const showSidebar = width > MIN_WIDTH_FOR_SIDEBAR;
+  const showSidebar = width >= MIN_WIDTH_FOR_SIDEBAR;
   const logWidth = showSidebar
     ? width - SIDEBAR_WIDTH - SIDEBAR_DIVIDER_WIDTH
     : width;
@@ -297,10 +296,9 @@ function appendToWindow(
 
   for (const segment of segments) {
     const prefixed = win.carrySgr ? win.carrySgr + segment : segment;
-    const prefixed1 = DISABLE_BOLD_FONT ? stripBold(prefixed) : prefixed;
-    win.logLines.push(prefixed1);
+    win.logLines.push(prefixed);
     updateCarrySgr(win, segment);
-    appendWrappedLine(win, prefixed1);
+    appendWrappedLine(win, prefixed);
   }
 
   if (isolated) {

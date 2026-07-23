@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
+    "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./dist/WezTerm.AppImage --config-file './termconfig.lua' start --cwd . -- bun run src/index.ts",
     "build:linux": "bun build --compile src/index.ts --outfile dist/bylinter",
     "build:windows": "bun build --compile --target=bun-windows-x64 src/index.ts --outfile dist/bylinter.exe",
     "test": "echo \"Error: no test specified\" && exit 1"
