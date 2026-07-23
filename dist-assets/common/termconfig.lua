@@ -11,13 +11,13 @@ config.color_scheme = 'Argonaut'
 
 -- список шрифтов, будем искать по порядку
 local base_font = wezterm.font_with_fallback({
-    'FantasqueSansM Nerd Font',
-    'JetBrains Mono',
+    'FantasqueSansM Nerd Font Mono',
     'Consolas',
 })
 
 config.font_size = 12.0
 config.font = base_font
+config.font_dirs = { 'fonts' }
 
 -- без жирных шрифтов
 config.font_rules = { { intensity = 'Bold', font = base_font } }

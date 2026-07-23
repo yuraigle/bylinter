@@ -15,7 +15,7 @@ export async function loadUserConfig(): Promise<void> {
 
   const candidates = [
     userSuppliedPath,
-    path.join(process.cwd(), "config.ts"),
+    path.join(process.cwd(), "config", "index.ts"),
   ].filter((p): p is string => Boolean(p));
 
   for (const candidate of candidates) {

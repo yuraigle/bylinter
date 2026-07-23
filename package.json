@@ -1,19 +1,20 @@
 {
   "name": "bylinter",
-  "version": "0.2.2",
+  "version": "0.3.2",
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
     "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./dist/WezTerm.AppImage --config-file './termconfig.lua' start --cwd . -- bun run src/index.ts",
-    "build:linux": "bun build --compile src/index.ts --outfile dist/bylinter",
-    "build:windows": "bun build --compile --target=bun-windows-x64 src/index.ts --outfile dist/bylinter.exe",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
+    "package": "bun scripts/package.ts"
   },
   "keywords": [],
   "author": "Yuri Orlov",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/bun": "^1.3.14",
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3"
   },
