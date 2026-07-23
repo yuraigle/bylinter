@@ -17,7 +17,6 @@ import { encode } from "./encoding";
 import { tuiLog, setStatus } from "./tui";
 import { writeLog } from "./logger";
 
-const CONSOLE_OUTPUT = (process.env.CONSOLE_OUTPUT || "1") === "1";
 const LOG_PATH = process.env.LOG_PATH || "";
 
 let telnetParser = createTelnetParser();
@@ -26,9 +25,7 @@ let inflate: Inflate | null = null;
 let lines: string[] = [];
 let partialLine = "";
 
-if (CONSOLE_OUTPUT) {
-  addOutputSink((text, isolated) => tuiLog(text, isolated));
-}
+addOutputSink((text, isolated) => tuiLog(text, isolated));
 
 export async function connect(
   host: string,
