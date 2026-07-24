@@ -1,9 +1,9 @@
 {
   "name": "bylinter",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "",
   "scripts": {
-    "start": "bun run src/index.ts",
+    "start": "bun run src/index.ts -c dist-assets/common/config/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
     "patch-wezterm": "bun scripts/patch-wezterm.ts",

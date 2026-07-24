@@ -18,12 +18,17 @@ import { tuiLog, setStatus } from "./tui";
 import { writeLog } from "./logger";
 
 const LOG_PATH = process.env.LOG_PATH || "";
+const PROMPT_TIMEOUT_MS = 250;
 
 let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
 let inflate: Inflate | null = null;
 let lines: string[] = [];
 let partialLine = "";
+
+// debounce для случая, когда сервер не шлёт GA
+let promptTimer: ReturnType<typeof setTimeout> | null = null;
+let gaSeen = false; // приходил ли от сервера хоть раз GA
 
 addOutputSink((text, isolated) => tuiLog(text, isolated));
 
@@ -74,6 +79,11 @@ function resetSession(): void {
   telnetParser = createTelnetParser();
   lines = [];
   partialLine = "";
+  gaSeen = false;
+  if (promptTimer) {
+    clearTimeout(promptTimer);
+    promptTimer = null;
+  }
 }
 
 function processIncoming(chunk: Buffer): void {
@@ -90,6 +100,24 @@ function processIncoming(chunk: Buffer): void {
   if (compressedTail !== null) {
     startCompression(compressedTail);
   }
+}
+
+function flushPrompt(): void {
+  const prompt = partialLine;
+  runPromptHooks(prompt, lines);
+  broadcast("\r\n" + prompt);
+  partialLine = "";
+  lines = [];
+}
+
+function schedulePromptTimeout(): void {
+  if (promptTimer) clearTimeout(promptTimer);
+  promptTimer = setTimeout(() => {
+    promptTimer = null;
+    if (partialLine.length > 0) {
+      flushPrompt();
+    }
+  }, PROMPT_TIMEOUT_MS);
 }
 
 function processSegment(text: string, hasGA: boolean): void {
@@ -109,11 +137,14 @@ function processSegment(text: string, hasGA: boolean): void {
   });
 
   if (hasGA) {
-    const prompt = partialLine;
-    runPromptHooks(prompt, lines);
-    broadcast("\r\n" + prompt);
-    partialLine = "";
-    lines = [];
+    gaSeen = true;
+    if (promptTimer) {
+      clearTimeout(promptTimer);
+      promptTimer = null;
+    }
+    flushPrompt();
+  } else if (!gaSeen && partialLine.length > 0) {
+    schedulePromptTimeout();
   }
 
   if (LOG_PATH) {

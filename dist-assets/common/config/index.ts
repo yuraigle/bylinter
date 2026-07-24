@@ -11,11 +11,16 @@ const {
   showerr,
   sendRaw,
   echo,
-  COLOR,
   setSidebar,
+  COLOR,
 } = globalThis.bylinter;
 
-showme(`Версия конфига 0.1`);
+const CHAR_NAME = ""; // для автологина
+const CHAR_PASS = "";
+
+showme(
+  `Введите ${COLOR.yellow}кон${COLOR.reset} для подключения к серверу Былин`,
+);
 
 function sendline(message: string): void {
   echo("\r\n" + COLOR.yellow + "[" + message + "]" + COLOR.reset);
@@ -23,23 +28,21 @@ function sendline(message: string): void {
 }
 
 registerAlias("кон", () => {
-  connect("bylins.su", 4000, "").catch((err) =>
+  connect("bylins.su", 4000, "").catch((err: Error) =>
     showerr("Failed to connect: " + err.message),
   );
 });
 
-registerTrigger(/Using keytable/, () => sendline("0"));
-
-registerTrigger(/^\s+Посетите наш сайт/, () => {
-  const CHAR_NAME = ""; // введите имя и пароль
-  const CHAR_PASS = "";
-  if (CHAR_NAME && CHAR_PASS) {
-    sendRaw(`${CHAR_NAME} ${CHAR_PASS}`);
-  }
-});
-
 registerPromptHook((prompt: string) => {
-  if (prompt.includes("ANYKEY нажмите ENTER")) {
+  if (prompt.match(/^Select one :/)) {
+    sendline("0"); // koi-8, должно соответствовать кодировке в .env
+    return true;
+  }
+  if (prompt.match(/^Введите имя персонажа/) && CHAR_NAME && CHAR_PASS) {
+    sendRaw(`${CHAR_NAME} ${CHAR_PASS}`); // sendRaw не показывает пароль
+    return true;
+  }
+  if (prompt.match(/ANYKEY нажмите ENTER/)) {
     sendline("");
     return true;
   }
@@ -56,18 +59,9 @@ function onConnect(): void {
   sendline(";афф;сч все;уме;гр;см");
 }
 
-registerBindkey("`", () => sendline("~"));
-registerBindkey("ё", () => sendline("~"));
-registerBindkey("M-up", () => sendline("n"));
-registerBindkey("M-down", () => sendline("s"));
-registerBindkey("M-left", () => sendline("w"));
-registerBindkey("M-right", () => sendline("e"));
-registerBindkey("M-pgup", () => sendline("u"));
-registerBindkey("M-pgdn", () => sendline("d"));
-
 // карта комнат в сайдбаре
 let currentMapLines: string[] = [];
-registerPromptHook((prompt, lines) => {
+registerPromptHook((prompt: string, lines: string[]) => {
   const mapLines: string[] = [];
 
   lines
@@ -89,4 +83,17 @@ registerPromptHook((prompt, lines) => {
   return false;
 }, 99);
 
-registerGag(/^:.*?/);
+// registerGag(/^:.*?/); // можно спрятать карту из лога
+
+// Alt+стрелки для ходьбы
+registerBindkey("`", () => sendline("~"));
+registerBindkey("ё", () => sendline("~"));
+registerBindkey("M-up", () => sendline("n"));
+registerBindkey("M-down", () => sendline("s"));
+registerBindkey("M-left", () => sendline("w"));
+registerBindkey("M-right", () => sendline("e"));
+registerBindkey("M-pgup", () => sendline("u"));
+registerBindkey("M-pgdn", () => sendline("d"));
+
+// поведение
+registerTrigger(/^Вы готовы сожрать быка\./, () => sendline("пить боч.синим"));

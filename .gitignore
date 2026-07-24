@@ -1,5 +1,6 @@
 node_modules
 vendor
 release
+logs
 .env
 launcher.res.o

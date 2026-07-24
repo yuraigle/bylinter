@@ -326,7 +326,6 @@ function appendToWindow(
       Math.max(0, win.wrappedRows.length - 1),
     );
   }
-  // todo ошибка, история проматывается вместе с данными от сервера
 
   if (windowNum === state.currentWindow) requestRedraw();
 }
