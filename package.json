@@ -1,10 +1,9 @@
 {
   "name": "bylinter",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
-    "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./dist/WezTerm.AppImage --config-file './termconfig.lua' start --cwd . -- bun run src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
     "patch-wezterm": "bun scripts/patch-wezterm.ts",

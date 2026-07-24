@@ -19,4 +19,4 @@ if [[ ! -x "$APP" ]]; then
   exit 1
 fi
 
-__NV_DISABLE_EXPLICIT_SYNC=1 "$WEZTERM" --config-file "$CONFIG" start --cwd "$ROOT" -- "$APP"
+__NV_DISABLE_EXPLICIT_SYNC=1 "$WEZTERM" --config-file "$CONFIG" start --cwd "$ROOT" -- "$APP" $@

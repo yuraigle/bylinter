@@ -8,11 +8,11 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
     char *lastSlash = strrchr(exePath, '\\');
     if (lastSlash) *lastSlash = '\0';
 
-    char cmd[2048];
+    char cmd[4096];
     snprintf(cmd, sizeof(cmd),
         "\"%s\\wezterm\\wezterm-gui.exe\" --config-file \"%s\\termconfig.lua\" "
-        "start --cwd \"%s\" -- \"%s\\bylinter-cli.exe\"",
-        exePath, exePath, exePath, exePath);
+        "start --cwd \"%s\" -- \"%s\\bylinter-cli.exe\" %s",
+        exePath, exePath, exePath, exePath, lpCmdLine);
 
     STARTUPINFOA si = { sizeof(si) };
     PROCESS_INFORMATION pi;
