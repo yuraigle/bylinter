@@ -28,6 +28,11 @@ for (const t of targets) {
     await $`curl -L ${t.url} -o /tmp/wezterm-${t.platform}.zip`;
     await $`unzip -q /tmp/wezterm-${t.platform}.zip -d /tmp/wezterm-${t.platform}-extracted`;
     await $`bash -c "mv /tmp/wezterm-${t.platform}-extracted/${t.extractedDirGlob}/* ${dest}/"`;
+
+    // чтобы уменьшить размер бандла
+    await rm(`${dest}/wezterm.pdb`);
+    await rm(`${dest}/wezterm.exe`);
+    await rm(`${dest}/wezterm-mux-server.exe`);
   }
   console.log(`✓ ${t.platform} → ${dest}`);
 }

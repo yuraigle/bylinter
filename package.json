@@ -1,6 +1,6 @@
 {
   "name": "bylinter",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts",
