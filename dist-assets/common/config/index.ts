@@ -11,6 +11,7 @@ const {
   showerr,
   sendRaw,
   echo,
+  wecho,
   setSidebar,
   COLOR,
 } = globalThis.bylinter;
@@ -39,7 +40,7 @@ registerPromptHook((prompt: string) => {
     return true;
   }
   if (prompt.match(/^Введите имя персонажа/) && CHAR_NAME && CHAR_PASS) {
-    sendRaw(`${CHAR_NAME} ${CHAR_PASS}`); // sendRaw не показывает пароль
+    sendRaw(`${CHAR_NAME} ${CHAR_PASS}`); // не показывает пароль в логе
     return true;
   }
   if (prompt.match(/ANYKEY нажмите ENTER/)) {
@@ -84,6 +85,44 @@ registerPromptHook((prompt: string, lines: string[]) => {
 }, 99);
 
 // registerGag(/^:.*?/); // можно спрятать карту из лога
+
+// сохранение диалогов в окно №2, доступно по Alt+2
+registerTrigger(
+  /^[А-ЯЁ][а-яё]+ сказал.? : '.+'/,
+  (m: string[], colored: string) => {
+    wecho(2, tsfmt() + colored);
+  },
+);
+
+registerTrigger(
+  /^[А-ЯЁ][а-яё]+ сообщил.? группе : '.+'/,
+  (m: string[], colored: string) => {
+    wecho(2, tsfmt() + colored);
+  },
+);
+
+registerTrigger(
+  /^[А-ЯЁ][а-яё]+ сказал. [А-ЯЁ][а-яё]+ : '.+'/,
+  (m: string[], colored: string) => {
+    wecho(2, tsfmt() + colored);
+  },
+);
+
+registerTrigger(
+  /^[А-ЯЁ][а-яё]+ (дружине|союзникам): '.+'\./,
+  (m: string[], colored: string) => {
+    wecho(2, tsfmt() + colored);
+  },
+);
+
+function tsfmt() {
+  const hms = new Date().toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  return "[" + hms + "] ";
+}
 
 // Alt+стрелки для ходьбы
 registerBindkey("`", () => sendline("~"));
