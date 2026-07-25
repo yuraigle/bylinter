@@ -23,6 +23,8 @@ async function buildWindows() {
   await buildLauncher(dir);
   await copyDistAssets(dir, "win");
   await cp("vendor/wezterm-win", `${dir}/wezterm`, { recursive: true });
+  await cp("README.md", `${dir}/README.md`);
+  await cp("LICENSE", `${dir}/LICENSE`);
   await $`cd release && 7z a -t7z -m0=lzma2 -mx=9 bylinter-win-${VERSION}.7z bylinter-win-${VERSION}`;
 }
 
@@ -35,6 +37,8 @@ async function buildLinux() {
   await copyDistAssets(dir, "linux");
   await cp("vendor/wezterm-linux", `${dir}/wezterm`, { recursive: true });
   await $`chmod +x ${dir}/run.sh`;
+  await cp("README.md", `${dir}/README.md`);
+  await cp("LICENSE", `${dir}/LICENSE`);
   await $`cd release && tar -cJf bylinter-linux-${VERSION}.tar.xz bylinter-linux-${VERSION}`;
 }
 
