@@ -1,5 +1,7 @@
 import { $ } from "bun";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, readdir, rm, rename } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
 
 const WEZTERM_VERSION = "20240203-110809-5046fc22";
 
@@ -12,6 +14,7 @@ const targets = [
   {
     platform: "linux",
     url: `https://github.com/wez/wezterm/releases/download/${WEZTERM_VERSION}/WezTerm-${WEZTERM_VERSION}-Ubuntu20.04.AppImage`,
+    extractedDirGlob: "",
     isAppImage: true,
   },
 ];
@@ -23,16 +26,36 @@ for (const t of targets) {
 
   if (t.isAppImage) {
     await $`curl -L ${t.url} -o ${dest}/WezTerm.AppImage`;
-    await $`chmod +x ${dest}/WezTerm.AppImage`;
+    if (process.platform !== 'win32') {
+      await $`chmod +x ${dest}/WezTerm.AppImage`;
+    }
   } else {
-    await $`curl -L ${t.url} -o /tmp/wezterm-${t.platform}.zip`;
-    await $`unzip -q /tmp/wezterm-${t.platform}.zip -d /tmp/wezterm-${t.platform}-extracted`;
-    await $`bash -c "mv /tmp/wezterm-${t.platform}-extracted/${t.extractedDirGlob}/* ${dest}/"`;
+    // download
+    const systemTmp = tmpdir();
+    const zipPath = path.join(systemTmp, `wezterm-${t.platform}.zip`);
+    await $`curl -L ${t.url} -o ${zipPath}`;
+
+    // extract
+    const extractPath = path.join(systemTmp, `wezterm-${t.platform}-extracted`);
+    await $`unzip -q ${zipPath} -d ${extractPath}`;
+
+    // move
+    const globPath = path.join(extractPath, t.extractedDirGlob);
+    const sourceFiles = await readdir(globPath);
+    for (const file of sourceFiles) {
+      await rename(path.join(globPath, file), path.join(dest, file));
+    }
 
     // чтобы уменьшить размер бандла
-    await rm(`${dest}/wezterm.pdb`);
-    await rm(`${dest}/wezterm.exe`);
-    await rm(`${dest}/wezterm-mux-server.exe`);
+    if (t.platform === "win") {
+      await rm(`${dest}/wezterm.pdb`);
+      await rm(`${dest}/wezterm.exe`);
+      await rm(`${dest}/wezterm-mux-server.exe`);
+    }
+
+    // удаляем временные файлы
+    await rm(zipPath, { force: true });
+    await rm(extractPath, { recursive: true, force: true });
   }
   console.log(`✓ ${t.platform} → ${dest}`);
 }
