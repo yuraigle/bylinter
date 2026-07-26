@@ -1,4 +1,4 @@
-import { decode, encode } from "./encoding";
+import { decode, encode } from "../../shared/encoding";
 
 const MSDP_VAR = 1;
 const MSDP_VAL = 2;

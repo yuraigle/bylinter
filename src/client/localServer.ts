@@ -1,9 +1,9 @@
 import { createServer } from "node:net";
 
 import { addOutputSink } from "./output";
-import { encode } from "./encoding";
-import { showme } from "./utils";
-import { createTelnetParser } from "./telnet";
+import { encode } from "../shared/encoding";
+import { showme } from "../shared/utils";
+import { createTelnetParser } from "../core/protocol/telnet";
 
 export function startLocalServer(
   port: number,

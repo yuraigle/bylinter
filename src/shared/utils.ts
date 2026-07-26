@@ -1,5 +1,5 @@
-import { tuiLog } from "./tui";
-import { COLOR } from "./ansi";
+import { tuiLog } from "../tui";
+import { COLOR } from "../core/protocol/ansi";
 
 const prefix = `${COLOR.red}-${COLOR.green}:${COLOR.red}-${COLOR.reset} `;
 

@@ -7,15 +7,15 @@ import {
   runTriggers,
   runMsdpHooks,
   applySubstitutes,
-} from "./triggers";
-import { showme, showerr } from "./utils";
-import { COLOR } from "./ansi";
+} from "../core/logic/triggers";
+import { showme, showerr } from "../shared/utils";
+import { COLOR } from "../core/protocol/ansi";
 import { broadcast, addOutputSink } from "./output";
-import { createTelnetParser, type TelnetEvent } from "./telnet";
-import { parseMsdp, encodeMsdpVar } from "./msdp";
-import { encode } from "./encoding";
-import { tuiLog, setStatus } from "./tui";
-import { writeLog } from "./logger";
+import { createTelnetParser, type TelnetEvent } from "../core/protocol/telnet";
+import { parseMsdp, encodeMsdpVar } from "../core/protocol/msdp";
+import { encode } from "../shared/encoding";
+import { tuiLog, setStatus } from "../tui";
+import { writeLog } from "../shared/logger";
 
 const LOG_PATH = process.env.LOG_PATH || "";
 const PROMPT_TIMEOUT_MS = 250;

@@ -1,5 +1,5 @@
-import { connect, disconnect, sendRaw } from "./mud";
-import { showerr, showme } from "./utils";
+import { connect, disconnect, sendRaw } from "../../client/mud";
+import { showerr, showme } from "../../shared/utils";
 
 export type AliasHandler = (args: string[]) => void;
 export type CommandHandler = (args: string[]) => void;

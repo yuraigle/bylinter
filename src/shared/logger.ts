@@ -1,6 +1,6 @@
 import { createWriteStream, mkdirSync, type WriteStream } from "node:fs";
 import path from "node:path";
-import { stripColors } from "./ansi";
+import { stripColors } from "../core/protocol/ansi";
 
 let currentStream: WriteStream | null = null;
 let currentFileDate = "";

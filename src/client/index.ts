@@ -1,13 +1,13 @@
-export { registerAlias } from "./input";
-export { registerBindkey } from "./bindkeys";
+export { registerAlias } from "../core/logic/input";
+export { registerBindkey } from "../core/logic/bindkeys";
 export {
   registerTrigger,
   registerPromptHook,
   registerMsdpHook,
   registerSubstitute,
   registerGag,
-} from "./triggers";
+} from "../core/logic/triggers";
 export { sendRaw, sendl, sendMsdp, connect, disconnect } from "./mud";
-export { showme, showerr, echo } from "./utils";
-export { stripColors, COLOR } from "./ansi";
-export { setSidebar, wecho } from "./tui";
+export { showme, showerr, echo } from "../shared/utils";
+export { stripColors, COLOR } from "../core/protocol/ansi";
+export { setSidebar, wecho } from "../tui";

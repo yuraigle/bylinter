@@ -1,5 +1,4 @@
-import { stripColors } from "./ansi";
-import { showme } from "./utils";
+import { stripColors } from "../protocol/ansi";
 
 export type LineHandler = (matches: string[], colored: string, ) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
