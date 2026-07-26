@@ -153,9 +153,12 @@ function processSegment(text: string, hasGA: boolean): void {
 }
 
 export function sendRaw(command: string) {
-  if (socket != null) {
-    socket.write(encode(command + "\r\n"));
+  if (socket == null) {
+    showerr("Can't send text: not connected to a server.");
+    return;
   }
+
+  socket.write(encode(command + "\r\n"));
 }
 
 export function sendl(command: string) {

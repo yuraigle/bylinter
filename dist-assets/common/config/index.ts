@@ -16,8 +16,8 @@ const {
   COLOR,
 } = globalThis.bylinter;
 
-const CHAR_NAME = ""; // для автологина
-const CHAR_PASS = "";
+const CHAR_NAME = "Услад"; // для автологина
+const CHAR_PASS = "oVP5Liqf6";
 
 showme(
   `Введите ${COLOR.yellow}кон${COLOR.reset} для подключения к серверу Былин`,

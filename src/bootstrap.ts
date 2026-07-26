@@ -14,8 +14,8 @@ export function bootstrap(): void {
   if (localPort > 0) startLocalServer(localPort, handleInput);
 
   initTui((cmd: string) => {
+    tuiLog(`\r\n${COLOR.brightYellow}${cmd}${COLOR.reset}`);
     handleInput(cmd);
-    tuiLog(`${COLOR.brightYellow}${cmd}${COLOR.reset}`);
   });
 
   showme(`Bylinter v${packageJson.version} by Yuri Orlov`);

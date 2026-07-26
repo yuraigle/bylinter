@@ -15,7 +15,7 @@ local base_font = wezterm.font_with_fallback({
     'Consolas',
 })
 
-config.font_size = 12.0
+config.font_size = 13.0
 config.font = base_font
 config.font_dirs = { 'fonts' }
 
@@ -23,7 +23,7 @@ config.font_dirs = { 'fonts' }
 config.font_rules = { { intensity = 'Bold', font = base_font } }
 config.bold_brightens_ansi_colors = true
 
-config.initial_cols = 160
+config.initial_cols = 120
 config.initial_rows = 40
 config.window_decorations = 'TITLE | RESIZE'
 config.window_background_opacity = 1.0

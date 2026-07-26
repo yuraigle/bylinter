@@ -1,9 +1,10 @@
 {
   "name": "bylinter",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts -c dist-assets/common/config/index.ts",
+    "guiw": "cmd /c start \"\" \"vendor\\wezterm-win\\wezterm-gui.exe\" --config-file dist-assets/common/termconfig.lua start --cwd \".\" -- bun start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
     "patch-wezterm": "bun scripts/patch-wezterm.ts",

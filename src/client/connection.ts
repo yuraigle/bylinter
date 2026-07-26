@@ -8,7 +8,11 @@ export function conn(
 ): Promise<Socket> {
   return proxy
     ? connectViaProxy(host, port, proxy)
-    : Promise.resolve(connect(port, host));
+    : connectDirect(host, port);
+}
+
+function connectDirect(host: string, port: number): Promise<Socket> {
+  return Promise.resolve(connect(port, host));
 }
 
 function connectViaProxy(

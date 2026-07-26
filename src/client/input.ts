@@ -1,5 +1,5 @@
 import { connect, disconnect, sendl, sendRaw } from "./mud";
-import { showerr } from "./utils";
+import { showerr, showme } from "./utils";
 
 export type AliasHandler = (args: string[]) => void;
 export type CommandHandler = (args: string[]) => void;
@@ -19,10 +19,17 @@ export function handleInput(raw: string): void {
   const line = raw.replace(/[\r\n]+$/, "").trim();
   const [cmd, ...args] = line.split(/\s+/);
 
+  if (cmd === '/help' || ["help", "#help", "?", "/?"].includes(line)) {
+    showHelp();
+    return;
+  }
+
   if (cmd.startsWith("/")) {
     const handler = commands[cmd];
     if (handler) {
       handler(args);
+    } else {
+      showerr("Not a command. Try /help to see help on commands");
     }
     return;
   }
@@ -33,15 +40,22 @@ export function handleInput(raw: string): void {
     return;
   }
 
-  // sendl(line);
   line.split(/;/).forEach((cmd) => sendRaw(cmd));
+}
+
+function showHelp(): void {
+  const commands: Map<string, string> = new Map();
+  commands.set('/connect <host> [port:4000]', 'connect to MUD server');
+  commands.set('/dc', 'drop connection');
+  commands.set('/q', 'quit');
+  commands.forEach((v, k) => showme(`${k} - ${v}`));
 }
 
 registerCommand("/connect", (args: string[]) => {
   const [host, portArg, proxy] = args;
 
   if (!host) {
-    showerr("Usage: /connect <host> <port> [proxy]");
+    showerr("Usage: /connect <host> [port:4000] [proxy]");
     return;
   }
 
