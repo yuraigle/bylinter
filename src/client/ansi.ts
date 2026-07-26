@@ -60,13 +60,6 @@ export function moveTo(row: number, col: number): string {
   return `\x1b[${row};${col}H`;
 }
 
-const BOLD_RE = /\x1b\[1m/g;
-const BOLD_IN_COMBINED_RE = /\x1b\[1;/g;
-
-export function stripBold(text: string): string {
-  return text.replace(BOLD_IN_COMBINED_RE, "\x1b[").replace(BOLD_RE, "");
-}
-
 export function stripColors(text: string): string {
   return text.replaceAll(/\x1b\[[0-9;]*m/g, "");
 }
