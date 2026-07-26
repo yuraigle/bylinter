@@ -1,7 +1,7 @@
 import type { Socket } from "node:net";
 import { createInflate, type Inflate } from "node:zlib";
 
-import { conn } from "./connection";
+import { connectDirect, connectViaProxy } from "./connection";
 import {
   runPromptHooks,
   runTriggers,
@@ -43,24 +43,40 @@ export async function connect(
     resetSession();
   }
 
-  socket = await conn(host, port, proxy);
-  setStatus(`Connected to ${host}:${port}`);
+  setStatus(`Trying to connect to ${host}:${port}...`);
 
-  socket.on("data", (chunk: Buffer) => {
-    if (inflate) {
-      inflate.write(chunk);
-    } else {
-      processIncoming(chunk);
-    }
-  });
+  try {
+    socket = proxy
+      ? await connectViaProxy(host, port, proxy)
+      : await connectDirect(host, port);
 
-  socket.on("close", () => {
+    socket.on("data", (chunk: Buffer) => {
+      if (inflate) {
+        inflate.write(chunk);
+      } else {
+        processIncoming(chunk);
+      }
+    });
+
+    socket.on("close", () => {
+      setStatus("Not connected");
+      showme("Connection closed");
+      resetSession();
+    });
+
+    socket.on("error", (e) => {
+      showerr(`Socket error: ${e.message}`);
+      setStatus("Not connected");
+      resetSession();
+    });
+
+    setStatus(`Connected to ${host}:${port}`);
+  } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    showerr(`Failed to connect: ${errMsg}`);
     setStatus("Not connected");
-    showme("Connection closed");
     resetSession();
-  });
-
-  socket.on("error", (e) => showerr(`Socket error: ${e.message}`));
+  }
 }
 
 export function disconnect(): void {

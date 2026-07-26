@@ -1,4 +1,4 @@
-import { connect, disconnect, sendl, sendRaw } from "./mud";
+import { connect, disconnect, sendRaw } from "./mud";
 import { showerr, showme } from "./utils";
 
 export type AliasHandler = (args: string[]) => void;

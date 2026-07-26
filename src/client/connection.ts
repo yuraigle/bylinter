@@ -1,62 +1,92 @@
-import type { Socket } from "node:net";
-import { connect } from "node:net";
+import { Socket, connect } from "node:net";
 
-export function conn(
-  host: string,
-  port: number = 4000,
-  proxy: string = "",
-): Promise<Socket> {
-  return proxy
-    ? connectViaProxy(host, port, proxy)
-    : connectDirect(host, port);
+export function connectDirect(host: string, port: number): Promise<Socket> {
+  return new Promise((resolve, reject) => {
+    const sock = new Socket();
+
+    sock.setTimeout(10000);
+
+    sock.once('connect', () => {
+      sock.setTimeout(0);
+      resolve(sock);
+    });
+
+    sock.once('error', (err: Error) => {
+      sock.destroy();
+      reject(err);
+    });
+
+    sock.once('timeout', () => {
+      sock.destroy();
+      reject(new Error('Connection timed out'));
+    });
+
+    sock.connect(port, host);
+  });
 }
 
-function connectDirect(host: string, port: number): Promise<Socket> {
-  return Promise.resolve(connect(port, host));
-}
-
-function connectViaProxy(
+export function connectViaProxy(
   host: string,
   port: number,
   proxy: string,
 ): Promise<Socket> {
   const proxyUrl = new URL(proxy);
-  const proxyObj = { host: proxyUrl.hostname, port: Number(proxyUrl.port) };
+  const proxyObj = {
+    host: proxyUrl.hostname,
+    port: Number(proxyUrl.port) || 8080 // Добавлен порт по умолчанию
+  };
 
   return new Promise((resolve, reject) => {
     const socket = connect(proxyObj.port, proxyObj.host, () => {
-      socket.write(
-        `CONNECT ${host}:${port} HTTP/1.1\r\n` +
-          `Host: ${host}:${port}\r\n` +
-          `Connection: keep-alive\r\n\r\n`,
-      );
+      socket.setTimeout(15000); // ждём ответ CONNECT
+
+      const connectRequest = [
+        `CONNECT ${host}:${port} HTTP/1.1`,
+        `Host: ${host}:${port}`,
+        `Proxy-Connection: keep-alive`,
+        `\r\n`,
+      ].join("\r\n");
+
+      socket.write(connectRequest);
     });
 
     let responseBuffer = Buffer.alloc(0);
 
     const onData = (chunk: Buffer) => {
       responseBuffer = Buffer.concat([responseBuffer, chunk]);
+
       const headerEnd = responseBuffer.indexOf("\r\n\r\n");
       if (headerEnd === -1) return;
 
-      const header = responseBuffer.subarray(0, headerEnd).toString("utf8");
-      socket.removeListener("data", onData);
+      const headerText = responseBuffer.subarray(0, headerEnd).toString("utf8");
+      const statusLine = headerText.split("\r\n")[0];
 
-      if (!/^HTTP\/1\.[01] 200/.test(header)) {
-        reject(new Error(`Proxy CONNECT failed: ${header.split("\r\n")[0]}`));
+      if (!/^HTTP\/1\.[01] 2\d{2}/.test(statusLine)) {
         socket.destroy();
+        reject(new Error("Proxy connection failed"));
         return;
       }
 
-      const leftover = responseBuffer.subarray(headerEnd + 4);
-      if (leftover.length > 0) {
-        socket.unshift(leftover);
-      }
+      socket.removeListener("data", onData);
+      socket.removeListener("timeout", onTimeout);
+      socket.setTimeout(0);
 
       resolve(socket);
     };
 
+    const onError = (err: Error) => {
+      socket.destroy();
+      reject(err);
+    };
+
+    const onTimeout = () => {
+      const err = new Error('Proxy connection timed out');
+      socket.destroy();
+      reject(err);
+    };
+
     socket.on("data", onData);
-    socket.on("error", reject);
+    socket.on("error", onError);
+    socket.on("timeout", onTimeout);
   });
 }
