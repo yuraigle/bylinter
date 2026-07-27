@@ -1,244 +1,36 @@
-import type { Socket } from "node:net";
-import { createInflate, type Inflate } from "node:zlib";
-
-import { connectDirect, connectViaProxy } from "./connection";
-import {
-  runPromptHooks,
-  runTriggers,
-  runMsdpHooks,
-  applySubstitutes,
-} from "../core/logic/triggers";
-import { showme, showerr } from "../shared/utils";
-import { TcpCommandSender } from "./CommandSender";
-import { COLOR } from "../core/protocol/ansi";
-import { broadcast, addOutputSink } from "./output";
-import { createTelnetParser, type TelnetEvent } from "../core/protocol/telnet";
-import { parseMsdp } from "../core/protocol/msdp";
-import { tuiLog, setStatus } from "../tui";
+import { MudSession } from "./MudSession";
 import { writeLog } from "../shared/logger";
+import { showerr, showme } from "../shared/utils";
+import { addOutputSink } from "./output";
+import { setStatus, tuiLog } from "../tui";
 
-const LOG_PATH = process.env.LOG_PATH || "";
-
-let telnetParser = createTelnetParser();
-let socket: Socket | null = null;
-let sender: TcpCommandSender = new TcpCommandSender(null);
-let inflate: Inflate | null = null;
-let lines: string[] = [];
-let partialLine = "";
-
-// debounce для случая, когда сервер не шлёт GA
-const PROMPT_TIMEOUT_MS = 250;
-let promptTimer: ReturnType<typeof setTimeout> | null = null;
-let gaSeen = false; // приходил ли от сервера хоть раз GA
+const session = new MudSession();
 
 addOutputSink((text, isolated) => tuiLog(text, isolated));
+session.setErrorCallback((e: Error) => showerr(e.message));
+session.setInfoCallback((text: string) => showme(text));
+session.setStatusCallback((text: string) => setStatus(text));
+const logPath = process.env.LOG_PATH || "";
+if (logPath) session.setLogger((text: string) => writeLog(text, logPath));
 
-export async function connect(
-  host: string,
-  port: number = 4000,
-  proxy: string = "",
-): Promise<void> {
-  if (socket != null) {
-    socket.removeAllListeners();
-    socket.destroy();
-    resetSession();
-  }
-
-  setStatus(`Trying to connect to ${host}:${port}...`);
-
-  try {
-    socket = proxy
-      ? await connectViaProxy(host, port, proxy)
-      : await connectDirect(host, port);
-
-    sender.setSocket(socket);
-
-    socket.on("data", (chunk: Buffer) => {
-      if (inflate) {
-        inflate.write(chunk);
-      } else {
-        processIncoming(chunk);
-      }
-    });
-
-    socket.on("close", () => {
-      setStatus("Not connected");
-      showme("Connection closed");
-      resetSession();
-    });
-
-    socket.on("error", (e) => {
-      showerr(`Socket error: ${e.message}`);
-      setStatus("Not connected");
-      resetSession();
-    });
-
-    setStatus(`Connected to ${host}:${port}`);
-  } catch (e) {
-    const errMsg = e instanceof Error ? e.message : String(e);
-    showerr(`Failed to connect: ${errMsg}`);
-    setStatus("Not connected");
-    resetSession();
-  }
+export function connect(host: string, port?: number, proxy?: string): Promise<void> {
+    return session.connect(host, port, proxy);
 }
 
 export function disconnect(): void {
-  if (socket != null) {
-    socket.destroy();
-    socket = null;
-  } else {
-    showerr("Not connected to a server.");
-  }
-}
-
-function resetSession(): void {
-  socket = null;
-  inflate?.destroy();
-  inflate = null;
-  sender.setSocket(null);
-  telnetParser = createTelnetParser();
-  lines = [];
-  partialLine = "";
-  gaSeen = false;
-  if (promptTimer) {
-    clearTimeout(promptTimer);
-    promptTimer = null;
-  }
-}
-
-function processIncoming(chunk: Buffer): void {
-  const { segments, events, compressedTail } = telnetParser.feed(chunk);
-
-  for (const event of events) {
-    handleTelnetEvent(event);
-  }
-
-  for (const segment of segments) {
-    processSegment(segment.text, segment.hasGA);
-  }
-
-  if (compressedTail !== null) {
-    startCompression(compressedTail);
-  }
-}
-
-function flushPrompt(): void {
-  const prompt = partialLine;
-  runPromptHooks(prompt, lines);
-  broadcast("\r\n" + prompt);
-  partialLine = "";
-  lines = [];
-}
-
-function schedulePromptTimeout(): void {
-  if (promptTimer) clearTimeout(promptTimer);
-  promptTimer = setTimeout(() => {
-    promptTimer = null;
-    if (partialLine.length > 0) {
-      flushPrompt();
-    }
-  }, PROMPT_TIMEOUT_MS);
-}
-
-function processSegment(text: string, hasGA: boolean): void {
-  partialLine += text;
-  const chunkLines = partialLine.split("\n").map((l) => l.replace(/\r$/, ""));
-  const completedLines = chunkLines.slice(0, -1);
-  lines.push(...completedLines);
-  partialLine = chunkLines[chunkLines.length - 1];
-
-  completedLines.forEach((line) => {
-    runTriggers(line);
-
-    const out: string | null = applySubstitutes(line);
-    if (out !== null) {
-      broadcast("\r\n" + out);
-    }
-  });
-
-  if (hasGA) {
-    gaSeen = true;
-    if (promptTimer) {
-      clearTimeout(promptTimer);
-      promptTimer = null;
-    }
-    flushPrompt();
-  } else if (!gaSeen && partialLine.length > 0) {
-    schedulePromptTimeout();
-  }
-
-  if (LOG_PATH) {
-    writeLog(text + (hasGA ? "\r\n" : ""), LOG_PATH);
-  }
+    session.disconnect();
 }
 
 export function sendRaw(command: string): void {
-  try {
-    sender.send(command);
-  } catch (e) {
-    if (e instanceof Error) {
-      showerr(e.message);
-    }
-  }
+    session.send(command);
 }
 
 export function sendl(command: string): void {
-  const echo = COLOR.brightYellow + command + COLOR.reset;
-  broadcast(echo, true);
-
-  try {
-    sender.sendLine(command);
-  } catch (e) {
-    if (e instanceof Error) {
-      showerr(e.message);
-    }
-  }
+    session.sendl(command);
 }
 
 export function sendMsdp(name: string, value: string): void {
-  try {
-    sender.sendMsdp(name, value);
-  } catch (e) {
-    if (e instanceof Error) {
-      showerr(e.message);
-    }
-  }
+    session.sendMsdp(name, value);
 }
 
-function handleTelnetEvent(event: TelnetEvent): void {
-  if (socket == null) return;
-
-  const MSDP_OPTION = 0x45;
-  const COMPRESS2_OPTION = 0x56;
-
-  if (event.kind === "negotiation") {
-    if (event.command === "WILL" && event.option === MSDP_OPTION) {
-      socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION]));
-    } else if (event.command === "WILL" && event.option === COMPRESS2_OPTION) {
-      socket.write(Buffer.from([0xff, 0xfd, COMPRESS2_OPTION]));
-    }
-    return;
-  }
-
-  if (event.option === MSDP_OPTION) {
-    const data = parseMsdp(event.payload);
-    runMsdpHooks(data);
-  }
-}
-
-function startCompression(tail: Buffer): void {
-  if (inflate) return;
-
-  const inf = createInflate();
-  inflate = inf;
-
-  inf.on("data", (decompressed: Buffer) => processIncoming(decompressed));
-  inf.on("error", (err) => {
-    showerr(`MCCP inflate error: ${err.message}`);
-    inf.destroy();
-    inflate = null;
-  });
-
-  showme("MCCP2 compression started");
-  if (tail.length > 0) inf.write(tail);
-}
+export { session };

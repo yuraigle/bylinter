@@ -70,6 +70,7 @@ export function connectViaProxy(
       socket.removeListener("data", onData);
       socket.removeListener("timeout", onTimeout);
       socket.setTimeout(0);
+      // todo при попытке подключиться к ошибочному серверу через ок прокси
 
       resolve(socket);
     };
