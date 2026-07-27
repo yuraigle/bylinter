@@ -5,11 +5,9 @@ import { TcpCommandSender } from "./CommandSender";
 import { createTelnetParser, TelnetEvent } from "../core/protocol/telnet";
 import { broadcast } from "./output";
 import { connectDirect, connectViaProxy } from "./connection";
-import {
-    applySubstitutes, runMsdpHooks, runPromptHooks, runTriggers
-} from "../core/logic/triggers";
 import { parseMsdp } from "../core/protocol/msdp";
 import { COLOR } from "../core/protocol/ansi";
+import { ITextPipeline, TextPipeline } from "./TextPipeline";
 
 export interface IMudSession {
     isConnected(): boolean;
@@ -23,7 +21,6 @@ export interface IMudSession {
     setInfoCallback(cb: (text: string) => void): void; // инфо в TUI
     setErrorCallback(cb: (error: Error) => void): void; // ошибки в TUI
     setStatusCallback(cb: (text: string) => void): void; // статусное сообщение
-    setLogger(callback: (text: string) => void): void; // для логгера в файл
 }
 
 export class MudSession implements IMudSession {
@@ -33,18 +30,11 @@ export class MudSession implements IMudSession {
     private inflate: Inflate | null = null;
 
     private telnetParser = createTelnetParser(); // todo: тип?
-    private lines: string[] = [];
-    private partialLine = "";
-
-    // --- Debounce промпта ---
-    private static readonly PROMPT_TIMEOUT_MS = 250;
-    private promptTimer: NodeJS.Timeout | null = null;
-    private gaSeen = false;
+    private textPipeline: ITextPipeline = new TextPipeline();
 
     private onInfo?: (text: string) => void;
     private onError?: (error: Error) => void;
     private onStatus?: (text: string) => void;
-    private logger?: (text: string) => void;
 
     public isConnected(): boolean {
         return this.socket != null && !this.socket.destroyed;
@@ -123,10 +113,6 @@ export class MudSession implements IMudSession {
         this.onStatus = cb;
     }
 
-    public setLogger(cb: (text: string) => void): void {
-        this.logger = cb;
-    }
-
     private setupSocket(socket: Socket): void {
         this.socket = socket;
         this.sender.setSocket(socket);
@@ -152,65 +138,20 @@ export class MudSession implements IMudSession {
     }
 
     private processIncoming(chunk: Buffer): void {
-        const { segments, events, compressedTail } = this.telnetParser.feed(chunk);
+        const { segments, events, compressedTail } =
+            this.telnetParser.feed(chunk);
 
         for (const event of events) {
             this.handleTelnetEvent(event);
         }
 
         for (const segment of segments) {
-            this.processSegment(segment.text, segment.hasGA);
+            this.textPipeline.handleIncomingText(segment.text, segment.hasGA);
         }
 
         if (compressedTail !== null) {
             this.startCompression(compressedTail);
         }
-    }
-
-    private processSegment(text: string, hasGA: boolean): void {
-        this.partialLine += text;
-        const chunkLines = this.partialLine
-            .split("\n").map(l => l.replace(/\r$/, ""));
-        const completedLines = chunkLines.slice(0, -1);
-        this.lines.push(...completedLines);
-        this.partialLine = chunkLines[chunkLines.length - 1];
-
-        completedLines.forEach(line => {
-            runTriggers(line);
-            const out = applySubstitutes(line);
-            if (out !== null) {
-                broadcast("\r\n" + out);
-            }
-        });
-
-        if (hasGA) {
-            this.gaSeen = true;
-            if (this.promptTimer) clearTimeout(this.promptTimer);
-            this.flushPrompt();
-        } else if (!this.gaSeen && this.partialLine.length > 0) {
-            this.schedulePromptTimeout();
-        }
-
-        this.invokeLogger(text + (hasGA ? "\r\n" : ""));
-    }
-
-    private flushPrompt(): void {
-        const prompt = this.partialLine;
-        runPromptHooks(prompt, this.lines);
-        broadcast("\r\n" + prompt);
-        this.partialLine = "";
-        this.lines = [];
-    }
-
-    private schedulePromptTimeout(): void {
-        if (this.promptTimer) clearTimeout(this.promptTimer);
-
-        this.promptTimer = setTimeout(() => {
-            this.promptTimer = null;
-            if (this.partialLine.length > 0) {
-                this.flushPrompt();
-            }
-        }, MudSession.PROMPT_TIMEOUT_MS);
     }
 
     private handleTelnetEvent(ev: TelnetEvent): void {
@@ -229,8 +170,8 @@ export class MudSession implements IMudSession {
         }
 
         if (ev.option === MSDP_OPTION) {
-            const data = parseMsdp(ev.payload);
-            runMsdpHooks(data);
+            const msdpData = parseMsdp(ev.payload);
+            this.textPipeline.handleIncomingMsdp(msdpData);
         }
     }
 
@@ -257,13 +198,7 @@ export class MudSession implements IMudSession {
         this.inflate?.destroy();
         this.inflate = null;
         this.telnetParser = createTelnetParser();
-        this.lines = [];
-        this.partialLine = "";
-        this.gaSeen = false;
-        if (this.promptTimer) {
-            clearTimeout(this.promptTimer);
-            this.promptTimer = null;
-        }
+        this.textPipeline.resetState();
     }
 
     private invokeInfo(text: string): void {
@@ -278,7 +213,4 @@ export class MudSession implements IMudSession {
         this.onStatus?.(text);
     }
 
-    private invokeLogger(text: string): void {
-        this.logger?.(text);
-    }
 }
