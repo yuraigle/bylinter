@@ -9,24 +9,25 @@ import {
   applySubstitutes,
 } from "../core/logic/triggers";
 import { showme, showerr } from "../shared/utils";
+import { TcpCommandSender } from "./CommandSender";
 import { COLOR } from "../core/protocol/ansi";
 import { broadcast, addOutputSink } from "./output";
 import { createTelnetParser, type TelnetEvent } from "../core/protocol/telnet";
-import { parseMsdp, encodeMsdpVar } from "../core/protocol/msdp";
-import { encode } from "../shared/encoding";
+import { parseMsdp } from "../core/protocol/msdp";
 import { tuiLog, setStatus } from "../tui";
 import { writeLog } from "../shared/logger";
 
 const LOG_PATH = process.env.LOG_PATH || "";
-const PROMPT_TIMEOUT_MS = 250;
 
 let telnetParser = createTelnetParser();
 let socket: Socket | null = null;
+let sender: TcpCommandSender = new TcpCommandSender(null);
 let inflate: Inflate | null = null;
 let lines: string[] = [];
 let partialLine = "";
 
 // debounce для случая, когда сервер не шлёт GA
+const PROMPT_TIMEOUT_MS = 250;
 let promptTimer: ReturnType<typeof setTimeout> | null = null;
 let gaSeen = false; // приходил ли от сервера хоть раз GA
 
@@ -49,6 +50,8 @@ export async function connect(
     socket = proxy
       ? await connectViaProxy(host, port, proxy)
       : await connectDirect(host, port);
+
+    sender.setSocket(socket);
 
     socket.on("data", (chunk: Buffer) => {
       if (inflate) {
@@ -92,6 +95,7 @@ function resetSession(): void {
   socket = null;
   inflate?.destroy();
   inflate = null;
+  sender.setSocket(null);
   telnetParser = createTelnetParser();
   lines = [];
   partialLine = "";
@@ -168,40 +172,37 @@ function processSegment(text: string, hasGA: boolean): void {
   }
 }
 
-export function sendRaw(command: string) {
-  if (socket == null) {
-    showerr("Can't send text: not connected to a server.");
-    return;
+export function sendRaw(command: string): void {
+  try {
+    sender.send(command);
+  } catch (e) {
+    if (e instanceof Error) {
+      showerr(e.message);
+    }
   }
-
-  socket.write(encode(command + "\r\n"));
 }
 
-export function sendl(command: string) {
-  if (socket == null) {
-    showerr("Can't send text: not connected to a server.");
-    return;
-  }
-
-  command.split(/;/).forEach((cmd) => sendRaw(cmd));
-
+export function sendl(command: string): void {
   const echo = COLOR.brightYellow + command + COLOR.reset;
   broadcast(echo, true);
+
+  try {
+    sender.sendLine(command);
+  } catch (e) {
+    if (e instanceof Error) {
+      showerr(e.message);
+    }
+  }
 }
 
 export function sendMsdp(name: string, value: string): void {
-  if (socket == null) {
-    showerr("Can't send msdp: not connected to a server.");
-    return;
+  try {
+    sender.sendMsdp(name, value);
+  } catch (e) {
+    if (e instanceof Error) {
+      showerr(e.message);
+    }
   }
-
-  socket.write(
-    Buffer.concat([
-      Buffer.from([0xff, 0xfa, 0x45]),
-      encodeMsdpVar(name, value),
-      Buffer.from([0xff, 0xf0]),
-    ]),
-  );
 }
 
 function handleTelnetEvent(event: TelnetEvent): void {

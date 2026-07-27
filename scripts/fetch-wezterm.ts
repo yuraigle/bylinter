@@ -54,8 +54,8 @@ for (const t of targets) {
     }
 
     // удаляем временные файлы
-    await rm(zipPath, { force: true });
-    await rm(extractPath, { recursive: true, force: true });
+    // await rm(zipPath, { force: true });
+    // await rm(extractPath, { recursive: true, force: true });
   }
   console.log(`✓ ${t.platform} → ${dest}`);
 }
