@@ -2,11 +2,10 @@ import type { Socket } from "node:net";
 import { createInflate, Inflate } from "node:zlib";
 
 import { TcpCommandSender } from "./CommandSender";
-import { createTelnetParser, TelnetEvent } from "../core/protocol/telnet";
-import { broadcast } from "./output";
+import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
+    from "../core/protocol/telnet";
 import { connectDirect, connectViaProxy } from "./connection";
 import { parseMsdp } from "../core/protocol/msdp";
-import { COLOR } from "../core/protocol/ansi";
 import { ITextPipeline, TextPipeline } from "./TextPipeline";
 
 export interface IMudSession {
@@ -14,8 +13,7 @@ export interface IMudSession {
     getSocket(): Socket | null;
     connect(host: string, port?: number, proxy?: string): Promise<void>;
     disconnect(): void;
-    send(command: string): void;
-    sendl(command: string): void;
+    sendText(command: string): void;
     sendMsdp(name: string, value: string): void;
 
     setInfoCallback(cb: (text: string) => void): void; // инфо в TUI
@@ -74,20 +72,9 @@ export class MudSession implements IMudSession {
         this.resetSessionState();
     }
 
-    public send(command: string): void {
+    public sendText(command: string): void {
         try {
-            this.sender.send(command);
-        } catch (e) {
-            if (e instanceof Error) this.invokeError(e);
-        }
-    }
-
-    public sendl(command: string): void {
-        const echo = COLOR.brightYellow + command + COLOR.reset;
-        broadcast(echo, true);
-
-        try {
-            this.sender.sendLine(command);
+            this.sender.sendText(command);
         } catch (e) {
             if (e instanceof Error) this.invokeError(e);
         }
@@ -157,19 +144,16 @@ export class MudSession implements IMudSession {
     private handleTelnetEvent(ev: TelnetEvent): void {
         if (!this.socket) return;
 
-        const MSDP_OPTION = 0x45;
-        const COMPRESS2_OPT = 0x56;
-
         if (ev.kind === "negotiation") {
-            if (ev.command === "WILL" && ev.option === MSDP_OPTION) {
-                this.socket.write(Buffer.from([0xff, 0xfd, MSDP_OPTION]));
+            if (ev.command === "WILL" && ev.option === MSDP_OPT) {
+                this.socket.write(Buffer.from([0xff, 0xfd, MSDP_OPT]));
             } else if (ev.command === "WILL" && ev.option === COMPRESS2_OPT) {
                 this.socket.write(Buffer.from([0xff, 0xfd, COMPRESS2_OPT]));
             }
             return;
         }
 
-        if (ev.option === MSDP_OPTION) {
+        if (ev.option === MSDP_OPT) {
             const msdpData = parseMsdp(ev.payload);
             this.textPipeline.handleIncomingMsdp(msdpData);
         }

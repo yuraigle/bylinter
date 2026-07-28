@@ -14,15 +14,8 @@ export interface TelnetSubnegotiation {
 
 export type TelnetEvent = TelnetNegotiation | TelnetSubnegotiation;
 
-const COMMAND_NAMES: Record<number, TelnetNegotiation["command"]> = {
-  0xfb: "WILL",
-  0xfc: "WONT",
-  0xfd: "DO",
-  0xfe: "DONT",
-};
-
-export const COMPRESS_OPTION = 0x55;
-export const COMPRESS2_OPTION = 0x56;
+export const MSDP_OPT = 0x45;
+export const COMPRESS2_OPT = 0x56;
 
 export interface TelnetParseResult {
   segments: TelnetSegment[];
@@ -34,6 +27,13 @@ export interface TelnetSegment {
   text: string;
   hasGA: boolean;
 }
+
+const COMMAND_NAMES: Record<number, TelnetNegotiation["command"]> = {
+  0xfb: "WILL",
+  0xfc: "WONT",
+  0xfd: "DO",
+  0xfe: "DONT",
+};
 
 // Возвращает индекс байта SE (0xF0), либо -1, если IAC SE ещё не пришёл
 // (значит subnegotiation-блок не завершён, нужно ждать следующий чанк)
@@ -104,7 +104,7 @@ export function createTelnetParser() {
           const payload = Buffer.from(buf.subarray(i + 3, seIndex - 1));
           events.push({ kind: "subnegotiation", option, payload });
 
-          if (option === COMPRESS2_OPTION) {
+          if (option === COMPRESS2_OPT) {
             segments.push({ text: decode(Buffer.from(out)), hasGA: false });
             const tail = buf.subarray(seIndex + 1);
             return { segments, events, compressedTail: Buffer.from(tail) };

@@ -1,9 +1,9 @@
-import { MudSession } from "./MudSession";
+import { IMudSession, MudSession } from "./MudSession";
 import { showerr, showme } from "../shared/utils";
 import { addOutputSink } from "./output";
 import { setStatus, tuiLog } from "../tui";
 
-const session = new MudSession();
+const session: IMudSession = new MudSession();
 
 addOutputSink((text, isolated) => tuiLog(text, isolated));
 session.setErrorCallback((e: Error) => showerr(e.message));
@@ -19,11 +19,13 @@ export function disconnect(): void {
 }
 
 export function sendRaw(command: string): void {
-    session.send(command);
+    session.sendText(command);
 }
 
 export function sendl(command: string): void {
-    session.sendl(command);
+    command.split(/;/).forEach((cmd) => {
+        session.sendText(cmd)
+    });
 }
 
 export function sendMsdp(name: string, value: string): void {

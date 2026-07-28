@@ -15,7 +15,6 @@ export interface IProcessingResult {
 export interface ITextPipeline {
     handleIncomingText(text: string, hasGA: boolean): void;
     handleIncomingMsdp(data: Record<string, unknown>): void;
-    flushPrompt(): void;
     resetState(): void;
 }
 
@@ -60,20 +59,20 @@ export class TextPipeline implements ITextPipeline {
         runMsdpHooks(data);
     }
 
-    public flushPrompt(): void {
-        const prompt = this.partialLine;
-        runPromptHooks(prompt, this.lines);
-        broadcast("\r\n" + prompt);
-        this.partialLine = "";
-        this.lines = [];
-    }
-
     private schedulePromptTimeout(): void {
         if (this.promptTimer) clearTimeout(this.promptTimer);
         this.promptTimer = setTimeout(() => {
             this.promptTimer = null;
             this.flushPrompt();
         }, TextPipeline.PROMPT_TIMEOUT_MS);
+    }
+
+    private flushPrompt(): void {
+        const prompt = this.partialLine;
+        runPromptHooks(prompt, this.lines);
+        broadcast("\r\n" + prompt);
+        this.partialLine = "";
+        this.lines = [];
     }
 
     private invokeLogger(text: string): void {
