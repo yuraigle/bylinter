@@ -4,9 +4,9 @@ import { createInflate, Inflate } from "node:zlib";
 import { TcpCommandSender } from "./CommandSender";
 import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
     from "../protocol/telnet";
-import { connectDirect, connectViaProxy } from "./connection";
 import { parseMsdp } from "../protocol/msdp";
 import { ITextPipeline, TextPipeline } from "./TextPipeline";
+import { ConnectionProvider } from "./connect/ConnectionProvider";
 
 export interface IMudSession {
     isConnected(): boolean;
@@ -49,11 +49,7 @@ export class MudSession implements IMudSession {
 
         try {
             this.invokeStatus(`Trying to connect to ${host}:${port}...`);
-
-            const sock = proxy
-                ? await connectViaProxy(host, port, proxy)
-                : await connectDirect(host, port);
-
+            const sock = await ConnectionProvider.connect(host, port, proxy);
             this.setupSocket(sock);
             this.invokeStatus(`Connected to ${host}:${port}`);
         } catch (e) {
