@@ -1,5 +1,5 @@
 import { startLocalServer } from "./client/localServer";
-import { handleInput } from "./core/logic/input";
+import { handleInput } from "./logic/input";
 import { initTui, tuiLog } from "./tui";
 import { showme } from "./shared/utils";
 import { exposeGlobalApi } from "./globalApi";

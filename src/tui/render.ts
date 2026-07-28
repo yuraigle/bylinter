@@ -1,5 +1,5 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
-import { COLOR, SCREEN, BOX, moveTo } from "../core/protocol/ansi";
+import { COLOR, SCREEN, BOX, moveTo } from "../protocol/ansi";
 
 const SIDEBAR_WIDTH = 49;
 const SIDEBAR_DIVIDER_WIDTH = 1;

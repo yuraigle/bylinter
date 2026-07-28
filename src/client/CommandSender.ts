@@ -1,6 +1,6 @@
 import type { Socket } from "node:net";
 
-import { encodeMsdpVar } from "../core/protocol/msdp";
+import { encodeMsdpVar } from "../protocol/msdp";
 import { encode } from "../shared/encoding";
 import { NoConnectionError } from "../error/NoConnectionError";
 

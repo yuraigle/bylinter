@@ -3,9 +3,9 @@ import { createInflate, Inflate } from "node:zlib";
 
 import { TcpCommandSender } from "./CommandSender";
 import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
-    from "../core/protocol/telnet";
+    from "../protocol/telnet";
 import { connectDirect, connectViaProxy } from "./connection";
-import { parseMsdp } from "../core/protocol/msdp";
+import { parseMsdp } from "../protocol/msdp";
 import { ITextPipeline, TextPipeline } from "./TextPipeline";
 
 export interface IMudSession {

@@ -3,7 +3,7 @@ import { createServer } from "node:net";
 import { addOutputSink } from "./output";
 import { encode } from "../shared/encoding";
 import { showme } from "../shared/utils";
-import { createTelnetParser } from "../core/protocol/telnet";
+import { createTelnetParser } from "../protocol/telnet";
 
 export function startLocalServer(
   port: number,

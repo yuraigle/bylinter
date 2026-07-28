@@ -3,7 +3,7 @@ import {
     applySubstitutes,
     runPromptHooks,
     runMsdpHooks
-} from "../core/logic/triggers";
+} from "../logic/triggers";
 import { broadcast } from "./output";
 import { writeLog } from "../shared/logger";
 

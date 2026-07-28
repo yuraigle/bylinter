@@ -1,4 +1,4 @@
-import { decode } from "../../shared/encoding";
+import { decode } from "../shared/encoding";
 
 export interface TelnetNegotiation {
   kind: "negotiation";

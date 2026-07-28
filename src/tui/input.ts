@@ -1,6 +1,6 @@
 import readline from "node:readline";
 
-import { dispatchBindkey, type KeyInfo } from "../core/logic/bindkeys";
+import { dispatchBindkey, type KeyInfo } from "../logic/bindkeys";
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
   getScrollStep,
