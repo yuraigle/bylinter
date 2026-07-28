@@ -42,6 +42,4 @@ export function setSidebar(lines: string[], start: number, end: number): void {
   for (let i = start; i <= end; i++) {
     state.sidebarLines[i] = lines[i - start] ?? "";
   }
-
-  // redraw();
 }
