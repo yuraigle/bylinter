@@ -1,6 +1,8 @@
 import { connect, Socket } from "node:net";
+import { IConnector } from "./ConnectionProvider";
 
-export class ProxyConnector {
+export class ProxyConnector implements IConnector {
+
     private readonly proxyHost: string;
     private readonly proxyPort: number;
 

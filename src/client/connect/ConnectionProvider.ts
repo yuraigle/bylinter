@@ -3,6 +3,10 @@ import { Socket } from "node:net";
 import { DirectConnector } from "./DirectConnector";
 import { ProxyConnector } from "./ProxyConnector";
 
+export interface IConnector {
+    connect(host: string, port: number): Promise<Socket>;
+}
+
 export class ConnectionProvider {
 
     public static async connect(
@@ -10,12 +14,10 @@ export class ConnectionProvider {
         port: number,
         proxyUrl?: string
     ): Promise<Socket> {
-        if (proxyUrl) {
-            const connector = new ProxyConnector(proxyUrl);
-            return await connector.connect(host, port);
-        }
+        const connector: IConnector = proxyUrl
+            ? new ProxyConnector(proxyUrl)
+            : new DirectConnector();
 
-        const connector = new DirectConnector();
         return await connector.connect(host, port);
     }
 }

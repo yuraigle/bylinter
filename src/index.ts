@@ -1,5 +1,8 @@
 import { bootstrap } from "./bootstrap";
-import { loadUserConfig } from "./configLoader";
+import { ConfigLoaderService } from "./client/ConfigLoaderService";
+import { showme } from "./client";
 
 bootstrap();
-await loadUserConfig();
+
+const configLoader = new ConfigLoaderService(showme);
+await configLoader.loadUserConfig();

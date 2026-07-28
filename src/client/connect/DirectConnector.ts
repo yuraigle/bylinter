@@ -1,6 +1,8 @@
 import { Socket } from "node:net";
+import { IConnector } from "./ConnectionProvider";
 
-export class DirectConnector {
+export class DirectConnector implements IConnector {
+
     public async connect(host: string, port: number): Promise<Socket> {
         return new Promise((resolve, reject) => {
             const sock = new Socket();
