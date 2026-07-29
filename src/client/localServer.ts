@@ -2,15 +2,15 @@ import { createServer } from "node:net";
 
 import { addOutputSink } from "./output";
 import { encode } from "../shared/encoding";
-import { showme } from "../shared/utils";
 import { createTelnetParser } from "../protocol/telnet";
 
 export function startLocalServer(
   port: number,
   onInput: (text: string) => void,
+  systemEcho: (text: string) => void,
 ): void {
   const server = createServer((client) => {
-    showme(`Client connected: ${client.remoteAddress}`);
+    systemEcho(`Client connected: ${client.remoteAddress}`);
 
     const parser = createTelnetParser();
 
@@ -27,7 +27,7 @@ export function startLocalServer(
     });
 
     client.on("close", () => {
-      showme("Client disconnected");
+      systemEcho("Client disconnected");
       removeSink();
     });
 
@@ -35,6 +35,6 @@ export function startLocalServer(
   });
 
   server.listen(port, () => {
-    showme(`Local proxy listening on port ${port}`);
+    systemEcho(`Local proxy listening on port ${port}`);
   });
 }

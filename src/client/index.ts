@@ -1,4 +1,4 @@
-export { registerAlias } from "../logic/input";
+export { registerAlias } from "./InputHandler";
 export { registerBindkey } from "../logic/bindkeys";
 export {
   registerTrigger,
@@ -7,7 +7,8 @@ export {
   registerSubstitute,
   registerGag,
 } from "../logic/triggers";
-export { sendRaw, sendl, sendMsdp, connect, disconnect } from "./mud";
-export { showme, showerr, echo } from "../shared/utils";
 export { stripColors, COLOR } from "../protocol/ansi";
-export { setSidebar, wecho } from "../tui";
+
+// export { sendRaw, sendl, sendMsdp, connect, disconnect } from "./mud";
+// export { showme, showerr, echo } from "../shared/utils";
+// export { setSidebar, wecho } from "../tui";

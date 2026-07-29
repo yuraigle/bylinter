@@ -175,8 +175,8 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   }
 }
 
-export function initInput(onLine: (line: string) => void): void {
-  inputHandler = onLine;
+export function initInput(onInput: (line: string) => void): void {
+  inputHandler = onInput;
 
   readline.emitKeypressEvents(process.stdin);
   if (process.stdin.isTTY) {

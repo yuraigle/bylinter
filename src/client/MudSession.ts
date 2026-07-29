@@ -1,12 +1,13 @@
 import type { Socket } from "node:net";
 import { createInflate, Inflate } from "node:zlib";
 
-import { TcpCommandSender } from "./CommandSender";
+import { ICommandSender, TcpCommandSender } from "./CommandSender";
 import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
     from "../protocol/telnet";
 import { parseMsdp } from "../protocol/msdp";
-import { ITextPipeline, TextPipeline } from "./TextPipeline";
+import { ITextPipeline } from "./TextPipeline";
 import { ConnectionProvider } from "./connect/ConnectionProvider";
+import { ITerminalUI } from "../tui/TerminalUI";
 
 export interface IMudSession {
     isConnected(): boolean;
@@ -15,26 +16,34 @@ export interface IMudSession {
     disconnect(): void;
     sendText(command: string): void;
     sendMsdp(name: string, value: string): void;
-
-    setInfoCallback(cb: (text: string) => void): void; // инфо в TUI
-    setErrorCallback(cb: (error: Error) => void): void; // ошибки в TUI
-    setStatusCallback(cb: (text: string) => void): void; // статусное сообщение
 }
 
 export class MudSession implements IMudSession {
-    // --- Сетевое состояние ---
+    private readonly textPipeline: ITextPipeline;
+    private readonly sender: ICommandSender;
+    private telnetParser = createTelnetParser(); // todo сделать классом
+
     private socket: Socket | null = null;
-    private sender: TcpCommandSender = new TcpCommandSender(null);
     private inflate: Inflate | null = null;
+    private onInfo?: (text: string) => void; // инфо в TUI
+    private onError?: (error: Error) => void; // ошибки в TUI
+    private onStatus?: (text: string) => void; // статусное сообщение
 
-    private telnetParser = createTelnetParser(); // todo: тип?
-    private textPipeline: ITextPipeline = new TextPipeline();
+    constructor(
+        textPipeline: ITextPipeline,
+        sender: TcpCommandSender,
+    ) {
+        this.textPipeline = textPipeline;
+        this.sender = sender;
+    }
 
-    private onInfo?: (text: string) => void;
-    private onError?: (error: Error) => void;
-    private onStatus?: (text: string) => void;
+    public setTui = (tui: ITerminalUI) => {
+        this.onInfo = tui.showme;
+        this.onError = (err: Error) => tui.showerr(err.message);
+        this.onStatus = tui.setStatus;
+    }
 
-    public isConnected(): boolean {
+    public isConnected = (): boolean => {
         return this.socket != null && !this.socket.destroyed;
     }
 
@@ -59,7 +68,7 @@ export class MudSession implements IMudSession {
         }
     }
 
-    public disconnect(): void {
+    public disconnect = (): void => {
         if (this.socket) {
             this.socket.destroy();
         } else {
@@ -68,7 +77,7 @@ export class MudSession implements IMudSession {
         this.resetSessionState();
     }
 
-    public sendText(command: string): void {
+    public sendText = (command: string): void => {
         try {
             this.sender.sendText(command);
         } catch (e) {
@@ -82,18 +91,6 @@ export class MudSession implements IMudSession {
         } catch (e) {
             if (e instanceof Error) this.invokeError(e);
         }
-    }
-
-    public setInfoCallback(cb: (text: string) => void): void {
-        this.onInfo = cb;
-    }
-
-    public setErrorCallback(cb: (error: Error) => void): void {
-        this.onError = cb;
-    }
-
-    public setStatusCallback(cb: (text: string) => void): void {
-        this.onStatus = cb;
     }
 
     private setupSocket(socket: Socket): void {

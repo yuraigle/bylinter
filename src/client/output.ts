@@ -1,4 +1,4 @@
-export type OutputSink = (text: string, isolated?: boolean) => void;
+export type OutputSink = (text: string) => void;
 
 const sinks = new Set<OutputSink>();
 
@@ -7,8 +7,8 @@ export function addOutputSink(sink: OutputSink): () => void {
   return () => sinks.delete(sink);
 }
 
-export function broadcast(text: string, isolated = false): void {
+export function broadcast(text: string): void {
   for (const sink of sinks) {
-    sink(text, isolated);
+    sink(text);
   }
 }

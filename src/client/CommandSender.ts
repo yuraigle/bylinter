@@ -7,6 +7,7 @@ import { NoConnectionError } from "../error/NoConnectionError";
 export interface ICommandSender {
     sendText(command: string): void;
     sendMsdp(name: string, value: string): void;
+    setSocket(socket: Socket | null): void;
 }
 
 export class TcpCommandSender implements ICommandSender {

@@ -21,15 +21,14 @@ export interface ITextPipeline {
 export class TextPipeline implements ITextPipeline {
     private lines: string[] = [];
     private partialLine = "";
+    private logPath: string | null = process.env.LOG_PATH || null;
 
     // prompt debouncer
     private static PROMPT_TIMEOUT_MS: number = 250;
     private promptTimer: NodeJS.Timeout | null = null;
     private gaSeen = false;
 
-    private logPath: string | null = process.env.LOG_PATH || null;
-
-    public handleIncomingText(text: string, hasGA: boolean): void {
+    public handleIncomingText = (text: string, hasGA: boolean): void => {
         this.partialLine += text;
         const chunkLines = this.partialLine
             .split("\n").map(l => l.replace(/\r$/, ""));
@@ -55,8 +54,16 @@ export class TextPipeline implements ITextPipeline {
         this.invokeLogger(text + (hasGA ? "\r\n" : ""));
     }
 
-    public handleIncomingMsdp(data: Record<string, unknown>): void {
+    public handleIncomingMsdp = (data: Record<string, unknown>): void => {
         runMsdpHooks(data);
+    }
+
+    public resetState = (): void => {
+        if (this.promptTimer) clearTimeout(this.promptTimer);
+        this.promptTimer = null;
+        this.gaSeen = false;
+        this.partialLine = "";
+        this.lines = [];
     }
 
     private schedulePromptTimeout(): void {
@@ -79,13 +86,5 @@ export class TextPipeline implements ITextPipeline {
         if (this.logPath) {
             writeLog(text, this.logPath);
         }
-    }
-
-    public resetState(): void {
-        if (this.promptTimer) clearTimeout(this.promptTimer);
-        this.promptTimer = null;
-        this.gaSeen = false;
-        this.partialLine = "";
-        this.lines = [];
     }
 }
