@@ -1,5 +1,6 @@
 import { state } from "./state";
-import { enterScreen, exitScreen, redraw, appendLog, rewrapAll } from "./render";
+import { enterScreen, exitScreen, redraw, appendLog, rewrapAll, wecho }
+    from "./render";
 import { initInput, destroyInput } from "./input";
 import { COLOR } from "../client";
 
@@ -12,6 +13,7 @@ export interface ITerminalUI {
     echo(text: string): void;
     showme(text: string): void;
     showerr(text: string): void;
+    wecho(w: number, text: string): void;
 }
 
 const prefix = `${COLOR.red}-${COLOR.green}:${COLOR.red}-${COLOR.reset} `;
@@ -64,5 +66,9 @@ export class TerminalUI implements ITerminalUI {
 
     public showerr = (message: string): void => {
         this.showme(`${COLOR.red}${message} ${COLOR.reset}`);
+    }
+
+    public wecho = (w: number, text: string): void => {
+        wecho(w, text);
     }
 }

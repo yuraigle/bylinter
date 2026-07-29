@@ -1,4 +1,13 @@
-import { COLOR, stripColors } from "./client";
+import {
+  COLOR,
+  registerGag,
+  registerMsdpHook,
+  registerPromptHook,
+  registerSubstitute,
+  registerTrigger,
+  stripColors
+} from "./client";
+import { AliasCollection } from "./client/AliasHandler";
 import { MudSession } from "./client/MudSession";
 import { TerminalUI } from "./tui/TerminalUI";
 
@@ -65,11 +74,11 @@ interface GlobalApiContext {
   };
 }
 
-/**
- * Публикует API для user-скриптов.
- * Принимает уже созданные и настроенные инстансы.
- */
-export function exposeGlobalApi(session: MudSession, tui: TerminalUI): void {
+export function exposeGlobalApi(
+  session: MudSession,
+  tui: TerminalUI,
+  aliases: AliasCollection,
+): void {
   const api: GlobalApiContext = {
     connect: session.connect,
     disconnect: session.disconnect,
@@ -79,16 +88,17 @@ export function exposeGlobalApi(session: MudSession, tui: TerminalUI): void {
     echo: tui.echo,
     showme: tui.showme,
     showerr: tui.showerr,
-    wecho: (n, line) => {}, // todo
+    wecho: tui.wecho,
+    setSidebar: tui.setSidebar,
 
-    registerTrigger: () => {},
-    registerPromptHook: () => {},
-    registerMsdpHook: () => {},
-    registerSubstitute: () => {},
-    registerGag: () => {},
-    registerAlias: () => {},
-    registerBindkey: () => {},
-    setSidebar: () => {},
+    registerTrigger: registerTrigger,
+    registerPromptHook: registerPromptHook,
+    registerMsdpHook: registerMsdpHook,
+    registerSubstitute: registerSubstitute,
+    registerGag: registerGag,
+    registerAlias: aliases.registerAlias,
+    registerBindkey: () => { },
+    
     stripColors: stripColors,
 
     COLOR: COLOR,
@@ -97,6 +107,6 @@ export function exposeGlobalApi(session: MudSession, tui: TerminalUI): void {
   Object.defineProperty(globalThis, 'bylinter', {
     value: api,
     writable: false,
-    configurable: true, // Чтобы allow reloading config
+    configurable: true,
   });
 }

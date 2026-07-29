@@ -1,21 +1,17 @@
+import { AliasCollection } from "./AliasHandler";
 import { MudSession } from "./MudSession";
 
-export type AliasHandler = (args: string[]) => void;
 export type CommandHandler = (args: string[]) => void;
-
-const aliases: Record<string, AliasHandler> = {};
-
-export function registerAlias(cmd: string, handler: AliasHandler): void {
-  aliases[cmd] = handler;
-}
 
 export class InputHandler {
   private readonly session: MudSession;
+  private readonly aliases: AliasCollection;
   private systemEcho: (text: string) => void = console.log;
   private commands: Record<string, CommandHandler> = {};
 
-  constructor(session: MudSession) {
+  constructor(session: MudSession, aliases: AliasCollection) {
     this.session = session;
+    this.aliases = aliases;
 
     this.commands['/connect'] = (args: string[]) => {
       const [host, portArg, proxy] = args;
@@ -69,11 +65,7 @@ export class InputHandler {
       return;
     }
 
-    const handler = aliases[cmd];
-    if (handler) {
-      handler(args);
-      return;
-    }
+    if (this.aliases.handleInput(line)) return;
 
     line.split(/;/).forEach((cmd) => this.session.sendText(cmd));
   }

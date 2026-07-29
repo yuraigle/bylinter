@@ -9,23 +9,25 @@ import { TcpCommandSender } from "./client/CommandSender";
 
 import packageJson from "../package.json" with { type: "json" };
 import { addOutputSink } from "./client/output";
+import { AliasCollection } from "./client/AliasHandler";
 
 const pipeline = new TextPipeline();
 const sender = new TcpCommandSender(null);
 const session: MudSession = new MudSession(pipeline, sender);
 
-const inputHandler = new InputHandler(session);
+const aliases: AliasCollection = new AliasCollection();
+const inputHandler = new InputHandler(session, aliases);
 const tui: TerminalUI = new TerminalUI(inputHandler.handle);
 
 session.setTui(tui);
-addOutputSink((text: string) => tui.log(text)); // todo куда это
 inputHandler.setSystemEcho(tui.echo);
 
 // старт локального сервера м проксированием туда всех строк
 const localPort = Number(process.env.LOCAL_PORT || 0);
 if (localPort > 0) startLocalServer(localPort, inputHandler.handle, tui.showme);
 
-exposeGlobalApi(session, tui); // все функции API в globalThis
+addOutputSink((text: string) => tui.log(text)); // todo куда это
+exposeGlobalApi(session, tui, aliases); // все функции API в globalThis
 
 tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 

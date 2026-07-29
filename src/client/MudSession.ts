@@ -51,7 +51,11 @@ export class MudSession implements IMudSession {
         return this.socket;
     }
 
-    public async connect(host: string, port = 4000, proxy = ""): Promise<void> {
+    public connect = async (
+        host: string,
+        port = 4000,
+        proxy = ""
+    ): Promise<void> => {
         if (this.isConnected()) {
             this.disconnect();
         }
