@@ -1,29 +1,17 @@
-import { stripColors } from "../protocol/ansi";
-
-export type LineHandler = (matches: string[], colored: string, ) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
 export type MsdpHandler = (data: Record<string, unknown>) => void;
 export type SubstituteHandler = (text: string) => string | null;
 
-export interface Trigger {
-  pattern: RegExp;
-  handler: LineHandler;
-}
 
 export interface PromptHook {
   handler: (prompt: string, lines: string[]) => boolean;
   priority: number;
 }
 
-const triggers: Trigger[] = [];
 const promptHooks: PromptHook[] = [];
 const msdpHooks: MsdpHandler[] = [];
 // const substitutes: SubstituteHandler[] = []; // для замены строки
 // const gags: RegExp[] = []; // для скрытия строки целиком
-
-export function registerTrigger(pattern: RegExp, handler: LineHandler): void {
-  triggers.push({ pattern, handler });
-}
 
 export function registerPromptHook(
   handler: PromptHandler,
@@ -40,18 +28,6 @@ export function registerMsdpHook(handler: MsdpHandler): void {
 export function registerSubstitute(handler: SubstituteHandler): void {
 }
 
-export function runTriggers(line: string): void {
-  const clean = stripColors(line);
-
-  // showme(`[raw] ${JSON.stringify(clean)}`);
-
-  for (const trigger of triggers) {
-    const match = clean.match(trigger.pattern);
-    if (match) {
-      trigger.handler(match, line);
-    }
-  }
-}
 
 export function applySubstitutes(text: string): string | null {
   // for (const subst of substitutes) {

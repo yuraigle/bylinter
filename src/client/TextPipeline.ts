@@ -1,11 +1,11 @@
 import {
-    runTriggers,
     applySubstitutes,
     runPromptHooks,
     runMsdpHooks
 } from "../logic/triggers";
 import { broadcast } from "./output";
 import { writeLog } from "../shared/logger";
+import { TriggerCollection } from "./TriggerCollection";
 
 export interface IProcessingResult {
     linesToDisplay: string[];
@@ -19,6 +19,12 @@ export interface ITextPipeline {
 }
 
 export class TextPipeline implements ITextPipeline {
+    private readonly triggers: TriggerCollection;
+
+    constructor(triggers: TriggerCollection) {
+        this.triggers = triggers;
+    }
+
     private lines: string[] = [];
     private partialLine = "";
     private logPath: string | null = process.env.LOG_PATH || null;
@@ -36,9 +42,10 @@ export class TextPipeline implements ITextPipeline {
         this.lines.push(...completedLines);
         this.partialLine = chunkLines[chunkLines.length - 1];
 
-        completedLines.forEach(line => {
-            runTriggers(line);
-            const out = applySubstitutes(line);
+        // lineCL - text colored
+        completedLines.forEach(lineCL => {
+            this.triggers.dispatch(lineCL);
+            const out = applySubstitutes(lineCL);
             if (out !== null) {
                 broadcast("\r\n" + out);
             }

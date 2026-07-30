@@ -11,8 +11,11 @@ import packageJson from "../package.json" with { type: "json" };
 import { addOutputSink } from "./client/output";
 import { AliasCollection } from "./client/AliasCollection";
 import { BindkeysCollection } from "./client/BindkeysCollection";
+import { TriggerCollection } from "./client/TriggerCollection";
 
-const pipeline: TextPipeline = new TextPipeline();
+const triggers: TriggerCollection = new TriggerCollection();
+const pipeline: TextPipeline = new TextPipeline(triggers);
+
 const sender: TcpCommandSender = new TcpCommandSender(null);
 const session: MudSession = new MudSession(pipeline, sender);
 const aliases: AliasCollection = new AliasCollection();
@@ -29,7 +32,7 @@ const localPort = Number(process.env.LOCAL_PORT || 0);
 if (localPort > 0) startLocalServer(localPort, inputHandler.handle, tui.showme);
 
 addOutputSink((text: string) => tui.log(text)); // todo куда это
-exposeGlobalApi(session, tui, aliases, bindkeys); // все API в globalThis
+exposeGlobalApi(session, tui, aliases, bindkeys, triggers); // все API в globalThis
 
 tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 

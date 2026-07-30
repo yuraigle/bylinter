@@ -9,6 +9,7 @@ import {
 import { AliasCollection } from "./client/AliasCollection";
 import { BindkeysCollection } from "./client/BindkeysCollection";
 import { MudSession } from "./client/MudSession";
+import { TriggerCollection } from "./client/TriggerCollection";
 import { TerminalUI } from "./tui/TerminalUI";
 
 type LineHandler = (matches: string[], colored: string) => void;
@@ -77,7 +78,8 @@ export function exposeGlobalApi(
   session: MudSession,
   tui: TerminalUI,
   aliases: AliasCollection,
-  bindkeys: BindkeysCollection
+  bindkeys: BindkeysCollection,
+  triggers: TriggerCollection,
 ): void {
   const api: GlobalApiContext = {
     connect: session.connect,
@@ -91,7 +93,7 @@ export function exposeGlobalApi(
     wecho: tui.wecho,
     setSidebar: tui.setSidebar,
 
-    registerTrigger: registerTrigger,
+    registerTrigger: triggers.register,
     registerPromptHook: registerPromptHook,
     registerMsdpHook: registerMsdpHook,
     registerSubstitute: registerSubstitute,

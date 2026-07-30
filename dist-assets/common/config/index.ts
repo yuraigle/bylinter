@@ -137,4 +137,7 @@ registerBindkey("M-pgdn", () => sendline("d"));
 // поведение
 registerTrigger(/^Вы готовы сожрать быка\./, () => sendline("пить боч.синим"));
 
-registerAlias("нас", () => { sendline("пить боч.синим") })
+registerAlias("обк", () => {
+  sendline("к !в щ!;к !м т!;к !доб!;к !б в!;к !пок!");
+  sendline("к !пок!;к !пок!;к !о н!;к !о я!;к !о с!");
+});
