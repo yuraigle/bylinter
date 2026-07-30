@@ -1,4 +1,4 @@
-import { AliasCollection } from "./AliasCollection";
+import { AliasCollection } from "./control/AliasCollection";
 import { MudSession } from "./MudSession";
 
 export type CommandHandler = (args: string[]) => void;

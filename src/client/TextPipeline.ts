@@ -1,11 +1,9 @@
-import {
-    applySubstitutes,
-    runPromptHooks,
-    runMsdpHooks
-} from "../logic/triggers";
 import { broadcast } from "./output";
 import { writeLog } from "../shared/logger";
-import { TriggerCollection } from "./TriggerCollection";
+import { TriggerCollection } from "./control/TriggerCollection";
+import { PromptHookCollection } from "./control/PromptHookCollection";
+import { MsdpHookCollection } from "./control/MsdpHookCollection";
+import { SubstituteCollection } from "./control/SubstituteCollection";
 
 export interface IProcessingResult {
     linesToDisplay: string[];
@@ -20,9 +18,20 @@ export interface ITextPipeline {
 
 export class TextPipeline implements ITextPipeline {
     private readonly triggers: TriggerCollection;
+    private readonly substitutes: SubstituteCollection;
+    private readonly promptHooks: PromptHookCollection;
+    private readonly msdpHooks: MsdpHookCollection;
 
-    constructor(triggers: TriggerCollection) {
+    constructor(
+        triggers: TriggerCollection,
+        substitutes: SubstituteCollection,
+        promptHooks: PromptHookCollection,
+        msdpHooks: MsdpHookCollection
+    ) {
         this.triggers = triggers;
+        this.substitutes = substitutes;
+        this.promptHooks = promptHooks;
+        this.msdpHooks = msdpHooks;
     }
 
     private lines: string[] = [];
@@ -45,9 +54,9 @@ export class TextPipeline implements ITextPipeline {
         // lineCL - text colored
         completedLines.forEach(lineCL => {
             this.triggers.dispatch(lineCL);
-            const out = applySubstitutes(lineCL);
-            if (out !== null) {
-                broadcast("\r\n" + out);
+            const outLineCL = this.substitutes.dispatch(lineCL);
+            if (outLineCL !== null) {
+                broadcast("\r\n" + outLineCL);
             }
         });
 
@@ -62,7 +71,7 @@ export class TextPipeline implements ITextPipeline {
     }
 
     public handleIncomingMsdp = (data: Record<string, unknown>): void => {
-        runMsdpHooks(data);
+        this.msdpHooks.dispatch(data);
     }
 
     public resetState = (): void => {
@@ -83,7 +92,7 @@ export class TextPipeline implements ITextPipeline {
 
     private flushPrompt(): void {
         const prompt = this.partialLine;
-        runPromptHooks(prompt, this.lines);
+        this.promptHooks.dispatch(prompt, this.lines);
         broadcast("\r\n" + prompt);
         this.partialLine = "";
         this.lines = [];

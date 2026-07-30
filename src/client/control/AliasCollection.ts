@@ -1,5 +1,3 @@
-export type AliasHandler = (args: string[]) => void;
-
 export class AliasCollection {
     private readonly aliases: Map<string, AliasHandler> = new Map();
 
@@ -19,3 +17,5 @@ export class AliasCollection {
         return false;
     }
 }
+
+export type AliasHandler = (args: string[]) => void;

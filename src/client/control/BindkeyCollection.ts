@@ -1,3 +1,33 @@
+export class BindkeyCollection {
+    private bindings: Binding[] = [];
+
+    public register = (spec: string, handler: () => void): void => {
+      this.bindings.push({ spec: parseSpec(spec), handler });
+    }
+
+    public dispatch = (key: KeyInfo, str: string): boolean => {
+      for (const { spec, handler } of this.bindings) {
+        if (spec.ctrl !== key.ctrl) continue;
+        if (spec.meta !== key.meta) continue;
+    
+        if (spec.name.length === 1) {
+          const expected = spec.shift ? spec.name.toUpperCase() : spec.name;
+          if (str !== expected) continue;
+        } else {
+          const actualName = normalizeName(key.name ?? "");
+          if (actualName !== spec.name) continue;
+          if (spec.shift && !key.shift) continue;
+        }
+    
+        handler();
+        return true;
+      }
+      return false;
+    }
+}
+
+// todo: Аж 2 класса под одно и то же, и ещё зачем-то str. Разобраться.
+
 export interface KeyInfo {
   name?: string;
   ctrl: boolean;
@@ -56,32 +86,4 @@ function parseSpec(spec: string): BindSpec {
   }
 
   return { ctrl, meta, shift, name: normalizeName(keyPart) };
-}
-
-export class BindkeysCollection {
-    private bindings: Binding[] = [];
-
-    public register = (spec: string, handler: () => void): void => {
-      this.bindings.push({ spec: parseSpec(spec), handler });
-    }
-
-    public dispatch = (key: KeyInfo, str: string): boolean => {
-      for (const { spec, handler } of this.bindings) {
-        if (spec.ctrl !== key.ctrl) continue;
-        if (spec.meta !== key.meta) continue;
-    
-        if (spec.name.length === 1) {
-          const expected = spec.shift ? spec.name.toUpperCase() : spec.name;
-          if (str !== expected) continue;
-        } else {
-          const actualName = normalizeName(key.name ?? "");
-          if (actualName !== spec.name) continue;
-          if (spec.shift && !key.shift) continue;
-        }
-    
-        handler();
-        return true;
-      }
-      return false;
-    }
 }

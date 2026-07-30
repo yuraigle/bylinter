@@ -5,6 +5,7 @@ const {
   registerTrigger,
   registerPromptHook,
   registerBindkey,
+  registerSubstitute,
   registerGag,
   connect,
   showme,
@@ -85,6 +86,14 @@ registerPromptHook((prompt: string, lines: string[]) => {
 }, 99);
 
 // registerGag(/^:.*?/); // можно спрятать карту из лога
+
+// пример substitute
+registerSubstitute(
+  /^([А-ЯЁ].*) ([А-ЯЁ][а-яё]+) ([(,].+) (летает|сидит|стоит|отдыхает|спит|плавает) здесь\. $/,
+  (m: string[]) => {
+    return `\u001b[1;31m${m[1]} \u001b[1;36m${m[2]}\u001b[1;31m ${m[3]} ${m[4]} здесь. `;
+  }
+);
 
 // сохранение диалогов в окно №2, доступно по Alt+2
 registerTrigger(

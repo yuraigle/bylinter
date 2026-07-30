@@ -1,4 +1,4 @@
-import { stripColors } from "../protocol/ansi";
+import { stripColors } from "../../protocol/ansi";
 
 export type LineHandler = (matches: string[], lineCL: string) => void;
 
@@ -16,7 +16,6 @@ export class TriggerCollection {
     }
 
     public dispatch = (lineCL: string): void => {
-        // showme(`[raw] ${JSON.stringify(lineCL)}`);
         const line = stripColors(lineCL);
 
         for (const trigger of this.triggers) {

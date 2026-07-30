@@ -3,7 +3,7 @@ import { enterScreen, exitScreen, redraw, appendLog, rewrapAll, wecho }
     from "./render";
 import { initInput, destroyInput } from "./input";
 import { COLOR } from "../client";
-import { KeyInfo } from "../client/BindkeysCollection";
+import { KeyInfo } from "../client/control/BindkeyCollection";
 
 export interface ITerminalUI {
     destroy(): void;

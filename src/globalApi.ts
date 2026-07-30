@@ -1,21 +1,17 @@
-import {
-  COLOR,
-  registerMsdpHook,
-  registerPromptHook,
-  registerSubstitute,
-  registerTrigger,
-  stripColors
-} from "./client";
-import { AliasCollection } from "./client/AliasCollection";
-import { BindkeysCollection } from "./client/BindkeysCollection";
+import { COLOR, stripColors } from "./client";
+import { AliasCollection } from "./client/control/AliasCollection";
+import { BindkeyCollection } from "./client/control/BindkeyCollection";
 import { MudSession } from "./client/MudSession";
-import { TriggerCollection } from "./client/TriggerCollection";
+import { TriggerCollection } from "./client/control/TriggerCollection";
 import { TerminalUI } from "./tui/TerminalUI";
+import { PromptHookCollection } from "./client/control/PromptHookCollection";
+import { MsdpHookCollection } from "./client/control/MsdpHookCollection";
+import { SubstituteCollection } from "./client/control/SubstituteCollection";
 
 type LineHandler = (matches: string[], colored: string) => void;
 type PromptHandler = (prompt: string, lines: string[]) => boolean;
 type MsdpHandler = (data: Record<string, unknown>) => void;
-type SubstituteHandler = (text: string) => string;
+type SubstituteHandler = (m: string[], lineCL: string) => string;
 type AliasHandler = (args: string[]) => void;
 type BindHandler = () => void;
 
@@ -33,7 +29,7 @@ interface GlobalApiContext {
   registerTrigger(pattern: RegExp, handler: LineHandler): void;
   registerPromptHook(handler: PromptHandler, priority: number): void;
   registerMsdpHook(handler: MsdpHandler): void;
-  registerSubstitute(handler: SubstituteHandler): void;
+  registerSubstitute(rx: RegExp, handler: SubstituteHandler): void;
   registerAlias(cmd: string, handler: AliasHandler): void;
   registerBindkey(spec: string, handler: BindHandler): void;
   setSidebar(lines: string[], start: number, end: number): void;
@@ -78,8 +74,11 @@ export function exposeGlobalApi(
   session: MudSession,
   tui: TerminalUI,
   aliases: AliasCollection,
-  bindkeys: BindkeysCollection,
+  bindkeys: BindkeyCollection,
   triggers: TriggerCollection,
+  substitutes: SubstituteCollection,
+  promptHooks: PromptHookCollection,
+  msdpHooks: MsdpHookCollection,
 ): void {
   const api: GlobalApiContext = {
     connect: session.connect,
@@ -94,14 +93,13 @@ export function exposeGlobalApi(
     setSidebar: tui.setSidebar,
 
     registerTrigger: triggers.register,
-    registerPromptHook: registerPromptHook,
-    registerMsdpHook: registerMsdpHook,
-    registerSubstitute: registerSubstitute,
+    registerPromptHook: promptHooks.register,
+    registerMsdpHook: msdpHooks.register,
+    registerSubstitute: substitutes.register,
     registerAlias: aliases.register,
     registerBindkey: bindkeys.register,
 
     stripColors: stripColors,
-
     COLOR: COLOR,
   };
 

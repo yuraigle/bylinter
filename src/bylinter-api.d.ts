@@ -11,7 +11,7 @@ interface GlobalApiContext {
     registerTrigger(pattern: RegExp, handler: (matches: string[], lineCL: string) => void): void;
     registerPromptHook(handler: (prompt: string, linesCL: string[]) => boolean, priority: number): void;
     registerMsdpHook(handler: (data: Record<string, unknown>) => void): void;
-    registerSubstitute(handler: (text: string) => string | null): void;
+    registerSubstitute(pattern: RegExp, handler: (text: string) => string | null): void;
     registerAlias(cmd: string, handler: (args: string[]) => void): void;
     registerBindkey(spec: string, handler: () => void): void;
     stripColors(text: string): string;
