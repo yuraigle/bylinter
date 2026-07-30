@@ -3,7 +3,7 @@ import { stripColors } from "../protocol/ansi";
 export type LineHandler = (matches: string[], colored: string, ) => void;
 export type PromptHandler = (prompt: string, lines: string[]) => boolean;
 export type MsdpHandler = (data: Record<string, unknown>) => void;
-export type SubstituteHandler = (text: string) => string;
+export type SubstituteHandler = (text: string) => string | null;
 
 export interface Trigger {
   pattern: RegExp;
@@ -18,8 +18,8 @@ export interface PromptHook {
 const triggers: Trigger[] = [];
 const promptHooks: PromptHook[] = [];
 const msdpHooks: MsdpHandler[] = [];
-const substitutes: SubstituteHandler[] = []; // для замены строки
-const gags: RegExp[] = []; // для скрытия строки целиком
+// const substitutes: SubstituteHandler[] = []; // для замены строки
+// const gags: RegExp[] = []; // для скрытия строки целиком
 
 export function registerTrigger(pattern: RegExp, handler: LineHandler): void {
   triggers.push({ pattern, handler });
@@ -38,11 +38,6 @@ export function registerMsdpHook(handler: MsdpHandler): void {
 }
 
 export function registerSubstitute(handler: SubstituteHandler): void {
-  substitutes.push(handler);
-}
-
-export function registerGag(re: RegExp): void {
-  gags.push(re);
 }
 
 export function runTriggers(line: string): void {
@@ -59,15 +54,13 @@ export function runTriggers(line: string): void {
 }
 
 export function applySubstitutes(text: string): string | null {
-  for (const gag of gags) {
-    if (gag.test(text)) {
-      return null;
-    }
-  }
-
-  for (const subst of substitutes) {
-    text = subst(text);
-  }
+  // for (const subst of substitutes) {
+  //   const res: string | null = subst(text);
+  //   if (res === null) {
+  //     return null; // Gag
+  //   }
+  //   text = res;
+  // }
   return text;
 }
 

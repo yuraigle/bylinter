@@ -3,6 +3,7 @@ import { enterScreen, exitScreen, redraw, appendLog, rewrapAll, wecho }
     from "./render";
 import { initInput, destroyInput } from "./input";
 import { COLOR } from "../client";
+import { KeyInfo } from "../client/BindkeysCollection";
 
 export interface ITerminalUI {
     destroy(): void;
@@ -20,8 +21,11 @@ const prefix = `${COLOR.red}-${COLOR.green}:${COLOR.red}-${COLOR.reset} `;
 
 export class TerminalUI implements ITerminalUI {
 
-    constructor(onInput: (line: string) => void) {
-        initInput(onInput);
+    constructor(
+        onInput: (line: string) => void,
+        onKeyPress: (key: KeyInfo, str: string) => boolean
+    ) {
+        initInput(onInput, onKeyPress);
         enterScreen();
         rewrapAll();
         redraw();

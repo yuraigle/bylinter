@@ -1,13 +1,13 @@
 import {
   COLOR,
-  registerGag,
   registerMsdpHook,
   registerPromptHook,
   registerSubstitute,
   registerTrigger,
   stripColors
 } from "./client";
-import { AliasCollection } from "./client/AliasHandler";
+import { AliasCollection } from "./client/AliasCollection";
+import { BindkeysCollection } from "./client/BindkeysCollection";
 import { MudSession } from "./client/MudSession";
 import { TerminalUI } from "./tui/TerminalUI";
 
@@ -33,7 +33,6 @@ interface GlobalApiContext {
   registerPromptHook(handler: PromptHandler, priority: number): void;
   registerMsdpHook(handler: MsdpHandler): void;
   registerSubstitute(handler: SubstituteHandler): void;
-  registerGag(pattern: RegExp): void;
   registerAlias(cmd: string, handler: AliasHandler): void;
   registerBindkey(spec: string, handler: BindHandler): void;
   setSidebar(lines: string[], start: number, end: number): void;
@@ -78,6 +77,7 @@ export function exposeGlobalApi(
   session: MudSession,
   tui: TerminalUI,
   aliases: AliasCollection,
+  bindkeys: BindkeysCollection
 ): void {
   const api: GlobalApiContext = {
     connect: session.connect,
@@ -95,10 +95,9 @@ export function exposeGlobalApi(
     registerPromptHook: registerPromptHook,
     registerMsdpHook: registerMsdpHook,
     registerSubstitute: registerSubstitute,
-    registerGag: registerGag,
-    registerAlias: aliases.registerAlias,
-    registerBindkey: () => { },
-    
+    registerAlias: aliases.register,
+    registerBindkey: bindkeys.register,
+
     stripColors: stripColors,
 
     COLOR: COLOR,

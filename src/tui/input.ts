@@ -1,6 +1,5 @@
 import readline from "node:readline";
 
-import { dispatchBindkey, type KeyInfo } from "../logic/bindkeys";
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
   getScrollStep,
@@ -10,8 +9,10 @@ import {
   rewrapAll,
   switchWindow,
 } from "./render";
+import { KeyInfo } from "../client/BindkeysCollection";
 
-let inputHandler: ((line: string) => void) | null = null;
+let inputHandler: (line: string) => void;
+let keyPressHandler: (key: KeyInfo, str: string) => boolean;
 
 function isPrintable(str: string | undefined): str is string {
   if (!str) return false;
@@ -161,7 +162,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     return;
   }
 
-  if (dispatchBindkey(key, str)) {
+  if (keyPressHandler && keyPressHandler(key, str)) {
     return;
   }
 
@@ -175,8 +176,12 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   }
 }
 
-export function initInput(onInput: (line: string) => void): void {
+export function initInput(
+  onInput: (line: string) => void,
+  onKeyPress: (key: KeyInfo, str: string) => boolean
+): void {
   inputHandler = onInput;
+  keyPressHandler = onKeyPress;
 
   readline.emitKeypressEvents(process.stdin);
   if (process.stdin.isTTY) {

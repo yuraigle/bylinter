@@ -6,13 +6,16 @@ export interface KeyInfo {
   sequence: string;
 }
 
-export type BindHandler = () => void;
-
 interface BindSpec {
-  ctrl: boolean;
-  meta: boolean;
-  shift: boolean;
-  name: string;
+    ctrl: boolean;
+    meta: boolean;
+    shift: boolean;
+    name: string;
+}
+
+interface Binding {
+    spec: BindSpec;
+    handler: () => void;
 }
 
 const NAME_ALIASES: Record<string, string> = {
@@ -55,33 +58,30 @@ function parseSpec(spec: string): BindSpec {
   return { ctrl, meta, shift, name: normalizeName(keyPart) };
 }
 
-interface Binding {
-  spec: BindSpec;
-  handler: BindHandler;
-}
+export class BindkeysCollection {
+    private bindings: Binding[] = [];
 
-const bindings: Binding[] = [];
-
-export function registerBindkey(spec: string, handler: BindHandler): void {
-  bindings.push({ spec: parseSpec(spec), handler });
-}
-
-export function dispatchBindkey(key: KeyInfo, str: string): boolean {
-  for (const { spec, handler } of bindings) {
-    if (spec.ctrl !== key.ctrl) continue;
-    if (spec.meta !== key.meta) continue;
-
-    if (spec.name.length === 1) {
-      const expected = spec.shift ? spec.name.toUpperCase() : spec.name;
-      if (str !== expected) continue;
-    } else {
-      const actualName = normalizeName(key.name ?? "");
-      if (actualName !== spec.name) continue;
-      if (spec.shift && !key.shift) continue;
+    public register = (spec: string, handler: () => void): void => {
+      this.bindings.push({ spec: parseSpec(spec), handler });
     }
 
-    handler();
-    return true;
-  }
-  return false;
+    public dispatch = (key: KeyInfo, str: string): boolean => {
+      for (const { spec, handler } of this.bindings) {
+        if (spec.ctrl !== key.ctrl) continue;
+        if (spec.meta !== key.meta) continue;
+    
+        if (spec.name.length === 1) {
+          const expected = spec.shift ? spec.name.toUpperCase() : spec.name;
+          if (str !== expected) continue;
+        } else {
+          const actualName = normalizeName(key.name ?? "");
+          if (actualName !== spec.name) continue;
+          if (spec.shift && !key.shift) continue;
+        }
+    
+        handler();
+        return true;
+      }
+      return false;
+    }
 }

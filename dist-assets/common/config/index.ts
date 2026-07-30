@@ -136,3 +136,5 @@ registerBindkey("M-pgdn", () => sendline("d"));
 
 // поведение
 registerTrigger(/^Вы готовы сожрать быка\./, () => sendline("пить боч.синим"));
+
+registerAlias("нас", () => { sendline("пить боч.синим") })

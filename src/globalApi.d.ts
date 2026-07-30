@@ -16,9 +16,6 @@ declare global {
   type SubstituteHandler = (text: string) => string;
   function registerSubstitute(handler: SubstituteHandler): void;
 
-  // Для скрытия строки по паттерну
-  function registerGag(pattern: RegExp): void;
-
   // Алиасы (команда -> обработчик с остальными аргументами)
   type AliasHandler = (args: string[]) => void;
   function registerAlias(cmd: string, handler: AliasHandler): void;
@@ -81,7 +78,6 @@ declare global {
     registerPromptHook: typeof registerPromptHook;
     registerMsdpHook: typeof registerMsdpHook;
     registerSubstitute: typeof registerSubstitute;
-    registerGag: typeof registerGag;
     registerAlias: typeof registerAlias;
     registerBindkey: typeof registerBindkey;
     sendl: typeof sendl;

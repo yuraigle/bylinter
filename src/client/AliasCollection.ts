@@ -3,7 +3,7 @@ export type AliasHandler = (args: string[]) => void;
 export class AliasCollection {
     private readonly aliases: Map<string, AliasHandler> = new Map();
 
-    public registerAlias = (cmd: string, handler: AliasHandler): void => {
+    public register = (cmd: string, handler: AliasHandler): void => {
         this.aliases.set(cmd, handler);
     }
 
