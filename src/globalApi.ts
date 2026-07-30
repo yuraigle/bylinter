@@ -1,4 +1,4 @@
-import { COLOR, stripColors } from "./client";
+import { clr, stripColors } from "./protocol/ansi";
 import { AliasCollection } from "./client/control/AliasCollection";
 import { BindkeyCollection } from "./client/control/BindkeyCollection";
 import { MudSession } from "./client/MudSession";
@@ -20,12 +20,10 @@ interface GlobalApiContext {
   disconnect(): void;
   sendRaw(command: string): void; // без эха
   sendMsdp(name: string, value: string): void;
-
   echo(message: string): void;
   showme(message: string): void;
   showerr(message: string): void;
   wecho(windowNum: number, line: string): void;
-
   registerTrigger(pattern: RegExp, handler: LineHandler): void;
   registerPromptHook(handler: PromptHandler, priority: number): void;
   registerMsdpHook(handler: MsdpHandler): void;
@@ -34,40 +32,7 @@ interface GlobalApiContext {
   registerBindkey(spec: string, handler: BindHandler): void;
   setSidebar(lines: string[], start: number, end: number): void;
   stripColors(text: string): string;
-
-  // COLORS: Map<string, string>; // todo
-
-  COLOR: {
-    readonly black: string;
-    readonly red: string;
-    readonly green: string;
-    readonly yellow: string;
-    readonly blue: string;
-    readonly magenta: string;
-    readonly cyan: string;
-    readonly white: string;
-    readonly brightBlack: string;
-    readonly brightRed: string;
-    readonly brightGreen: string;
-    readonly brightYellow: string;
-    readonly brightBlue: string;
-    readonly brightMagenta: string;
-    readonly brightCyan: string;
-    readonly brightWhite: string;
-    readonly bgBlack: string;
-    readonly bgRed: string;
-    readonly bgGreen: string;
-    readonly bgYellow: string;
-    readonly bgBlue: string;
-    readonly bgMagenta: string;
-    readonly bgCyan: string;
-    readonly bgWhite: string;
-    readonly bold: string;
-    readonly dim: string;
-    readonly italic: string;
-    readonly underline: string;
-    readonly reset: string;
-  };
+  clr(letter: string): string;
 }
 
 export function exposeGlobalApi(
@@ -100,7 +65,7 @@ export function exposeGlobalApi(
     registerBindkey: bindkeys.register,
 
     stripColors: stripColors,
-    COLOR: COLOR,
+    clr: clr,
   };
 
   Object.defineProperty(globalThis, 'bylinter', {

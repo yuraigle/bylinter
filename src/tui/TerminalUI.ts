@@ -2,7 +2,7 @@ import { state } from "./state";
 import { enterScreen, exitScreen, redraw, appendLog, rewrapAll, wecho }
     from "./render";
 import { initInput, destroyInput } from "./input";
-import { COLOR } from "../client";
+import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../client/control/BindkeyCollection";
 
 export interface ITerminalUI {
@@ -17,15 +17,19 @@ export interface ITerminalUI {
     wecho(w: number, text: string): void;
 }
 
-const prefix = `${COLOR.red}-${COLOR.green}:${COLOR.red}-${COLOR.reset} `;
+const prefix = `${clr('B')}-${clr('C')}:${clr('B')}-${clr('0')} `;
 
 export class TerminalUI implements ITerminalUI {
-
     constructor(
         onInput: (line: string) => void,
         onKeyPress: (key: KeyInfo, str: string) => boolean
     ) {
-        initInput(onInput, onKeyPress);
+        const echoAndInput = (line: string) => {
+            this.echo(clr('L') + line + clr('0'));
+            onInput(line);
+        }
+
+        initInput(echoAndInput, onKeyPress);
         enterScreen();
         rewrapAll();
         redraw();
@@ -69,7 +73,7 @@ export class TerminalUI implements ITerminalUI {
     }
 
     public showerr = (message: string): void => {
-        this.showme(`${COLOR.red}${message} ${COLOR.reset}`);
+        this.showme(`${clr('B')}${message}${clr('0')}`);
     }
 
     public wecho = (w: number, text: string): void => {

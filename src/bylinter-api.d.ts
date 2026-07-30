@@ -15,5 +15,11 @@ interface GlobalApiContext {
     registerAlias(cmd: string, handler: (args: string[]) => void): void;
     registerBindkey(spec: string, handler: () => void): void;
     stripColors(text: string): string;
-    COLORS: Map<string, string>; // todo
+    clr(letter: string): string;
 }
+
+declare global {
+  var bylinter: GlobalApiContext;
+}
+
+export {};

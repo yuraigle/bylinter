@@ -1,3 +1,4 @@
+import { clr } from "../protocol/ansi";
 import { AliasCollection } from "./control/AliasCollection";
 import { MudSession } from "./MudSession";
 
@@ -15,21 +16,20 @@ export class InputHandler {
 
     this.commands['/connect'] = (args: string[]) => {
       const [host, portArg, proxy] = args;
+      const helpMsg = "Usage: /connect <host> [port:4000] [proxy]";
 
       if (!host) {
-        this.systemEcho("Usage: /connect <host> [port:4000] [proxy]");
+        this.systemEcho(helpMsg);
         return;
       }
 
       const port = portArg ? Number(portArg) : 4000;
       if (Number.isNaN(port)) {
-        this.systemEcho("Usage: /connect <host> <port> [proxy]");
+        this.systemEcho(helpMsg);
         return;
       }
 
-      session.connect(host, port, proxy).catch((err) =>
-        this.systemEcho(`Failed to connect: ` + err.message),
-      );
+      session.connect(host, port, proxy);
     }
 
     this.commands['/dc'] = () => {
@@ -60,7 +60,7 @@ export class InputHandler {
       if (handler) {
         handler(args);
       } else {
-        this.systemEcho("Not a command. Try /help to see help on commands");
+        this.systemEcho("Not a command. Try /help");
       }
       return;
     }
@@ -75,6 +75,6 @@ export class InputHandler {
     commands.set('/connect <host> [port:4000]', 'connect to MUD server');
     commands.set('/dc', 'drop connection');
     commands.set('/q', 'quit');
-    commands.forEach((v, k) => this.systemEcho(`${k} - ${v}`));
+    commands.forEach((v, k) => this.systemEcho(clr('H') + `${k} - ${v}`));
   }
 }

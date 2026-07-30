@@ -14,26 +14,22 @@ const {
   echo,
   wecho,
   setSidebar,
-  COLOR,
+  clr,
 } = globalThis.bylinter;
 
 const CHAR_NAME = "Услад"; // для автологина
 const CHAR_PASS = "oVP5Liqf6";
 
 showme(
-  `Введите ${COLOR.yellow}кон${COLOR.reset} для подключения к серверу Былин`,
+  `Введите ${clr('D')}кон${clr('0')} для подключения к серверу Былин`,
 );
 
 function sendline(message: string): void {
-  echo("\r\n" + COLOR.yellow + "[" + message + "]" + COLOR.reset);
+  echo("\r\n" + clr('D') + "[" + message + "]" + clr('0'));
   message.split(/;/).forEach((cmd) => sendRaw(cmd));
 }
 
-registerAlias("кон", () => {
-  connect("bylins.su", 4000, "").catch((err: Error) =>
-    showerr("Failed to connect: " + err.message),
-  );
-});
+registerAlias("кон", () => connect("bylins.su", 4000, ""));
 
 registerPromptHook((prompt: string) => {
   if (prompt.match(/^Select one :/)) {

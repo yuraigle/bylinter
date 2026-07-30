@@ -68,8 +68,8 @@ export class MudSession implements IMudSession {
             this.invokeStatus(`Connected to ${host}:${port}`);
         } catch (e) {
             const err = e instanceof Error ? e : new Error(String(e));
+            this.invokeError(err);
             this.invokeStatus("Not connected");
-            throw err;
         }
     }
 

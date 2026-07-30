@@ -1,13 +1,14 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
-import { COLOR, SCREEN, BOX, moveTo } from "../protocol/ansi";
+import { SCREEN, BOX, moveTo } from "../protocol/ansi";
 
 const SIDEBAR_WIDTH = 49;
 const SIDEBAR_DIVIDER_WIDTH = 1;
 const MIN_WIDTH_FOR_SIDEBAR = 160;
 const SPLIT_DIVIDER_ROWS = 1;
-const CLR1 = COLOR.yellow;
-const STATUS_BG = COLOR.bgYellow;
-const STATUS_FG = COLOR.black;
+const CLR0 = "\x1b[0m"; // Reset
+const CLR1 = "\x1b[33m"; // Yellow
+const STATUS_BG = "\x1b[43m"; // BG_Yellow
+const STATUS_FG = "\x1b[30m"; // Black
 
 function getLayout() {
   const width = process.stdout.columns || 80;
@@ -92,7 +93,7 @@ export function redraw(): void {
     const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
     const topStart = Math.max(0, topEnd - topHeight);
     const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
-    const dividerLine = CLR1 + BOX.horizontal.repeat(logWidth) + COLOR.reset;
+    const dividerLine = CLR1 + BOX.horizontal.repeat(logWidth) + CLR0;
     const bottomRows = win.wrappedRows.slice(
       Math.max(0, win.wrappedRows.length - bottomHeight),
     );
@@ -116,13 +117,13 @@ export function redraw(): void {
     if (showSidebar) {
       out += moveTo(i + 1, dividerCol);
       const junctionChar = i === splitDividerRow ? BOX.teeLeft : BOX.vertical;
-      out += CLR1 + junctionChar + COLOR.reset;
+      out += CLR1 + junctionChar + CLR0;
       const sidebarLine = truncateVisible(
         state.sidebarLines[i] ?? "",
         SIDEBAR_WIDTH,
       );
       out += moveTo(i + 1, sidebarCol) + sidebarLine;
-      out += COLOR.reset;
+      out += CLR0;
     }
   }
 
@@ -130,7 +131,7 @@ export function redraw(): void {
   const statusWithWindow = `[${state.currentWindow}] ${state.statusText}`;
   out += STATUS_BG + STATUS_FG +
     statusWithWindow.padEnd(width).slice(0, width) +
-    COLOR.reset;
+    CLR0;
 
   out += moveTo(inputRow, 1) + SCREEN.clearLine;
 
