@@ -1,5 +1,5 @@
 import { clr } from "../protocol/ansi";
-import { AliasCollection } from "./control/AliasCollection";
+import { AliasCollection } from "./logic/AliasCollection";
 import { MudSession } from "./MudSession";
 
 export type CommandHandler = (args: string[]) => void;

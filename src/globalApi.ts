@@ -1,39 +1,14 @@
+import type { GlobalApiContext } from "./types/bylinter-api.d.ts";
+
 import { clr, stripColors } from "./protocol/ansi";
-import { AliasCollection } from "./client/control/AliasCollection";
-import { BindkeyCollection } from "./client/control/BindkeyCollection";
+import { AliasCollection } from "./client/logic/AliasCollection";
+import { BindkeyCollection } from "./client/logic/BindkeyCollection";
 import { MudSession } from "./client/MudSession";
-import { TriggerCollection } from "./client/control/TriggerCollection";
+import { TriggerCollection } from "./client/logic/TriggerCollection";
 import { TerminalUI } from "./tui/TerminalUI";
-import { PromptHookCollection } from "./client/control/PromptHookCollection";
-import { MsdpHookCollection } from "./client/control/MsdpHookCollection";
-import { SubstituteCollection } from "./client/control/SubstituteCollection";
-
-type LineHandler = (matches: string[], colored: string) => void;
-type PromptHandler = (prompt: string, lines: string[]) => boolean;
-type MsdpHandler = (data: Record<string, unknown>) => void;
-type SubstituteHandler = (m: string[], lineCL: string) => string;
-type AliasHandler = (args: string[]) => void;
-type BindHandler = () => void;
-
-interface GlobalApiContext {
-  connect(host: string, port?: number, proxy?: string): Promise<void>;
-  disconnect(): void;
-  sendRaw(command: string): void; // без эха
-  sendMsdp(name: string, value: string): void;
-  echo(message: string): void;
-  showme(message: string): void;
-  showerr(message: string): void;
-  wecho(windowNum: number, line: string): void;
-  registerTrigger(pattern: RegExp, handler: LineHandler): void;
-  registerPromptHook(handler: PromptHandler, priority: number): void;
-  registerMsdpHook(handler: MsdpHandler): void;
-  registerSubstitute(rx: RegExp, handler: SubstituteHandler): void;
-  registerAlias(cmd: string, handler: AliasHandler): void;
-  registerBindkey(spec: string, handler: BindHandler): void;
-  setSidebar(lines: string[], start: number, end: number): void;
-  stripColors(text: string): string;
-  clr(letter: string): string;
-}
+import { PromptHookCollection } from "./client/logic/PromptHookCollection";
+import { MsdpHookCollection } from "./client/logic/MsdpHookCollection";
+import { SubstituteCollection } from "./client/logic/SubstituteCollection";
 
 export function exposeGlobalApi(
   session: MudSession,

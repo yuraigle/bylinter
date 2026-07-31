@@ -1,12 +1,13 @@
 // Пример написания триггеров на языке TypeScript
 
+/// <reference path="./types/bylinter-api.d.ts" />
+
 const {
   registerAlias,
   registerTrigger,
   registerPromptHook,
   registerBindkey,
   registerSubstitute,
-  registerGag,
   connect,
   showme,
   showerr,
@@ -33,7 +34,7 @@ registerAlias("кон", () => connect("bylins.su", 4000, ""));
 
 registerPromptHook((prompt: string) => {
   if (prompt.match(/^Select one :/)) {
-    sendline("0"); // koi-8, должно соответствовать кодировке в .env
+    sendline("0"); // koi8-r, должно соответствовать кодировке в .env
     return true;
   }
   if (prompt.match(/^Введите имя персонажа/) && CHAR_NAME && CHAR_PASS) {
@@ -87,7 +88,7 @@ registerPromptHook((prompt: string, lines: string[]) => {
 registerSubstitute(
   /^([А-ЯЁ].*) ([А-ЯЁ][а-яё]+) ([(,].+) (летает|сидит|стоит|отдыхает|спит|плавает) здесь\. $/,
   (m: string[]) => {
-    return `\u001b[1;31m${m[1]} \u001b[1;36m${m[2]}\u001b[1;31m ${m[3]} ${m[4]} здесь. `;
+    return `${clr('B') + m[1]} ${clr('G') + m[2] + clr('B')} ${m[3]} ${m[4]} здесь. `;
   }
 );
 

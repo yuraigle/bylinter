@@ -8,12 +8,12 @@ import { TextPipeline } from "./client/TextPipeline";
 import { TcpCommandSender } from "./client/CommandSender";
 
 import { addOutputSink } from "./client/output";
-import { AliasCollection } from "./client/control/AliasCollection";
-import { BindkeyCollection } from "./client/control/BindkeyCollection";
-import { TriggerCollection } from "./client/control/TriggerCollection";
-import { PromptHookCollection } from "./client/control/PromptHookCollection";
-import { MsdpHookCollection } from "./client/control/MsdpHookCollection";
-import { SubstituteCollection } from "./client/control/SubstituteCollection";
+import { AliasCollection } from "./client/logic/AliasCollection";
+import { BindkeyCollection } from "./client/logic/BindkeyCollection";
+import { TriggerCollection } from "./client/logic/TriggerCollection";
+import { PromptHookCollection } from "./client/logic/PromptHookCollection";
+import { MsdpHookCollection } from "./client/logic/MsdpHookCollection";
+import { SubstituteCollection } from "./client/logic/SubstituteCollection";
 import { clr } from "./protocol/ansi";
 import packageJson from "../package.json" with { type: "json" };
 
