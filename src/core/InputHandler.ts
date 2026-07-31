@@ -1,5 +1,5 @@
 import { clr } from "../protocol/ansi";
-import { AliasCollection } from "./logic/AliasCollection";
+import { AliasCollection } from "../logic/AliasCollection";
 import { MudSession } from "./MudSession";
 
 export type CommandHandler = (args: string[]) => void;
@@ -16,7 +16,7 @@ export class InputHandler {
 
     this.commands['/connect'] = (args: string[]) => {
       const [host, portArg, proxy] = args;
-      const helpMsg = "Usage: /connect <host> [port:4000] [proxy]";
+      const helpMsg = "Usage: /connect <host> <port> [proxy]";
 
       if (!host) {
         this.systemEcho(helpMsg);

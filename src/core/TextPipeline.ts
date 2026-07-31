@@ -1,9 +1,11 @@
 import { broadcast } from "./output";
 import { writeLog } from "../shared/logger";
-import { TriggerCollection } from "./logic/TriggerCollection";
-import { PromptHookCollection } from "./logic/PromptHookCollection";
-import { MsdpHookCollection } from "./logic/MsdpHookCollection";
-import { SubstituteCollection } from "./logic/SubstituteCollection";
+import {
+    TriggerCollection,
+    PromptHookCollection,
+    MsdpHookCollection,
+    SubstituteCollection
+} from "../logic";
 
 export interface IProcessingResult {
     linesToDisplay: string[];

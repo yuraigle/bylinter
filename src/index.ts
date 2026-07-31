@@ -1,3 +1,5 @@
+import type { GlobalApiContext } from "./types/bylinter-api";
+
 import { TerminalUI } from "./tui/TerminalUI";
 import { InputHandler } from "./core/InputHandler";
 import { MudSession } from "./core/MudSession";
@@ -15,7 +17,7 @@ import {
 } from "./logic";
 
 import { LocalServer } from "./core/LocalServer";
-import { exposeGlobalApi } from "./globalApi";
+import { GlobalApi } from "./core/GlobalApi";
 import { ConfigLoaderService } from "./core/ConfigLoaderService";
 import { clr } from "./protocol/ansi";
 import packageJson from "../package.json" with { type: "json" };
@@ -47,7 +49,7 @@ if (localPort > 0) {
 }
 
 // все методы API в globalThis для юзер конфига
-exposeGlobalApi(
+const api: GlobalApiContext = new GlobalApi().expose(
     session,
     tui,
     aliases,
@@ -57,6 +59,7 @@ exposeGlobalApi(
     promptHooks,
     msdpHooks
 );
+Object.defineProperty(globalThis, 'bylinter', { value: api, writable: false });
 
 tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 

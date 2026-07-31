@@ -9,7 +9,7 @@ import {
   rewrapAll,
   switchWindow,
 } from "./render";
-import { KeyInfo } from "../core/logic/BindkeyCollection";
+import { KeyInfo } from "../logic/BindkeyCollection";
 
 let inputHandler: (line: string) => void;
 let keyPressHandler: (key: KeyInfo, str: string) => boolean;
@@ -135,7 +135,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     const win = getWindow(state.currentWindow);
     const step = getScrollStep();
     const isFirstPress = win.scrollOffset === 0;
-    const delta = isFirstPress ? step * 2 : step;
+    const delta = isFirstPress ? step * 1.5 : step;
 
     const newOffset = Math.min(
       win.scrollOffset + delta,
