@@ -1,6 +1,6 @@
 import { createServer } from "node:net";
 
-import { addOutputSink } from "./output";
+import { Broadcaster } from "./Broadcaster";
 import { encode } from "../shared/encoding";
 import { createTelnetParser } from "../protocol/telnet";
 
@@ -8,11 +8,18 @@ type TextConsumer = (text: string) => void;
 
 export class LocalServer {
   private readonly port: number;
+  private readonly outputSink: Broadcaster;
   private readonly onInput: TextConsumer;
   private readonly systemEcho: TextConsumer;
 
-  constructor(port: number, onInput: TextConsumer, systemEcho: TextConsumer) {
+  constructor(
+    port: number,
+    outputSink: Broadcaster,
+    onInput: TextConsumer,
+    systemEcho: TextConsumer
+  ) {
     this.port = port;
+    this.outputSink = outputSink;
     this.onInput = onInput;
     this.systemEcho = systemEcho;
   }
@@ -23,9 +30,11 @@ export class LocalServer {
 
       const parser = createTelnetParser();
 
-      const removeSink = addOutputSink((text) => {
+      const consumer = (text: string) => {
         if (!client.destroyed) client.write(encode(text));
-      });
+      };
+
+      const removeCb = this.outputSink.addConsumer(consumer);
 
       client.on("data", (chunk: Buffer) => {
         const { segments } = parser.feed(chunk);
@@ -37,10 +46,13 @@ export class LocalServer {
 
       client.on("close", () => {
         this.systemEcho("Client disconnected");
-        removeSink();
+        removeCb();
       });
 
-      client.on("error", () => removeSink());
+      client.on("error", () => {
+        this.systemEcho("Client disconnected");
+        removeCb()
+      });
     });
 
     server.listen(this.port, () => {

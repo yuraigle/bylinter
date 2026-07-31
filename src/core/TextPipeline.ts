@@ -1,4 +1,3 @@
-import { broadcast } from "./output";
 import { writeLog } from "../shared/logger";
 import {
     TriggerCollection,
@@ -6,34 +5,27 @@ import {
     MsdpHookCollection,
     SubstituteCollection
 } from "../logic";
+import { Broadcaster } from "./Broadcaster";
 
-export interface IProcessingResult {
-    linesToDisplay: string[];
-    hasGA: boolean;
-}
-
-export interface ITextPipeline {
-    handleIncomingText(text: string, hasGA: boolean): void;
-    handleIncomingMsdp(data: Record<string, unknown>): void;
-    resetState(): void;
-}
-
-export class TextPipeline implements ITextPipeline {
+export class TextPipeline {
     private readonly triggers: TriggerCollection;
     private readonly substitutes: SubstituteCollection;
     private readonly promptHooks: PromptHookCollection;
     private readonly msdpHooks: MsdpHookCollection;
+    private readonly broadcaster: Broadcaster;
 
     constructor(
         triggers: TriggerCollection,
         substitutes: SubstituteCollection,
         promptHooks: PromptHookCollection,
-        msdpHooks: MsdpHookCollection
+        msdpHooks: MsdpHookCollection,
+        broadcaster: Broadcaster,
     ) {
         this.triggers = triggers;
         this.substitutes = substitutes;
         this.promptHooks = promptHooks;
         this.msdpHooks = msdpHooks;
+        this.broadcaster = broadcaster;
     }
 
     private lines: string[] = [];
@@ -58,7 +50,7 @@ export class TextPipeline implements ITextPipeline {
             this.triggers.dispatch(lineCL);
             const outLineCL = this.substitutes.dispatch(lineCL);
             if (outLineCL !== null) {
-                broadcast("\r\n" + outLineCL);
+                this.broadcaster.broadcast("\r\n" + outLineCL);
             }
         });
 
@@ -95,7 +87,7 @@ export class TextPipeline implements ITextPipeline {
     private flushPrompt(): void {
         const prompt = this.partialLine;
         this.promptHooks.dispatch(prompt, this.lines);
-        broadcast("\r\n" + prompt);
+        this.broadcaster.broadcast("\r\n" + prompt);
         this.partialLine = "";
         this.lines = [];
     }

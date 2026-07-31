@@ -5,8 +5,8 @@ import { InputHandler } from "./core/InputHandler";
 import { MudSession } from "./core/MudSession";
 import { TextPipeline } from "./core/TextPipeline";
 import { TcpCommandSender } from "./core/CommandSender";
+import { Broadcaster } from "./core/Broadcaster";
 
-import { addOutputSink } from "./core/output";
 import {
     AliasCollection,
     BindkeyCollection,
@@ -26,8 +26,9 @@ const triggers: TriggerCollection = new TriggerCollection();
 const substitutes: SubstituteCollection = new SubstituteCollection();
 const promptHooks: PromptHookCollection = new PromptHookCollection();
 const msdpHooks: MsdpHookCollection = new MsdpHookCollection();
+const broadcaster: Broadcaster = new Broadcaster();
 const pipeline: TextPipeline = new TextPipeline(
-    triggers, substitutes, promptHooks, msdpHooks
+    triggers, substitutes, promptHooks, msdpHooks, broadcaster
 );
 
 const sender: TcpCommandSender = new TcpCommandSender(null);
@@ -38,14 +39,14 @@ const inputHandler: InputHandler = new InputHandler(session, aliases);
 const bindkeys: BindkeyCollection = new BindkeyCollection();
 const tui: TerminalUI = new TerminalUI(inputHandler.handle, bindkeys.dispatch);
 
-addOutputSink((text: string) => tui.log(text)); // для строк из MUD в tui
+broadcaster.addConsumer((text: string) => tui.log(text)); // строки из MUD в tui
 session.setTui(tui); // для вывода ошибок, статуса и дебага
 inputHandler.setSystemEcho(tui.showme); // куда пишем ошибки и справку
 
 // старт локального сервера с проксированием туда контента из клиента
-const localPort = Number(process.env.LOCAL_PORT || 0);
-if (localPort > 0) {
-    new LocalServer(localPort, inputHandler.handle, tui.showme).init();
+const port = Number(process.env.LOCAL_PORT || 0);
+if (port > 0) {
+    new LocalServer(port, broadcaster, inputHandler.handle, tui.showme).init();
 }
 
 // все методы API в globalThis для юзер конфига

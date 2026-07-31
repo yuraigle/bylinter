@@ -1,4 +1,3 @@
-// src/app/connection/ConnectionProvider.ts
 import { Socket } from "node:net";
 import { DirectConnector } from "./DirectConnector";
 import { ProxyConnector } from "./ProxyConnector";

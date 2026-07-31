@@ -5,9 +5,9 @@ import { ICommandSender, TcpCommandSender } from "./CommandSender";
 import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
     from "../protocol/telnet";
 import { parseMsdp } from "../protocol/msdp";
-import { ITextPipeline } from "./TextPipeline";
 import { ConnectionProvider } from "../connect/ConnectionProvider";
 import { ITerminalUI } from "../tui/TerminalUI";
+import { TextPipeline } from "./TextPipeline";
 
 export interface IMudSession {
     isConnected(): boolean;
@@ -19,7 +19,7 @@ export interface IMudSession {
 }
 
 export class MudSession implements IMudSession {
-    private readonly textPipeline: ITextPipeline;
+    private readonly textPipeline: TextPipeline;
     private readonly sender: ICommandSender;
     private telnetParser = createTelnetParser(); // todo сделать классом
 
@@ -31,7 +31,7 @@ export class MudSession implements IMudSession {
     private debugMode: boolean = Number(process.env.DEBUG_MODE || 0) > 0;
 
     constructor(
-        textPipeline: ITextPipeline,
+        textPipeline: TextPipeline,
         sender: TcpCommandSender,
     ) {
         this.textPipeline = textPipeline;

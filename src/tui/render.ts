@@ -10,7 +10,7 @@ const CLR1 = "\x1b[33m"; // Yellow
 const STATUS_BG = "\x1b[43m"; // BG_Yellow
 const STATUS_FG = "\x1b[30m"; // Black
 
-function getLayout() {
+export function getLayout() {
   const width = process.stdout.columns || 80;
   const height = process.stdout.rows || 24;
   const showSidebar = width >= MIN_WIDTH_FOR_SIDEBAR;

@@ -2,6 +2,7 @@ import readline from "node:readline";
 
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
+  getLayout,
   getScrollStep,
   redraw,
   redrawInput,
@@ -133,12 +134,10 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
   if (key.name === "pageup" && !key.ctrl && !key.meta) {
     const win = getWindow(state.currentWindow);
-    const step = getScrollStep();
     const isFirstPress = win.scrollOffset === 0;
-    const delta = isFirstPress ? step * 1.5 : step;
-
+    const step = isFirstPress ? getLayout().logHeight - 1 : getScrollStep();
     const newOffset = Math.min(
-      win.scrollOffset + delta,
+      win.scrollOffset + step,
       Math.max(0, win.wrappedRows.length - 1),
     );
 
@@ -152,8 +151,11 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   if (key.name === "pagedown" && !key.ctrl && !key.meta) {
     const win = getWindow(state.currentWindow);
     const step = getScrollStep();
-
-    const newOffset = Math.max(win.scrollOffset - step, 0);
+    const { logHeight } = getLayout();
+    let newOffset = Math.max(win.scrollOffset - step, 0);
+    if (newOffset + step <= logHeight) {
+      newOffset = 0; // одна лишь строка разделителя
+    }
 
     if (newOffset !== win.scrollOffset) {
       win.scrollOffset = newOffset;
