@@ -6,7 +6,7 @@ import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT }
     from "../protocol/telnet";
 import { parseMsdp } from "../protocol/msdp";
 import { ITextPipeline } from "./TextPipeline";
-import { ConnectionProvider } from "./connect/ConnectionProvider";
+import { ConnectionProvider } from "../connect/ConnectionProvider";
 import { ITerminalUI } from "../tui/TerminalUI";
 
 export interface IMudSession {

@@ -1,19 +1,22 @@
-import { ConfigLoaderService } from "./client/ConfigLoaderService";
-import { startLocalServer } from "./client/localServer";
-import { exposeGlobalApi } from "./globalApi";
-import { InputHandler } from "./client/InputHandler";
 import { TerminalUI } from "./tui/TerminalUI";
-import { MudSession } from "./client/MudSession";
-import { TextPipeline } from "./client/TextPipeline";
-import { TcpCommandSender } from "./client/CommandSender";
+import { InputHandler } from "./core/InputHandler";
+import { MudSession } from "./core/MudSession";
+import { TextPipeline } from "./core/TextPipeline";
+import { TcpCommandSender } from "./core/CommandSender";
 
-import { addOutputSink } from "./client/output";
-import { AliasCollection } from "./client/logic/AliasCollection";
-import { BindkeyCollection } from "./client/logic/BindkeyCollection";
-import { TriggerCollection } from "./client/logic/TriggerCollection";
-import { PromptHookCollection } from "./client/logic/PromptHookCollection";
-import { MsdpHookCollection } from "./client/logic/MsdpHookCollection";
-import { SubstituteCollection } from "./client/logic/SubstituteCollection";
+import { addOutputSink } from "./core/output";
+import {
+    AliasCollection,
+    BindkeyCollection,
+    TriggerCollection,
+    PromptHookCollection,
+    MsdpHookCollection,
+    SubstituteCollection
+} from "./logic";
+
+import { LocalServer } from "./core/LocalServer";
+import { exposeGlobalApi } from "./globalApi";
+import { ConfigLoaderService } from "./core/ConfigLoaderService";
 import { clr } from "./protocol/ansi";
 import packageJson from "../package.json" with { type: "json" };
 
@@ -37,9 +40,11 @@ addOutputSink((text: string) => tui.log(text)); // для строк из MUD в
 session.setTui(tui); // для вывода ошибок, статуса и дебага
 inputHandler.setSystemEcho(tui.showme); // куда пишем ошибки и справку
 
-// старт локального сервера с проксированием туда
+// старт локального сервера с проксированием туда контента из клиента
 const localPort = Number(process.env.LOCAL_PORT || 0);
-if (localPort > 0) startLocalServer(localPort, inputHandler.handle, tui.showme);
+if (localPort > 0) {
+    new LocalServer(localPort, inputHandler.handle, tui.showme).init();
+}
 
 // все методы API в globalThis для юзер конфига
 exposeGlobalApi(

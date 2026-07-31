@@ -2,7 +2,6 @@ import type { Socket } from "node:net";
 
 import { encodeMsdpVar } from "../protocol/msdp";
 import { encode } from "../shared/encoding";
-import { NoConnectionError } from "../error/NoConnectionError";
 
 export interface ICommandSender {
     sendText(command: string): void;
@@ -24,7 +23,7 @@ export class TcpCommandSender implements ICommandSender {
     private ensureConnected(): void {
         if (!this.socket) {
             const msg: string = "Can't send text: not connected to a server.";
-            throw new NoConnectionError(msg);
+            throw new Error(msg);
         }
     }
 

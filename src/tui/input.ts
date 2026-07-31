@@ -9,7 +9,7 @@ import {
   rewrapAll,
   switchWindow,
 } from "./render";
-import { KeyInfo } from "../client/logic/BindkeyCollection";
+import { KeyInfo } from "../core/logic/BindkeyCollection";
 
 let inputHandler: (line: string) => void;
 let keyPressHandler: (key: KeyInfo, str: string) => boolean;

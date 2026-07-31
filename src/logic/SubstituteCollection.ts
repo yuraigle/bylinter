@@ -1,4 +1,4 @@
-import { stripColors } from "../../protocol/ansi";
+import { stripColors } from "../protocol/ansi";
 
 export class SubstituteCollection {
     private readonly substitutes: Substitute[] = [];

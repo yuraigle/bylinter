@@ -1,14 +1,16 @@
 import type { GlobalApiContext } from "./types/bylinter-api.d.ts";
 
 import { clr, stripColors } from "./protocol/ansi";
-import { AliasCollection } from "./client/logic/AliasCollection";
-import { BindkeyCollection } from "./client/logic/BindkeyCollection";
-import { MudSession } from "./client/MudSession";
-import { TriggerCollection } from "./client/logic/TriggerCollection";
+import { MudSession } from "./core/MudSession.js";
 import { TerminalUI } from "./tui/TerminalUI";
-import { PromptHookCollection } from "./client/logic/PromptHookCollection";
-import { MsdpHookCollection } from "./client/logic/MsdpHookCollection";
-import { SubstituteCollection } from "./client/logic/SubstituteCollection";
+import {
+    AliasCollection,
+    BindkeyCollection,
+    TriggerCollection,
+    PromptHookCollection,
+    MsdpHookCollection,
+    SubstituteCollection
+} from "./logic";
 
 export function exposeGlobalApi(
   session: MudSession,
