@@ -7,12 +7,17 @@ import {
 } from "../logic";
 import { Broadcaster } from "./Broadcaster";
 
+const endsWithReset = (s: string) => s.endsWith("\x1b[0;0m");
+const startsWithColor = (s: string) => s.match(/^\x1b\[[0-9;]*m/);
+const hasAnyColor = (s: string) => s.match(/\x1b\[[0-9;]*m/);
+
 export class TextPipeline {
     private readonly triggers: TriggerCollection;
     private readonly substitutes: SubstituteCollection;
     private readonly promptHooks: PromptHookCollection;
     private readonly msdpHooks: MsdpHookCollection;
     private readonly broadcaster: Broadcaster;
+    private carrySgr: string = "";
 
     constructor(
         triggers: TriggerCollection,
@@ -39,9 +44,22 @@ export class TextPipeline {
 
     public handleIncomingText = (text: string, hasGA: boolean): void => {
         this.partialLine += text;
-        const chunkLines = this.partialLine
-            .split("\n").map(l => l.replace(/\r$/, ""));
+        const chunkLines = this.partialLine.replaceAll(/\r/g, '').split("\n");
         const completedLines = chunkLines.slice(0, -1);
+
+        for (let i = 0; i < completedLines.length; i++) {
+            let outLine = completedLines[i];
+            if (outLine.match(/^\s*$/)) continue; // игнор пустых строк
+            if (this.carrySgr && !startsWithColor(outLine)) { // если был незакрытый цвет
+                outLine = this.carrySgr + outLine; // добавить цвет в начало
+            }
+            this.updateCarrySgr(completedLines[i]); // обновить последний цвет
+            if (hasAnyColor(outLine) && !endsWithReset(outLine)) {
+                outLine += "\x1b[0;0m"; // закрыть цвет на этой строке
+            }
+            completedLines[i] = outLine;
+        }
+
         this.lines.push(...completedLines);
         this.partialLine = chunkLines[chunkLines.length - 1];
 
@@ -95,6 +113,19 @@ export class TextPipeline {
     private invokeLogger(text: string): void {
         if (this.logPath) {
             writeLog(text, this.logPath);
+        }
+    }
+
+    private updateCarrySgr(chunk: string): void {
+        const matches = chunk.match(/\x1b\[[0-9;]*m/g);
+        if (!matches) return;
+        for (const code of matches) {
+            if (code === "\x1b[0m" || code === "\x1b[0;0m" || code === "\x1b[m") {
+                this.carrySgr = "";
+            } else {
+                this.carrySgr = code; // this.carrySgr + 
+                // todo заменять цвет а не добавлять
+            }
         }
     }
 }

@@ -28,7 +28,6 @@ export class MudSession implements IMudSession {
     private onInfo?: (text: string) => void; // инфо в TUI
     private onError?: (error: Error) => void; // ошибки в TUI
     private onStatus?: (text: string) => void; // статусное сообщение
-    private debugMode: boolean = Number(process.env.DEBUG_MODE || 0) > 0;
 
     constructor(
         textPipeline: TextPipeline,
@@ -132,10 +131,6 @@ export class MudSession implements IMudSession {
         }
 
         for (const segment of segments) {
-            if (this.debugMode) {
-                segment.text.split(/\r\n/).forEach(line =>
-                    this.invokeInfo(`[debug] ${JSON.stringify(line)}`));
-            }
             this.textPipeline.handleIncomingText(segment.text, segment.hasGA);
         }
 

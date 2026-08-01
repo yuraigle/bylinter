@@ -7,7 +7,7 @@ import { KeyInfo } from "../logic/BindkeyCollection";
 
 export interface ITerminalUI {
     destroy(): void;
-    log(text: string, isolated?: boolean): void;
+    log(text: string): void;
     setStatus(text: string): void;
     setSidebar(lines: string[], start: number, end: number): void;
 
@@ -40,10 +40,6 @@ export class TerminalUI implements ITerminalUI {
         destroyInput();
     }
 
-    public log = (text: string, isolated = false): void => {
-        appendLog(text, isolated);
-    }
-
     public setStatus = (text: string): void => {
         state.statusText = text;
         redraw();
@@ -64,18 +60,26 @@ export class TerminalUI implements ITerminalUI {
         redraw();
     }
 
-    public echo = (message: string): void => {
-        appendLog("\r\n" + message, true);
+    // для добавления строк из игры
+    public log = (text: string): void => {
+        appendLog(text);
     }
 
+    // для показа строк из пользовательского конфига
+    public echo = (message: string): void => {
+        appendLog("\r\n" + message);
+    }
+
+    // для системных сообщений
     public showme = (message: string): void => {
-        appendLog("\r\n" + prefix + message, true);
+        appendLog("\r\n" + prefix + message);
     }
 
     public showerr = (message: string): void => {
         this.showme(`${clr('B')}${message}${clr('0')}`);
     }
 
+    // в отдельное окно alt+2/3/4
     public wecho = (w: number, text: string): void => {
         wecho(w, text);
     }

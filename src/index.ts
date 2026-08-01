@@ -42,6 +42,7 @@ const tui: TerminalUI = new TerminalUI(inputHandler.handle, bindkeys.dispatch);
 broadcaster.addConsumer((text: string) => tui.log(text)); // строки из MUD в tui
 session.setTui(tui); // для вывода ошибок, статуса и дебага
 inputHandler.setSystemEcho(tui.showme); // куда пишем ошибки и справку
+triggers.setDebugger((s: string) => tui.wecho(5, s));
 
 // старт локального сервера с проксированием туда контента из клиента
 const port = Number(process.env.LOCAL_PORT || 0);

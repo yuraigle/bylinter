@@ -230,15 +230,6 @@ function wrapLine(line: string, width: number): string[] {
   return rows;
 }
 
-function updateCarrySgr(win: WindowState, chunk: string): void {
-  const matches = chunk.match(/\x1b\[[0-9;]*m/g);
-  if (!matches) return;
-  for (const code of matches) {
-    win.carrySgr =
-      code === "\x1b[0m" || code === "\x1b[m" ? "" : win.carrySgr + code;
-  }
-}
-
 function rewrapWindow(win: WindowState, width: number): void {
   win.wrapWidth = width;
   win.wrappedRows = [];
@@ -276,13 +267,11 @@ function appendWrappedLine(win: WindowState, line: string): void {
 function appendToWindow(
   windowNum: number,
   text: string,
-  isolated = false,
 ): void {
   const win = getWindow(windowNum);
   const { logWidth } = getLayout();
   if (win.wrapWidth === 0) win.wrapWidth = logWidth;
 
-  const savedCarry = win.carrySgr;
   const rowsBefore = win.wrappedRows.length;
   const wasSplit = win.scrollOffset > 0;
 
@@ -291,19 +280,12 @@ function appendToWindow(
   if (win.logLines.length > 0) {
     const first = segments.shift() ?? "";
     win.logLines[win.logLines.length - 1] += first;
-    updateCarrySgr(win, first);
     rewrapLastLine(win);
   }
 
   for (const segment of segments) {
-    const prefixed = win.carrySgr ? win.carrySgr + segment : segment;
-    win.logLines.push(prefixed);
-    updateCarrySgr(win, segment);
-    appendWrappedLine(win, prefixed);
-  }
-
-  if (isolated) {
-    win.carrySgr = savedCarry; // эхо не должно менять цвет игрового потока
+    win.logLines.push(segment);
+    appendWrappedLine(win, segment);
   }
 
   if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
@@ -331,8 +313,8 @@ function appendToWindow(
   if (windowNum === state.currentWindow) requestRedraw();
 }
 
-export function appendLog(text: string, isolated = false): void {
-  appendToWindow(1, text, isolated);
+export function appendLog(text: string): void {
+  appendToWindow(1, text);
 }
 
 export function wecho(windowNum: number, line: string): void {

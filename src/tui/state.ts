@@ -16,7 +16,6 @@ export interface WindowState {
   rowCounts: number[];
   wrapWidth: number;
   scrollOffset: number;
-  carrySgr: string;
 }
 
 export const state: TuiState = {
@@ -47,7 +46,6 @@ function createWindow(): WindowState {
     rowCounts: [],
     wrapWidth: 0,
     scrollOffset: 0,
-    carrySgr: "",
   };
 }
 
