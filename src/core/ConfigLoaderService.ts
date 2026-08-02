@@ -35,7 +35,5 @@ export class ConfigLoaderService {
         return;
       }
     }
-
-    this.infoLog("No config.ts found");
   }
 }

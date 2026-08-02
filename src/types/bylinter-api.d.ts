@@ -20,7 +20,7 @@ export interface GlobalApiContext {
 }
 
 type LineHandler = (matches: string[], lineCL: string) => void;
-type PromptHandler = (prompt: string, lines: string[]) => boolean;
+type PromptHandler = (prompt: string, linesCL: string[]) => boolean;
 type MsdpHandler = (data: Record<string, unknown>) => void;
 type SubstituteHandler = (m: string[], lineCL: string) => string | null;
 type AliasHandler = (args: string[]) => void;
