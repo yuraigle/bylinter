@@ -90,7 +90,7 @@ export class MudSession implements IMudSession {
         }
     }
 
-    public sendMsdp(name: string, value: string): void {
+    public sendMsdp = (name: string, value: string): void => {
         try {
             this.sender.sendMsdp(name, value);
         } catch (e) {
