@@ -1,131 +1,136 @@
 import { writeLog } from "../shared/logger";
 import {
-    TriggerCollection,
-    PromptHookCollection,
-    MsdpHookCollection,
-    SubstituteCollection
+  TriggerCollection,
+  PromptHookCollection,
+  MsdpHookCollection,
+  SubstituteCollection,
 } from "../logic";
 import { Broadcaster } from "./Broadcaster";
+import { stripColors } from "../protocol/ansi";
 
-const endsWithReset = (s: string) => s.endsWith("\x1b[0;0m");
-const startsWithColor = (s: string) => s.match(/^\x1b\[[0-9;]*m/);
-const hasAnyColor = (s: string) => s.match(/\x1b\[[0-9;]*m/);
+const rxColor: RegExp = /^\x1b\[[01];3[0-7]m$/;
+const rxReset: RegExp = /^\x1b\[0(;0)?m$/;
+const endsWithReset = (s: string): boolean => /\x1b\[0(;0)?m$/.test(s);
+const startsWithColor = (s: string): boolean => /^\x1b\[[01];3[0-7]m/.test(s);
+const hasAnyColor = (s: string): boolean => /\x1b\[[01];3[0-7]m/.test(s);
 
 export class TextPipeline {
-    private readonly triggers: TriggerCollection;
-    private readonly substitutes: SubstituteCollection;
-    private readonly promptHooks: PromptHookCollection;
-    private readonly msdpHooks: MsdpHookCollection;
-    private readonly broadcaster: Broadcaster;
-    private carrySgr: string = "";
+  private readonly triggers: TriggerCollection;
+  private readonly substitutes: SubstituteCollection;
+  private readonly promptHooks: PromptHookCollection;
+  private readonly msdpHooks: MsdpHookCollection;
+  private readonly broadcaster: Broadcaster;
+  private carrySgr: string = "";
 
-    constructor(
-        triggers: TriggerCollection,
-        substitutes: SubstituteCollection,
-        promptHooks: PromptHookCollection,
-        msdpHooks: MsdpHookCollection,
-        broadcaster: Broadcaster,
-    ) {
-        this.triggers = triggers;
-        this.substitutes = substitutes;
-        this.promptHooks = promptHooks;
-        this.msdpHooks = msdpHooks;
-        this.broadcaster = broadcaster;
+  constructor(
+    triggers: TriggerCollection,
+    substitutes: SubstituteCollection,
+    promptHooks: PromptHookCollection,
+    msdpHooks: MsdpHookCollection,
+    broadcaster: Broadcaster,
+  ) {
+    this.triggers = triggers;
+    this.substitutes = substitutes;
+    this.promptHooks = promptHooks;
+    this.msdpHooks = msdpHooks;
+    this.broadcaster = broadcaster;
+  }
+
+  private linesFromLastPrompt: string[] = [];
+  private partialLine = "";
+  private logPath: string | null = process.env.LOG_PATH || null;
+
+  // prompt debouncer
+  private static PROMPT_TIMEOUT_MS: number = 250;
+  private promptTimer: NodeJS.Timeout | null = null;
+  private gaSeen = false;
+
+  public handleIncomingText = (text: string, hasGA: boolean): void => {
+    this.partialLine += text;
+    const chunkLines = this.partialLine.replaceAll(/\r/g, "").split("\n");
+    const completedLines = chunkLines.slice(0, -1);
+
+    // подстановка цветов в начало каждой строки, ресет - в конец
+    for (let i = 0; i < completedLines.length; i++) {
+      let outLine = completedLines[i];
+      if (outLine.match(/^\s*$/)) continue; // игнор пустых строк
+      if (this.carrySgr && !startsWithColor(outLine)) {
+        outLine = this.carrySgr + outLine; // добавить цвет в начало
+      }
+      this.updateCarrySgr(completedLines[i]); // обновить последний цвет
+      if (hasAnyColor(outLine) && !endsWithReset(outLine)) {
+        outLine += "\x1b[0m"; // закрыть цвет на этой строке
+      }
+      // если цвет просто открылся и закрылся, пишем пустую строку
+      if (outLine.match(/^\x1b\[[01];3[0-7]m\s*\x1b\[0(;0)?m$/)) outLine = "";
+
+      completedLines[i] = outLine;
     }
 
-    private lines: string[] = [];
-    private partialLine = "";
-    private logPath: string | null = process.env.LOG_PATH || null;
+    this.linesFromLastPrompt.push(...completedLines);
+    this.partialLine = chunkLines[chunkLines.length - 1];
 
-    // prompt debouncer
-    private static PROMPT_TIMEOUT_MS: number = 250;
-    private promptTimer: NodeJS.Timeout | null = null;
-    private gaSeen = false;
+    completedLines.forEach((lineCL) => {
+      this.triggers.dispatch(lineCL); // lineCL - text colored
+      const outLineCL = this.substitutes.dispatch(lineCL);
+      if (outLineCL !== null) {
+        this.broadcaster.broadcast("\r\n" + outLineCL);
+      }
+    });
 
-    public handleIncomingText = (text: string, hasGA: boolean): void => {
-        this.partialLine += text;
-        const chunkLines = this.partialLine.replaceAll(/\r/g, '').split("\n");
-        const completedLines = chunkLines.slice(0, -1);
-
-        for (let i = 0; i < completedLines.length; i++) {
-            let outLine = completedLines[i];
-            if (outLine.match(/^\s*$/)) continue; // игнор пустых строк
-            if (this.carrySgr && !startsWithColor(outLine)) { // если был незакрытый цвет
-                outLine = this.carrySgr + outLine; // добавить цвет в начало
-            }
-            this.updateCarrySgr(completedLines[i]); // обновить последний цвет
-            if (hasAnyColor(outLine) && !endsWithReset(outLine)) {
-                outLine += "\x1b[0;0m"; // закрыть цвет на этой строке
-            }
-            completedLines[i] = outLine;
-        }
-
-        this.lines.push(...completedLines);
-        this.partialLine = chunkLines[chunkLines.length - 1];
-
-        // lineCL - text colored
-        completedLines.forEach(lineCL => {
-            this.triggers.dispatch(lineCL);
-            const outLineCL = this.substitutes.dispatch(lineCL);
-            if (outLineCL !== null) {
-                this.broadcaster.broadcast("\r\n" + outLineCL);
-            }
-        });
-
-        if (hasGA) {
-            this.gaSeen = true;
-            this.flushPrompt();
-        } else if (!this.gaSeen && this.partialLine.length > 0) {
-            this.schedulePromptTimeout(); // ждём 250мс и промт = остаток
-        }
-
-        this.invokeLogger(text + (hasGA ? "\r\n" : ""));
+    if (hasGA) {
+      this.gaSeen = true;
+      this.flushPrompt();
+    } else if (!this.gaSeen && this.partialLine.length > 0) {
+      this.schedulePromptTimeout(); // ждём 250мс и промт = остаток
     }
 
-    public handleIncomingMsdp = (data: Record<string, unknown>): void => {
-        this.msdpHooks.dispatch(data);
-    }
+    this.invokeLogger(text + (hasGA ? "\r\n" : ""));
+  };
 
-    public resetState = (): void => {
-        if (this.promptTimer) clearTimeout(this.promptTimer);
-        this.promptTimer = null;
-        this.gaSeen = false;
-        this.partialLine = "";
-        this.lines = [];
-    }
+  public handleIncomingMsdp = (data: Record<string, unknown>): void => {
+    this.msdpHooks.dispatch(data);
+  };
 
-    private schedulePromptTimeout(): void {
-        if (this.promptTimer) clearTimeout(this.promptTimer);
-        this.promptTimer = setTimeout(() => {
-            this.promptTimer = null;
-            this.flushPrompt();
-        }, TextPipeline.PROMPT_TIMEOUT_MS);
-    }
+  public resetState = (): void => {
+    if (this.promptTimer) clearTimeout(this.promptTimer);
+    this.promptTimer = null;
+    this.gaSeen = false;
+    this.partialLine = "";
+    this.linesFromLastPrompt = [];
+  };
 
-    private flushPrompt(): void {
-        const prompt = this.partialLine;
-        this.promptHooks.dispatch(prompt, this.lines);
-        this.broadcaster.broadcast("\r\n" + prompt);
-        this.partialLine = "";
-        this.lines = [];
-    }
+  private schedulePromptTimeout(): void {
+    if (this.promptTimer) clearTimeout(this.promptTimer);
+    this.promptTimer = setTimeout(() => {
+      this.promptTimer = null;
+      this.flushPrompt();
+    }, TextPipeline.PROMPT_TIMEOUT_MS);
+  }
 
-    private invokeLogger(text: string): void {
-        if (this.logPath) {
-            writeLog(text, this.logPath);
-        }
-    }
+  private flushPrompt(): void {
+    const prompt = this.partialLine;
+    this.promptHooks.dispatch(prompt, this.linesFromLastPrompt);
+    this.broadcaster.broadcast("\r\n" + prompt);
+    this.partialLine = "";
+    this.linesFromLastPrompt = [];
+  }
 
-    private updateCarrySgr(chunk: string): void {
-        const matches = chunk.match(/\x1b\[[0-9;]*m/g);
-        if (!matches) return;
-        for (const code of matches) {
-            if (code === "\x1b[0m" || code === "\x1b[0;0m" || code === "\x1b[m") {
-                this.carrySgr = "";
-            } else {
-                this.carrySgr = code; // this.carrySgr + 
-                // todo заменять цвет а не добавлять
-            }
-        }
+  private invokeLogger(text: string): void {
+    if (this.logPath) {
+      writeLog(text, this.logPath);
     }
+  }
+
+  private updateCarrySgr(chunk: string): void {
+    const ansiMatches = chunk.match(/\x1b\[[0-9;]*m/g);
+    if (!ansiMatches) return;
+    for (const code of ansiMatches) {
+      if (rxReset.test(code)) {
+        this.carrySgr = "";
+      } else if (rxColor.test(code)) {
+        this.carrySgr = code;
+      }
+    }
+  }
 }

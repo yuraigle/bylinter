@@ -16,12 +16,13 @@ export interface GlobalApiContext {
   setSidebar(lines: string[], start: number, end: number): void;
   stripColors(text: string): string;
   clr(letter: string): string;
+  get_clr(lineCL: string, pos: number): string;
 }
 
 type LineHandler = (matches: string[], lineCL: string) => void;
 type PromptHandler = (prompt: string, lines: string[]) => boolean;
 type MsdpHandler = (data: Record<string, unknown>) => void;
-type SubstituteHandler = (m: string[], lineCL: string) => string;
+type SubstituteHandler = (m: string[], lineCL: string) => string | null;
 type AliasHandler = (args: string[]) => void;
 type BindHandler = () => void;
 

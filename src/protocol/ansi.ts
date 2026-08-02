@@ -33,4 +33,40 @@ export const clr = (letter: string): string => {
   if (ix >= 0 && ix <= 7) return "\x1b[3" + ix + "m"; // regular color
   if (ix >= 8 && ix <= 15) return "\x1b[9" + (ix - 8) + "m"; // bright
   return "\x1b[0m"; // reset
-}
+};
+
+// цвет N-го символа в строке
+export const get_clr = (lineCL: string, pos: number): string => {
+  const escRe = /\x1b\[([0-9;]*)m/y;
+  let currentLetter = "H"; // белый
+  let visibleIndex = -1;
+  let i = 0;
+
+  while (i < lineCL.length) {
+    if (lineCL[i] === "\x1b") {
+      escRe.lastIndex = i;
+      const m = escRe.exec(lineCL);
+      if (m) {
+        const codes = m[1].split(";").map(Number);
+        for (const code of codes) {
+          if (code === 0) {
+            currentLetter = "H";
+          } else if (code >= 30 && code <= 37) {
+            currentLetter = String.fromCharCode(65 + (code - 30)); // A-H
+          } else if (code >= 90 && code <= 97) {
+            currentLetter = String.fromCharCode(65 + 8 + (code - 90)); // I-P
+          }
+        }
+        i = escRe.lastIndex;
+        continue;
+      }
+    }
+    visibleIndex++;
+    if (visibleIndex === pos) {
+      return currentLetter;
+    }
+    i++;
+  }
+
+  return currentLetter;
+};

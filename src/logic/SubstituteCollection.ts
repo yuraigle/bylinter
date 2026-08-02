@@ -7,7 +7,7 @@ export class SubstituteCollection {
         this.substitutes.push(new Substitute(rx, cb));
     }
 
-    public dispatch = (lineCL: string): string => {
+    public dispatch = (lineCL: string): string | null => {
         const line = stripColors(lineCL);
         for (const subst of this.substitutes) {
             if (subst.pattern.test(line)) {
@@ -19,7 +19,7 @@ export class SubstituteCollection {
     }
 }
 
-export type SubstituteHandler = (m: string[], lineCL: string) => string;
+export type SubstituteHandler = (m: string[], lineCL: string) => string | null;
 
 export class Substitute {
     public readonly pattern: RegExp;

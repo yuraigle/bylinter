@@ -1,10 +1,3 @@
-type LineHandler = (matches: string[], lineCL: string) => void;
-type PromptHandler = (prompt: string, lines: string[]) => boolean;
-type MsdpHandler = (data: Record<string, unknown>) => void;
-type SubstituteHandler = (m: string[], lineCL: string) => string;
-type AliasHandler = (args: string[]) => void;
-type BindHandler = () => void;
-
 export interface GlobalApiContext {
   connect(host: string, port?: number, proxy?: string): Promise<void>;
   disconnect(): void;
@@ -23,7 +16,15 @@ export interface GlobalApiContext {
   setSidebar(lines: string[], start: number, end: number): void;
   stripColors(text: string): string;
   clr(letter: string): string;
+  get_clr(lineCL: string, pos: number): string;
 }
+
+type LineHandler = (matches: string[], lineCL: string) => void;
+type PromptHandler = (prompt: string, lines: string[]) => boolean;
+type MsdpHandler = (data: Record<string, unknown>) => void;
+type SubstituteHandler = (m: string[], lineCL: string) => string | null;
+type AliasHandler = (args: string[]) => void;
+type BindHandler = () => void;
 
 declare global {
   var bylinter: GlobalApiContext;
