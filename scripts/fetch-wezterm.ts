@@ -1,8 +1,7 @@
 import { $, Glob } from "bun";
 import { tmpdir } from "node:os";
-import { mkdir, readdir, rm, rename } from "node:fs/promises";
+import { mkdir, rm, cp } from "node:fs/promises";
 import * as path from "node:path";
-import { cp } from "node:fs/promises";
 
 const WEZTERM_VERSION = "20240203-110809-5046fc22";
 const PROXY = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || "";
@@ -55,7 +54,7 @@ for (const t of targets) {
 
   if (t.isAppImage) {
     // download
-    const outPath = path.join(systemTmp, 'WezTerm.AppImage');
+    const outPath = path.join(systemTmp, `WezTerm-${WEZTERM_VERSION}.AppImage`);
     await downloadIfMissing(t.url, outPath);
 
     // extract
@@ -72,14 +71,10 @@ for (const t of targets) {
     const extractPath = path.join(systemTmp, `wezterm-${t.platform}-extracted`);
     await $`unzip -q ${outPath} -d ${extractPath}`;
 
-    // move
     const globPath = t.extractedDirGlob
       ? await findExtractedDir(extractPath, t.extractedDirGlob)
       : extractPath;
-    const sourceFiles = await readdir(globPath);
-    for (const file of sourceFiles) {
-      await rename(path.join(globPath, file), path.join(dest, file));
-    }
+    await cp(globPath, dest, { recursive: true });
 
     // чтобы уменьшить размер бандла
     if (t.platform === "win") {
