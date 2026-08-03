@@ -75,7 +75,8 @@ registerPromptHook((prompt: string, lines: string[]) => {
   const mapLines: string[] = [];
 
   lines
-    .filter((s) => s.match(/^:.*$/))
+    .filter((s) => s.match(/^(\x1b\[0;37m)?:.*$/)) // может быть цвет H в начале
+    .map((s) => s.replace(/^\x1b\[0;37m/, ""))
     .forEach((s) => mapLines.push(s.substring(1)));
 
   if (mapLines.length > 0) {
@@ -107,7 +108,9 @@ const rxPlayerHere = RegExp(
 );
 registerSubstitute(rxPlayerHere, (m: string[], lineCL: string): string => {
   if (getColor(lineCL, 0) !== "B") return lineCL; // проверка на цвет: красный
-  return lineCL.replace(m[2], clr("G") + m[2] + clr("B"));
+  if (/под седлом/.test(m[4] || "")) return lineCL;
+  if (!m[1] && !m[3]) return lineCL;
+  return lineCL.replace("" + m[2], clr("H") + m[2] + clr("B"));
 });
 // todo: доделать прячется маскируется
 
@@ -147,6 +150,59 @@ function tsfmt() {
   return "[" + hms + "] ";
 }
 
+// подсветки приёмов в бою
+const magicLag: RegExp[] = [
+  /^[^:]+ замер(ла|ло|ли)? на месте!$/,
+  /^[^:]+ повалило на землю\.$/,
+  /^[^:]+ оглушило\.$/,
+  /^[^:]+ прилег(ла|ло|ли)? подремать\.$/,
+];
+
+for (const rx of magicLag) {
+  registerSubstitute(rx, (m, lineCL) =>
+    getColor(lineCL, 0) != "H" ? lineCL : clr("O") + m[0],
+  );
+}
+
+const fightLag: RegExp[] = [
+  /^[^:]+ [а-я]+ от богатырского удара .*/,
+  /^[^:]+ завалил.? .* на землю мощным ударом.*/,
+  /^Одним ударом .* повалил.? .* на землю.*/,
+  /^[^:]+ своим оглушающим ударом сбил.*/,
+  /^[^:]+ мощным ударом оглушил.? .*/,
+  /^[^:]+ оглушил[оаи]? .*/,
+];
+
+for (const rx of fightLag) {
+  registerSubstitute(rx, (m, lineCL) =>
+    getColor(lineCL, 0) != "H" ? lineCL : clr("M") + m[0],
+  );
+}
+
+const otherAffect: RegExp[] = [
+  /^[^:]+ прикусил[аои]? язык!$/,
+  /^[^:]+ ослеп(ла|ло|ли)?!$/,
+];
+
+for (const rx of otherAffect) {
+  registerSubstitute(rx, (m, lineCL) =>
+    getColor(lineCL, 0) != "H" ? lineCL : clr("F") + m[0],
+  );
+}
+
+const fightFail: RegExp[] = [
+  /^[^:]+ уклонил.?с. от попытки .* завалить /,
+  /^[^:]+ попытал.?с. завалить .*, но /,
+  /^[^:]+ избежал.? попытки .* завалить /,
+  /^[^:]+ попытал.?с. подсечь .*, но /,
+];
+
+for (const rx of fightFail) {
+  registerSubstitute(rx, (m, lineCL) =>
+    getColor(lineCL, 0) != "H" ? lineCL : clr("I") + m[0],
+  );
+}
+
 // Alt+стрелки для ходьбы
 registerBindkey("`", () => sendline("~"));
 registerBindkey("ё", () => sendline("~"));
@@ -156,6 +212,7 @@ registerBindkey("M-left", () => sendline("w"));
 registerBindkey("M-right", () => sendline("e"));
 registerBindkey("M-pgup", () => sendline("u"));
 registerBindkey("M-pgdn", () => sendline("d"));
+registerBindkey("M-end", () => sendline("scan"));
 
 // поведение
 registerTrigger(/^Вы готовы сожрать быка\./, () => sendline("пить боч.синим"));
@@ -168,7 +225,7 @@ registerAlias("обкаст", () => {
 // для неумеющих парсить текст есть msdp
 registerTrigger(/^Using keytable$/, () => {
   // ["ROOM","EXPERIENCE","GOLD","LEVEL","MAX_HIT","MAX_MOVE","STATE","GROUP"]
-  sendMsdp("REPORT", "ROOM");
+  // sendMsdp("REPORT", "ROOM");
   sendMsdp("REPORT", "GROUP");
 });
 
