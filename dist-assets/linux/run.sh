@@ -4,7 +4,7 @@ set -e
 ROOT="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 
 WEZTERM="$ROOT/wezterm/WezTerm.AppImage"
-CONFIG="$ROOT/termconfig.lua"
+CONFIG="$ROOT/wezterm/termconfig.lua"
 APP="$ROOT/bylinter-cli"
 
 if [[ ! -x "$WEZTERM" ]]; then

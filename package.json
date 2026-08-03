@@ -4,8 +4,8 @@
   "description": "",
   "scripts": {
     "start": "bun run src/index.ts -c dist-assets/common/config/index.ts",
-    "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./vendor/wezterm-linux/WezTerm.AppImage --config-file dist-assets/common/termconfig.lua start --cwd \".\" -- bun start",
-    "guiw": "cmd /c start \"\" \"vendor\\wezterm-win\\wezterm-gui.exe\" --config-file dist-assets/common/termconfig.lua start --cwd \".\" -- bun start",
+    "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./vendor/wezterm-linux/WezTerm.AppImage --config-file dist-assets/common/wezterm/termconfig.lua start --cwd \".\" -- bun start",
+    "guiw": "cmd /c start \"\" \"vendor\\wezterm-win\\wezterm-gui.exe\" --config-file dist-assets/common/wezterm/termconfig.lua start --cwd \".\" -- bun start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
     "patch-wezterm": "bun scripts/patch-wezterm.ts",
