@@ -24,10 +24,6 @@ export function moveTo(row: number, col: number): string {
   return `\x1b[${row};${col}H`;
 }
 
-export function stripColors(text: string): string {
-  return text.replaceAll(/\x1b\[[0-9;]*m/g, "");
-}
-
 export const clr = (letter: string): string => {
   const ix: number = letter.charCodeAt(0) - 65;
   if (ix >= 0 && ix <= 7) return "\x1b[3" + ix + "m"; // regular color
@@ -36,7 +32,7 @@ export const clr = (letter: string): string => {
 };
 
 // цвет N-го символа в строке
-export const get_clr = (lineCL: string, pos: number): string => {
+export const getColor = (lineCL: string, pos: number): string => {
   const escRe = /\x1b\[([0-9;]*)m/y;
   let currentLetter = "H"; // белый
   let visibleIndex = -1;

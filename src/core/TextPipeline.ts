@@ -6,7 +6,6 @@ import {
   SubstituteCollection,
 } from "../logic";
 import { Broadcaster } from "./Broadcaster";
-import { stripColors } from "../protocol/ansi";
 
 const rxColor: RegExp = /^\x1b\[[01];3[0-7]m$/;
 const rxReset: RegExp = /^\x1b\[0(;0)?m$/;

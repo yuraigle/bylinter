@@ -1,6 +1,6 @@
+import { stripANSI } from "bun";
 import { createWriteStream, mkdirSync, type WriteStream } from "node:fs";
 import path from "node:path";
-import { stripColors } from "../protocol/ansi";
 
 let currentStream: WriteStream | null = null;
 let currentFileDate = "";
@@ -36,5 +36,5 @@ function ensureStream(logDir: string): WriteStream {
 
 export function writeLog(text: string, logDir: string): void {
   const stream = ensureStream(logDir);
-  stream.write(stripColors(text));
+  stream.write(stripANSI(text));
 }

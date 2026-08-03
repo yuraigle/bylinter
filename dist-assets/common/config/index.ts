@@ -6,29 +6,39 @@ const {
   registerAlias,
   registerTrigger,
   registerPromptHook,
+  registerMsdpHook,
   registerBindkey,
   registerSubstitute,
   connect,
-  showme,
-  showerr,
-  sendRaw,
+  sendText,
+  sendMsdp,
   echo,
   wecho,
   setSidebar,
   clr,
-  get_clr,
+  getColor,
 } = globalThis.bylinter;
 
 const CHAR_NAME = ""; // для автологина
 const CHAR_PASS = "";
 
-showme(`Введите ${clr("D")}кон${clr("0")} для подключения к серверу Былин`);
+const showme = (message: string): void => {
+  echo(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
+};
 
-function sendline(message: string): void {
+const sendline = (message: string): void => {
   echo("\r\n" + clr("D") + "[" + message + "]" + clr("0"));
-  message.split(/;/).forEach((cmd) => sendRaw(cmd));
-}
+  message.split(/;/).forEach((cmd) => sendText(cmd));
+};
 
+let colorsTest: string = "";
+for (let i = 0; i < 15; i++) {
+  const letter = String.fromCharCode(65 + i);
+  colorsTest += clr(letter) + letter;
+}
+showme("Colors Palette: " + colorsTest + clr("0"));
+
+showme(`Введите ${clr("D")}кон${clr("0")} для подключения к серверу Былин`);
 registerAlias("кон", () => connect("bylins.su", 4000, ""));
 
 registerPromptHook((prompt: string) => {
@@ -37,7 +47,7 @@ registerPromptHook((prompt: string) => {
     return true;
   }
   if (prompt.match(/^Введите имя персонажа/) && CHAR_NAME && CHAR_PASS) {
-    sendRaw(`${CHAR_NAME} ${CHAR_PASS}`); // не показывает пароль в логе
+    sendText(`${CHAR_NAME} ${CHAR_PASS}`); // не показывает пароль в логе
     return true;
   }
   if (prompt.match(/ANYKEY нажмите ENTER/)) {
@@ -94,7 +104,7 @@ const rxPlayerHere = RegExp(
   "^" + preTitle + pName + postTitle + guildAff + pos + aura + " $",
 );
 registerSubstitute(rxPlayerHere, (m: string[], lineCL: string): string => {
-  if (get_clr(lineCL, 0) !== "B") return lineCL; // проверка на цвет: красный
+  if (getColor(lineCL, 0) !== "B") return lineCL; // проверка на цвет: красный
   return lineCL.replace(m[2], clr("G") + m[2] + clr("B"));
 });
 // todo: доделать прячется маскируется
@@ -152,3 +162,12 @@ registerAlias("обкаст", () => {
   sendline("к !в щ!;к !м т!;к !доб!;к !б в!;к !пок!");
   sendline("к !пок!;к !пок!;к !о н!;к !о я!;к !о с!");
 });
+
+// для неумеющих парсить текст есть msdp
+registerTrigger(/^Using keytable$/, () => {
+  // ["ROOM","EXPERIENCE","GOLD","LEVEL","MAX_HIT","MAX_MOVE","STATE","GROUP"]
+  sendMsdp("REPORT", "ROOM");
+  sendMsdp("REPORT", "GROUP");
+});
+
+registerMsdpHook((data) => showme(`[msdp] ${JSON.stringify(data)}`));

@@ -1,4 +1,4 @@
-import { stripColors } from "../protocol/ansi";
+import { stripANSI } from "bun";
 
 export class SubstituteCollection {
     private readonly substitutes: Substitute[] = [];
@@ -8,7 +8,7 @@ export class SubstituteCollection {
     }
 
     public dispatch = (lineCL: string): string | null => {
-        const line = stripColors(lineCL);
+        const line = stripANSI(lineCL);
         for (const subst of this.substitutes) {
             if (subst.pattern.test(line)) {
                 const m: string[] = line.match(subst.pattern) ?? [];

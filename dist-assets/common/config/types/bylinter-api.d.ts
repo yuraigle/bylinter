@@ -1,11 +1,9 @@
 export interface GlobalApiContext {
   connect(host: string, port?: number, proxy?: string): Promise<void>;
   disconnect(): void;
-  sendRaw(command: string): void; // без эха
+  sendText(command: string): void; // без эха
   sendMsdp(name: string, value: string): void;
   echo(message: string): void;
-  showme(message: string): void;
-  showerr(message: string): void;
   wecho(windowNum: number, line: string): void;
   registerTrigger(pattern: RegExp, handler: LineHandler): void;
   registerPromptHook(handler: PromptHandler, priority: number): void;
@@ -14,9 +12,8 @@ export interface GlobalApiContext {
   registerAlias(cmd: string, handler: AliasHandler): void;
   registerBindkey(spec: string, handler: BindHandler): void;
   setSidebar(lines: string[], start: number, end: number): void;
-  stripColors(text: string): string;
   clr(letter: string): string;
-  get_clr(lineCL: string, pos: number): string;
+  getColor(lineCL: string, pos: number): string;
 }
 
 type LineHandler = (matches: string[], lineCL: string) => void;

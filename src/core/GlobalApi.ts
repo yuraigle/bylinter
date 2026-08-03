@@ -1,6 +1,6 @@
 import { GlobalApiContext } from "../types/bylinter-api";
 
-import { clr, get_clr, stripColors } from "../protocol/ansi";
+import { clr, getColor } from "../protocol/ansi";
 import { MudSession } from "./MudSession.js";
 import { TerminalUI } from "../tui/TerminalUI";
 import {
@@ -25,24 +25,18 @@ export class GlobalApi {
   ): GlobalApiContext => ({
     connect: session.connect,
     disconnect: session.disconnect,
-    sendRaw: session.sendText,
+    sendText: session.sendText,
     sendMsdp: session.sendMsdp,
-
     echo: tui.echo,
-    showme: tui.showme,
-    showerr: tui.showerr,
     wecho: tui.wecho,
     setSidebar: tui.setSidebar,
-
     registerTrigger: triggers.register,
     registerPromptHook: promptHooks.register,
     registerMsdpHook: msdpHooks.register,
     registerSubstitute: substitutes.register,
     registerAlias: aliases.register,
     registerBindkey: bindkeys.register,
-
-    stripColors: stripColors,
     clr: clr,
-    get_clr: get_clr,
+    getColor: getColor,
   });
 }

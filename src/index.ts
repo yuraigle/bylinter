@@ -65,12 +65,5 @@ Object.defineProperty(globalThis, 'bylinter', { value: api, writable: false });
 
 tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 
-let colorsTest: string = '';
-for (let i = 0; i < 15; i++) {
-    const letter = String.fromCharCode(65 + i);
-    colorsTest += clr(letter) + letter;
-}
-tui.showme('Colors Palette: ' + colorsTest + clr('0'));
-
 // загрузка пользовательского конфига, если он есть
 await (new ConfigLoaderService(tui.showme)).loadUserConfig();
