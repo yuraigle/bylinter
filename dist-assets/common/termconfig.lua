@@ -11,11 +11,11 @@ config.color_scheme = 'Argonaut'
 
 -- список шрифтов, будем искать по порядку
 local base_font = wezterm.font_with_fallback({
+    'JetBrains Mono',
     'FantasqueSansM Nerd Font Mono',
-    'Consolas',
 })
 
-config.font_size = 13.0
+config.font_size = 14.0
 config.font = base_font
 config.font_dirs = { 'fonts' }
 
@@ -24,7 +24,7 @@ config.font_rules = { { intensity = 'Bold', font = base_font } }
 config.bold_brightens_ansi_colors = true
 
 config.initial_cols = 160
-config.initial_rows = 40
+config.initial_rows = 38
 config.window_decorations = 'TITLE | RESIZE'
 config.window_background_opacity = 1.0
 config.window_padding = { left = 6, right = 6, top = 4, bottom = 4 }

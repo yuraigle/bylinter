@@ -39,7 +39,9 @@ for (let i = 0; i < 15; i++) {
 showme("Colors Palette: " + colorsTest + clr("0"));
 
 showme(`Введите ${clr("D")}кон${clr("0")} для подключения к серверу Былин`);
-registerAlias("кон", () => connect("bylins.su", 4000, ""));
+
+const PROXY = process.env.HTTP_PROXY || "";
+registerAlias("кон", () => connect("bylins.su", 4000, PROXY));
 
 registerPromptHook((prompt: string) => {
   if (prompt.match(/^Select one :/)) {
