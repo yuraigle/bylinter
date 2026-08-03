@@ -86,6 +86,7 @@ for (const t of targets) {
       await rm(`${dest}/wezterm.pdb`, { force: true });
       await rm(`${dest}/wezterm.exe`, { force: true });
       await rm(`${dest}/wezterm-mux-server.exe`, { force: true });
+      await rm(`${dest}/strip-ansi-escapes.exe`, { force: true });
     }
 
     // удаляем временные файлы

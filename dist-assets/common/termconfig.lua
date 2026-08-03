@@ -12,7 +12,6 @@ config.color_scheme = 'Argonaut'
 -- список шрифтов, будем искать по порядку
 local base_font = wezterm.font_with_fallback({
     'JetBrains Mono',
-    'FantasqueSansM Nerd Font Mono',
 })
 
 config.font_size = 14.0
