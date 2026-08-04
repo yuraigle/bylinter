@@ -33,6 +33,10 @@ config.enable_tab_bar = false
 config.scrollback_lines = 5000
 config.exit_behavior = 'CloseOnCleanExit'
 config.window_close_confirmation = 'NeverPrompt'
-config.default_cursor_style = 'SteadyBar'
+config.default_cursor_style = 'BlinkingBar'
+
+wezterm.on('format-window-title', function()
+    return 'Bylinter'
+end)
 
 return config
