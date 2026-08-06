@@ -38,8 +38,12 @@ config.enable_tab_bar = false
 config.scrollback_lines = 5000
 config.exit_behavior = 'CloseOnCleanExit'
 config.window_close_confirmation = 'NeverPrompt'
-config.default_cursor_style = 'BlinkingBlock'
 
+-- курсор - мигающий зелёный блок
+config.default_cursor_style = 'BlinkingBlock'
+config.colors = { cursor_bg = '#3da03d', cursor_border = '#3da03d' }
+
+-- заголовок окна
 wezterm.on('format-window-title', function()
     return 'Bylinter'
 end)
