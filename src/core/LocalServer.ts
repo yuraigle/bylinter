@@ -4,6 +4,8 @@ import { Broadcaster } from "./Broadcaster";
 import { encode } from "../shared/encoding";
 import { createTelnetParser } from "../protocol/telnet";
 
+// LocalServer на UTF-8 всегда, для веб-клиентов
+
 type TextConsumer = (text: string) => void;
 
 export class LocalServer {
@@ -31,7 +33,7 @@ export class LocalServer {
       const parser = createTelnetParser();
 
       const consumer = (text: string) => {
-        if (!client.destroyed) client.write(encode(text));
+        if (!client.destroyed) client.write(text);
       };
 
       const removeCb = this.outputSink.addConsumer(consumer);
@@ -40,8 +42,9 @@ export class LocalServer {
         const { segments } = parser.feed(chunk);
         const text = segments.map((s) => s.text).join("");
         if (text.length > 0) {
-          this.onInput(text);
+          this.onInput(encode(text).toString());
         }
+        // todo спрашивать пароль для подключения
       });
 
       client.on("close", () => {
@@ -60,4 +63,3 @@ export class LocalServer {
     });
   }
 }
-
