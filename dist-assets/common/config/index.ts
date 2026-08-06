@@ -230,3 +230,8 @@ registerTrigger(/^Using keytable$/, () => {
 });
 
 registerMsdpHook((data) => showme(`[msdp] ${JSON.stringify(data)}`));
+
+registerAlias('_тверь_д_владимир', () => { });
+registerAlias('_тверь_д_муром', () => { });
+registerAlias('_тверь_з_деревня', () => { });
+registerAlias('_тверь_з_хоромы', () => { });

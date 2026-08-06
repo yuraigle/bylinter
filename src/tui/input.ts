@@ -180,7 +180,8 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
 export function initInput(
   onInput: (line: string) => void,
-  onKeyPress: (key: KeyInfo, str: string) => boolean
+  onKeyPress: (key: KeyInfo, str: string) => boolean,
+  aliasNames: Set<string>,
 ): void {
   inputHandler = onInput;
   keyPressHandler = onKeyPress;
