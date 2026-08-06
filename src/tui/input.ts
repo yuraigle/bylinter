@@ -11,6 +11,7 @@ import {
   switchWindow,
 } from "./render";
 import { KeyInfo } from "../logic/BindkeyCollection";
+import { AliasCollection } from "../logic";
 
 let inputHandler: (line: string) => void;
 let keyPressHandler: (key: KeyInfo, str: string) => boolean;
@@ -26,6 +27,15 @@ function isPrintable(str: string | undefined): str is string {
 
 function handleKeypress(str: string, key: KeyInfo | undefined): void {
   if (!key) return;
+
+  if (key.name !== "tab") {
+    completion = null;
+  }
+
+  if (key.name === "tab" && !key.ctrl && !key.meta) {
+    handleTabCompletion();
+    return;
+  }
 
   if (key.name === "return") {
     const line = state.inputBuffer;
@@ -181,10 +191,11 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 export function initInput(
   onInput: (line: string) => void,
   onKeyPress: (key: KeyInfo, str: string) => boolean,
-  aliasNames: Set<string>,
+  aliases: AliasCollection,
 ): void {
   inputHandler = onInput;
   keyPressHandler = onKeyPress;
+  aliasCollection = aliases
 
   readline.emitKeypressEvents(process.stdin);
   if (process.stdin.isTTY) {
@@ -206,4 +217,41 @@ export function destroyInput(): void {
     process.stdin.setRawMode(false);
   }
   process.stdin.pause();
+}
+
+let aliasCollection: AliasCollection | null = null;
+let completion: CompletionState | null = null;
+
+interface CompletionState {
+  prefix: string;
+  matches: string[];
+  index: number; // matches.length — исходный prefix
+}
+
+function handleTabCompletion(): void {
+  if (!aliasCollection) return;
+
+  if (!completion) {
+    const prefix = state.inputBuffer;
+    if (prefix.length === 0) return;
+
+    const matches = Array.from(aliasCollection.getNames())
+      .filter((name) => name.startsWith(prefix))
+      .sort((a, b) => a.localeCompare(b));
+
+    if (matches.length === 0) return;
+
+    completion = { prefix, matches, index: 0 };
+  } else {
+    completion.index = (completion.index + 1) % (completion.matches.length + 1);
+  }
+
+  const value =
+    completion.index < completion.matches.length
+      ? completion.matches[completion.index]
+      : completion.prefix;
+
+  state.inputBuffer = value;
+  state.cursorPos = value.length;
+  redrawInput();
 }

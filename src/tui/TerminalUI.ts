@@ -10,6 +10,7 @@ import {
 import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../logic/BindkeyCollection";
+import { AliasCollection } from "../logic";
 
 export interface ITerminalUI {
   destroy(): void;
@@ -29,14 +30,14 @@ export class TerminalUI implements ITerminalUI {
   constructor(
     onInput: (line: string) => void,
     onKeyPress: (key: KeyInfo, str: string) => boolean,
-    aliasNames: Set<string>,
+    aliases: AliasCollection,
   ) {
     const echoAndInput = (line: string) => {
       this.echo(clr("L") + line + clr("0"));
       onInput(line);
     };
 
-    initInput(echoAndInput, onKeyPress, aliasNames);
+    initInput(echoAndInput, onKeyPress, aliases);
     enterScreen();
     rewrapAll();
     redraw();

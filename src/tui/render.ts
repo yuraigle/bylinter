@@ -7,6 +7,7 @@ const MIN_WIDTH_FOR_SIDEBAR = 160;
 const SPLIT_DIVIDER_ROWS = 1;
 const CLR0 = "\x1b[0m"; // Reset
 const CLR1 = "\x1b[33m"; // Yellow
+const CLR2 = "\x1b[93m"; // Bright Yellow
 const STATUS_BG = "\x1b[43m"; // BG_Yellow
 const STATUS_FG = "\x1b[30m"; // Black
 
@@ -160,9 +161,10 @@ export function redrawInput(): void {
     viewStart = Math.max(0, state.cursorPos - width + 1);
   }
   const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
+  const visibleInputClr = CLR2 + visibleInput + CLR0;
   const visibleCursorCol = state.cursorPos - viewStart;
 
-  out += visibleInput;
+  out += visibleInputClr;
   out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
 
   process.stdout.write(out);

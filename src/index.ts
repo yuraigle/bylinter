@@ -43,7 +43,7 @@ const bindkeys: BindkeyCollection = new BindkeyCollection();
 const tui: TerminalUI = new TerminalUI(
   inputHandler.handle,
   bindkeys.dispatch,
-  aliases.getNames(), // для tab-навигации по алиасам
+  aliases, // для tab-навигации по алиасам
 );
 
 broadcaster.addConsumer((text: string) => tui.log(text)); // строки из MUD в tui

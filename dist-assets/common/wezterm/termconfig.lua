@@ -9,13 +9,18 @@ end
 -- https://wezterm.org/colorschemes/
 config.color_scheme = 'Argonaut'
 
--- список шрифтов, будем искать по порядку. можно локально положить в ./fonts
-local base_font = wezterm.font_with_fallback({
-    'JetBrains Mono',                -- нормально в FullHD
-    'FantasqueSansM Nerd Font Mono', -- симпатичный, только в 4K
-})
+-- шрифты можно локально положить в ./fonts
+-- FiraMono Nerd Font | JetBrains Mono | Consolas | Courier New | GeistMono NFM
+local base_font = wezterm.font(
+    'Lucida Console', { weight = 'Regular' } -- Light | Book | Regular | Medium | Bold
+)
 
-config.font_size = 14.0
+-- на грустном мониторе FullHD можно поиграть с настройками рендеринга шрифтов:
+config.freetype_render_target = "Normal" -- Normal | HorizontalLcd
+config.freetype_load_target = "Normal" -- Normal | Light | Mono | HorizontalLcd
+config.freetype_load_flags = "DEFAULT" -- DEFAULT | NO_BITMAP | FORCE_AUTOHINT | NO_AUTOHINT
+
+config.font_size = 13
 config.font = base_font
 config.font_dirs = { 'fonts' }
 
@@ -33,6 +38,9 @@ config.enable_tab_bar = false
 config.scrollback_lines = 5000
 config.exit_behavior = 'CloseOnCleanExit'
 config.window_close_confirmation = 'NeverPrompt'
-config.default_cursor_style = 'SteadyBar'
+
+-- курсор - мигающий зелёный блок
+config.default_cursor_style = 'BlinkingBlock'
+config.colors = { cursor_bg = '#3da03d', cursor_border = '#3da03d' }
 
 return config
