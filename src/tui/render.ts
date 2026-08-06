@@ -141,9 +141,10 @@ export function redraw(): void {
     viewStart = Math.max(0, state.cursorPos - width + 1);
   }
   const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
+  const visibleInputClr = CLR2 + visibleInput + CLR0;
   const visibleCursorCol = state.cursorPos - viewStart;
 
-  out += visibleInput;
+  out += visibleInputClr;
   out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
 
   process.stdout.write(out);
