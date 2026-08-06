@@ -10,9 +10,9 @@ end
 config.color_scheme = 'Argonaut'
 
 -- шрифты можно локально положить в ./fonts
--- FiraMono Nerd Font | JetBrains Mono | Consolas | Courier New | GeistMono NFM
+-- Lucida Console | JetBrains Mono | Consolas | Courier New | GeistMono NFM
 local base_font = wezterm.font(
-    'Lucida Console', { weight = 'Regular' } -- Light | Book | Regular | Medium | Bold
+    'JetBrains Mono', { weight = 'Regular' } -- Light | Book | Regular | Medium | Bold
 )
 
 -- на грустном мониторе FullHD можно поиграть с настройками рендеринга шрифтов:
