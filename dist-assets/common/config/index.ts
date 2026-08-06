@@ -150,7 +150,7 @@ function tsfmt() {
   return "[" + hms + "] ";
 }
 
-// подсветки приёмов в бою
+// подсветки в бою
 const magicLag: RegExp[] = [
   /^[^:]+ замер(ла|ло|ли)? на месте!$/,
   /^[^:]+ повалило на землю\.$/,
@@ -160,22 +160,22 @@ const magicLag: RegExp[] = [
 
 for (const rx of magicLag) {
   registerSubstitute(rx, (m, lineCL) =>
-    getColor(lineCL, 0) != "H" ? lineCL : clr("O") + m[0],
+    getColor(lineCL, 0) != "H" ? lineCL : clr("O") + m[0] + clr("0"),
   );
 }
 
 const fightLag: RegExp[] = [
-  /^[^:]+ [а-я]+ от богатырского удара .*/,
-  /^[^:]+ завалил.? .* на землю мощным ударом.*/,
-  /^Одним ударом .* повалил.? .* на землю.*/,
-  /^[^:]+ своим оглушающим ударом сбил.*/,
-  /^[^:]+ мощным ударом оглушил.? .*/,
-  /^[^:]+ оглушил[оаи]? .*/,
+  /^[^:]+ [а-я]+ от богатырского удара .*$/,
+  /^[^:]+ завалил.? .* на землю мощным ударом.*$/,
+  /^Одним ударом .* повалил.? .* на землю.*$/,
+  /^[^:]+ своим оглушающим ударом сбил.*$/,
+  /^[^:]+ мощным ударом оглушил.? .*$/,
+  /^[^:]+ оглушил[оаи]? .*$/,
 ];
 
 for (const rx of fightLag) {
   registerSubstitute(rx, (m, lineCL) =>
-    getColor(lineCL, 0) != "H" ? lineCL : clr("M") + m[0],
+    getColor(lineCL, 0) != "H" ? lineCL : clr("M") + m[0] + clr("0"),
   );
 }
 
@@ -186,20 +186,20 @@ const otherAffect: RegExp[] = [
 
 for (const rx of otherAffect) {
   registerSubstitute(rx, (m, lineCL) =>
-    getColor(lineCL, 0) != "H" ? lineCL : clr("F") + m[0],
+    getColor(lineCL, 0) != "H" ? lineCL : clr("F") + m[0] + clr("0"),
   );
 }
 
 const fightFail: RegExp[] = [
-  /^[^:]+ уклонил.?с. от попытки .* завалить /,
-  /^[^:]+ попытал.?с. завалить .*, но /,
-  /^[^:]+ избежал.? попытки .* завалить /,
-  /^[^:]+ попытал.?с. подсечь .*, но /,
+  /^[^:]+ уклонил.?с. от попытки .* завалить .*$/,
+  /^[^:]+ попытал.?с. завалить .*, но .*$/,
+  /^[^:]+ избежал.? попытки .* завалить .*$/,
+  /^[^:]+ попытал.?с. подсечь .*, но .*$/,
 ];
 
 for (const rx of fightFail) {
   registerSubstitute(rx, (m, lineCL) =>
-    getColor(lineCL, 0) != "H" ? lineCL : clr("I") + m[0],
+    getColor(lineCL, 0) != "H" ? lineCL : clr("I") + m[0] + clr("0"),
   );
 }
 
