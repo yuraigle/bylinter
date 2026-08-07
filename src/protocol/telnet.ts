@@ -46,7 +46,7 @@ function findSubnegotiationEnd(buf: Buffer, from: number): number {
   return -1;
 }
 
-export function createTelnetParser() {
+export function createTelnetParser(encoding?: string) {
   let pending = Buffer.alloc(0);
 
   function feed(chunk: Buffer): TelnetParseResult {
@@ -67,7 +67,10 @@ export function createTelnetParser() {
         const cmd = buf[i + 1];
 
         if (cmd === 0xf9) {
-          segments.push({ text: decode(Buffer.from(out)), hasGA: true });
+          segments.push({
+            text: decode(Buffer.from(out), encoding),
+            hasGA: true,
+          });
           out = [];
           i += 1;
           continue;
@@ -105,7 +108,10 @@ export function createTelnetParser() {
           events.push({ kind: "subnegotiation", option, payload });
 
           if (option === COMPRESS2_OPT) {
-            segments.push({ text: decode(Buffer.from(out)), hasGA: false });
+            segments.push({
+              text: decode(Buffer.from(out), encoding),
+              hasGA: false,
+            });
             const tail = buf.subarray(seIndex + 1);
             return { segments, events, compressedTail: Buffer.from(tail) };
           }
@@ -122,7 +128,7 @@ export function createTelnetParser() {
 
     // Остаток без GA (незавершённый хвост) — тоже отдельный сегмент
     if (out.length > 0 || segments.length === 0) {
-      segments.push({ text: decode(Buffer.from(out)), hasGA: false });
+      segments.push({ text: decode(Buffer.from(out), encoding), hasGA: false });
     }
 
     return { segments, events, compressedTail: null };

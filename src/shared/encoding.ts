@@ -8,8 +8,8 @@ if (!iconv.encodingExists(ENCODING)) {
   );
 }
 
-export function decode(buf: Buffer): string {
-  return iconv.decode(buf, ENCODING);
+export function decode(buf: Buffer, encodingOverride?: string): string {
+  return iconv.decode(buf, encodingOverride ?? ENCODING);
 }
 
 export function encode(text: string): Buffer {
