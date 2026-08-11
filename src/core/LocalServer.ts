@@ -34,10 +34,13 @@ export class LocalServer {
       let authenticated = localPass === null;
       let inputBuffer = "";
 
-      const consumer = (text: string) => {
+      const consumer = (text: string, hasGA?: boolean) => {
         if (!authenticated) return;
         if (!client.destroyed) {
           client.write(text);
+          if (hasGA) {
+            client.write(Buffer.from([0xff, 0xf9])); // IAC GA
+          }
         }
       };
 
@@ -45,6 +48,7 @@ export class LocalServer {
 
       if (!authenticated) {
         client.write("Password: ");
+        client.write(Buffer.from([0xff, 0xf9])); // IAC GA
       }
 
       client.on("data", (chunk: Buffer) => {
