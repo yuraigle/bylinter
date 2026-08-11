@@ -26,6 +26,7 @@ export class GlobalApi {
     connect: session.connect,
     disconnect: session.disconnect,
     sendText: session.sendText,
+    sendLine: session.sendLine,
     sendMsdp: session.sendMsdp,
     echo: tui.echo,
     wecho: tui.wecho,

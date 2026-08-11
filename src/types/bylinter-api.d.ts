@@ -2,6 +2,7 @@ export interface GlobalApiContext {
   connect(host: string, port?: number, proxy?: string): Promise<void>;
   disconnect(): void;
   sendText(command: string): void; // без эха
+  sendLine(command: string): void;
   sendMsdp(name: string, value: string): void;
   echo(message: string): void;
   wecho(windowNum: number, line: string): void;

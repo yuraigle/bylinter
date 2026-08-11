@@ -85,6 +85,10 @@ export class LocalServer {
       });
     });
 
+    server.on("error", (err) => {
+      this.systemEcho(`Error while starting local proxy: ${err.message}`);
+    });
+
     server.listen(this.port, () => {
       this.systemEcho(`Local proxy listening on port ${this.port}`);
     });

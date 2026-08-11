@@ -12,6 +12,7 @@ import { parseMsdp } from "../protocol/msdp";
 import { ConnectionProvider } from "../connect/ConnectionProvider";
 import { ITerminalUI } from "../tui/TerminalUI";
 import { TextPipeline } from "./TextPipeline";
+import { writeLog } from "../shared/logger";
 
 export interface IMudSession {
   isConnected(): boolean;
@@ -32,6 +33,7 @@ export class MudSession implements IMudSession {
   private onInfo?: (text: string) => void; // инфо в TUI
   private onError?: (error: Error) => void; // ошибки в TUI
   private onStatus?: (text: string) => void; // статусное сообщение
+  private logPath: string | null = process.env.LOG_PATH || null;
 
   constructor(textPipeline: TextPipeline, sender: TcpCommandSender) {
     this.textPipeline = textPipeline;
@@ -91,6 +93,11 @@ export class MudSession implements IMudSession {
     }
   };
 
+  public sendLine = (input: string): void => {
+    input.split(/;/).forEach((cmd) => this.sendText(cmd));
+    this.invokeLogger(`[${input}]\r\n`)
+  }
+
   public sendMsdp = (name: string, value: string): void => {
     try {
       this.sender.sendMsdp(name, value);
@@ -133,6 +140,7 @@ export class MudSession implements IMudSession {
 
     for (const segment of segments) {
       this.textPipeline.handleIncomingText(segment.text, segment.hasGA);
+      this.invokeLogger(segment.text + (segment.hasGA ? "\r\n" : ""));
     }
 
     if (compressedTail !== null) {
@@ -155,6 +163,7 @@ export class MudSession implements IMudSession {
     if (ev.option === MSDP_OPT) {
       const msdpData = parseMsdp(ev.payload);
       this.textPipeline.handleIncomingMsdp(msdpData);
+      this.invokeLogger(`[msdp] ${JSON.stringify(msdpData)}\r\n`);
     }
   }
 
@@ -194,5 +203,11 @@ export class MudSession implements IMudSession {
 
   private invokeStatus(text: string): void {
     this.onStatus?.(text);
+  }
+
+  private invokeLogger(text: string): void {
+    if (this.logPath) {
+      writeLog(text, this.logPath);
+    }
   }
 }

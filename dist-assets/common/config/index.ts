@@ -11,6 +11,7 @@ const {
   registerSubstitute,
   connect,
   sendText,
+  sendLine,
   sendMsdp,
   echo,
   wecho,
@@ -28,7 +29,7 @@ const showme = (message: string): void => {
 
 const sendline = (message: string): void => {
   echo("\r\n" + clr("D") + "[" + message + "]" + clr("0"));
-  message.split(/;/).forEach((cmd) => sendText(cmd));
+  sendLine(message);
 };
 
 let colorsTest: string = "";

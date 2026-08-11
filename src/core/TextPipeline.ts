@@ -1,4 +1,3 @@
-import { writeLog } from "../shared/logger";
 import {
   TriggerCollection,
   PromptHookCollection,
@@ -37,7 +36,6 @@ export class TextPipeline {
 
   private linesFromLastPrompt: string[] = [];
   private partialLine = "";
-  private logPath: string | null = process.env.LOG_PATH || null;
 
   // prompt debouncer
   private static PROMPT_TIMEOUT_MS: number = 250;
@@ -83,8 +81,6 @@ export class TextPipeline {
     } else if (!this.gaSeen && this.partialLine.length > 0) {
       this.schedulePromptTimeout(); // ждём 250мс и промт = остаток
     }
-
-    this.invokeLogger(text + (hasGA ? "\r\n" : ""));
   };
 
   public handleIncomingMsdp = (data: Record<string, unknown>): void => {
@@ -113,12 +109,6 @@ export class TextPipeline {
     this.broadcaster.broadcast("\r\n" + prompt);
     this.partialLine = "";
     this.linesFromLastPrompt = [];
-  }
-
-  private invokeLogger(text: string): void {
-    if (this.logPath) {
-      writeLog(text, this.logPath);
-    }
   }
 
   private updateCarrySgr(chunk: string): void {
