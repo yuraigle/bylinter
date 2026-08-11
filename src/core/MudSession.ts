@@ -140,7 +140,6 @@ export class MudSession implements IMudSession {
 
     for (const segment of segments) {
       this.textPipeline.handleIncomingText(segment.text, segment.hasGA);
-      this.invokeLogger(segment.text + (segment.hasGA ? "\r\n" : ""));
     }
 
     if (compressedTail !== null) {

@@ -4,6 +4,7 @@ import {
   MsdpHookCollection,
   SubstituteCollection,
 } from "../logic";
+import { writeLog } from "../shared/logger";
 import { Broadcaster } from "./Broadcaster";
 
 const rxColor: RegExp = /^\x1b\[[01];3[0-7]m$/;
@@ -19,6 +20,7 @@ export class TextPipeline {
   private readonly msdpHooks: MsdpHookCollection;
   private readonly broadcaster: Broadcaster;
   private carrySgr: string = "";
+  private logPath: string | null = process.env.LOG_PATH || null;
 
   constructor(
     triggers: TriggerCollection,
@@ -69,6 +71,7 @@ export class TextPipeline {
 
     completedLines.forEach((lineCL) => {
       this.triggers.dispatch(lineCL); // lineCL - text colored
+      this.invokeLogger(lineCL + "\r\n");
       const outLineCL = this.substitutes.dispatch(lineCL);
       if (outLineCL !== null) {
         this.broadcaster.broadcast("\r\n" + outLineCL);
@@ -107,6 +110,7 @@ export class TextPipeline {
     const prompt = this.partialLine;
     this.promptHooks.dispatch(prompt, this.linesFromLastPrompt);
     this.broadcaster.broadcast("\r\n" + prompt);
+    this.invokeLogger(prompt + "\r\n");
     this.partialLine = "";
     this.linesFromLastPrompt = [];
   }
@@ -120,6 +124,12 @@ export class TextPipeline {
       } else if (rxColor.test(code)) {
         this.carrySgr = code;
       }
+    }
+  }
+
+  private invokeLogger(text: string): void {
+    if (this.logPath) {
+      writeLog(text, this.logPath);
     }
   }
 }
