@@ -1,20 +1,20 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
-import { SCREEN, BOX, moveTo } from "../protocol/ansi";
+import { SCREEN, BOX, moveTo, clr } from "../protocol/ansi";
 
-const SIDEBAR_WIDTH = 49;
+const SIDEBAR_WIDTH = Number(process.env.SIDEBAR_WIDTH || 0);
 const SIDEBAR_DIVIDER_WIDTH = 1;
-const MIN_WIDTH_FOR_SIDEBAR = 160;
+const MIN_WIDTH_FOR_SIDEBAR = 110 + SIDEBAR_WIDTH + SIDEBAR_DIVIDER_WIDTH;
 const SPLIT_DIVIDER_ROWS = 1;
-const CLR0 = "\x1b[0m"; // Reset
-const CLR1 = "\x1b[33m"; // Yellow
-const CLR2 = "\x1b[93m"; // Bright Yellow
-const STATUS_BG = "\x1b[43m"; // BG_Yellow
-const STATUS_FG = "\x1b[30m"; // Black
+const CLR_RESET = clr("0"); // Reset
+const CLR_INPUT = clr("L"); // Bright Yellow for user input
+const CLR_MAIN = clr(process.env.STATUS_COLOR || "D"); // Yellow
+const STATUS_BG = CLR_MAIN.replace(/\[[39]/, "[4");
+const STATUS_FG = clr("A"); // Black for statusbar font
 
 export function getLayout() {
   const width = process.stdout.columns || 80;
   const height = process.stdout.rows || 24;
-  const showSidebar = width >= MIN_WIDTH_FOR_SIDEBAR;
+  const showSidebar = SIDEBAR_WIDTH > 0 && width >= MIN_WIDTH_FOR_SIDEBAR;
   const logWidth = showSidebar
     ? width - SIDEBAR_WIDTH - SIDEBAR_DIVIDER_WIDTH
     : width;
@@ -94,7 +94,7 @@ export function redraw(): void {
     const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
     const topStart = Math.max(0, topEnd - topHeight);
     const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
-    const dividerLine = CLR1 + BOX.horizontal.repeat(logWidth) + CLR0;
+    const dividerLine = CLR_MAIN + BOX.horizontal.repeat(logWidth) + CLR_RESET;
     const bottomRows = win.wrappedRows.slice(
       Math.max(0, win.wrappedRows.length - bottomHeight),
     );
@@ -118,21 +118,23 @@ export function redraw(): void {
     if (showSidebar) {
       out += moveTo(i + 1, dividerCol);
       const junctionChar = i === splitDividerRow ? BOX.teeLeft : BOX.vertical;
-      out += CLR1 + junctionChar + CLR0;
+      out += CLR_MAIN + junctionChar + CLR_RESET;
       const sidebarLine = truncateVisible(
         state.sidebarLines[i] ?? "",
         SIDEBAR_WIDTH,
       );
       out += moveTo(i + 1, sidebarCol) + sidebarLine;
-      out += CLR0;
+      out += CLR_RESET;
     }
   }
 
   out += moveTo(statusRow, 1) + SCREEN.clearLine;
   const statusWithWindow = `[${state.currentWindow}] ${state.statusText}`;
-  out += STATUS_BG + STATUS_FG +
+  out +=
+    STATUS_BG +
+    STATUS_FG +
     statusWithWindow.padEnd(width).slice(0, width) +
-    CLR0;
+    CLR_RESET;
 
   out += moveTo(inputRow, 1) + SCREEN.clearLine;
 
@@ -141,7 +143,7 @@ export function redraw(): void {
     viewStart = Math.max(0, state.cursorPos - width + 1);
   }
   const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
-  const visibleInputClr = CLR2 + visibleInput + CLR0;
+  const visibleInputClr = CLR_INPUT + visibleInput + CLR_RESET;
   const visibleCursorCol = state.cursorPos - viewStart;
 
   out += visibleInputClr;
@@ -162,7 +164,7 @@ export function redrawInput(): void {
     viewStart = Math.max(0, state.cursorPos - width + 1);
   }
   const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
-  const visibleInputClr = CLR2 + visibleInput + CLR0;
+  const visibleInputClr = CLR_INPUT + visibleInput + CLR_RESET;
   const visibleCursorCol = state.cursorPos - viewStart;
 
   out += visibleInputClr;
@@ -267,10 +269,7 @@ function appendWrappedLine(win: WindowState, line: string): void {
   win.rowCounts.push(rows.length);
 }
 
-function appendToWindow(
-  windowNum: number,
-  text: string,
-): void {
+function appendToWindow(windowNum: number, text: string): void {
   const win = getWindow(windowNum);
   const { logWidth } = getLayout();
   if (win.wrapWidth === 0) win.wrapWidth = logWidth;

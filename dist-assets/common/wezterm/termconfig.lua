@@ -28,7 +28,7 @@ config.font_dirs = { 'fonts' }
 config.font_rules = { { intensity = 'Bold', font = base_font } }
 config.bold_brightens_ansi_colors = true
 
-config.initial_cols = 160
+config.initial_cols = 150
 config.initial_rows = 38
 config.window_decorations = 'TITLE | RESIZE'
 config.window_background_opacity = 1.0

@@ -71,29 +71,28 @@ function onConnect(): void {
 }
 
 // карта комнат в сайдбаре
-let currentMapLines: string[] = [];
-registerPromptHook((prompt: string, lines: string[]) => {
-  const mapLines: string[] = [];
+const mapLines: string[] = [];
 
-  lines
-    .filter((s) => s.match(/^(\x1b\[0;37m)?:.*$/)) // может быть цвет H в начале
-    .map((s) => s.replace(/^\x1b\[0;37m/, ""))
-    .forEach((s) => mapLines.push(s.substring(1)));
+registerTrigger(/^:\s+/, (m, lineCL) => {
+  const s = lineCL.replace(/: {2}/, "");
+  mapLines.push(s);
+});
 
+registerTrigger(/^$/, () => {
   if (mapLines.length > 0) {
-    // "@" всегда по центру
     const result: string[] = [];
+    // "@" всегда по центру
     const markerIndex = mapLines.findIndex((line) => line.includes("@"));
     if (markerIndex === -1) return false;
     for (let offset = -9; offset <= 9; offset++) {
       result.push(mapLines[markerIndex + offset] ?? "");
     }
-
-    setSidebar(result, 0, 19);
+    setSidebar(result, 0, 19); // строки 0-19 в сайдбаре
   }
 
-  return false;
-}, 99);
+  mapLines.length = 0;
+});
+// \карта комнат в сайдбаре
 
 // пример substitute: подсветка имён игроков
 const preTitle = "([А-ЯЁ][^,]* )?";
