@@ -67,7 +67,7 @@ export class MudSession implements IMudSession {
       this.invokeStatus(`Trying to connect to ${host}:${port}...`);
       const sock = await ConnectionProvider.connect(host, port, proxy);
       this.setupSocket(sock);
-      this.invokeStatus(`Connected to ${host}:${port}`);
+      this.invokeStatus(`Connected to ${host}:${port}${proxy ? ' via proxy ' + proxy : ''}`);
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       this.invokeError(err);
