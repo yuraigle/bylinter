@@ -49,5 +49,5 @@ function createWindow(): WindowState {
   };
 }
 
-export const MAX_BUFFER_LINES = 5000;
+export const MAX_BUFFER_LINES = 10000;
 export const MAX_HISTORY = 100;

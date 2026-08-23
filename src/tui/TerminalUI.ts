@@ -1,12 +1,5 @@
 import { state } from "./state";
-import {
-  enterScreen,
-  exitScreen,
-  redraw,
-  appendLog,
-  rewrapAll,
-  wecho,
-} from "./render";
+import { appendLog, enterScreen, exitScreen, redraw, rewrapAll, wecho } from "./render";
 import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../logic/BindkeyCollection";
@@ -17,7 +10,6 @@ export interface ITerminalUI {
   log(text: string): void;
   setStatus(text: string): void;
   setSidebar(lines: string[], start: number, end: number): void;
-
   echo(text: string): void;
   showme(text: string): void;
   showerr(text: string): void;

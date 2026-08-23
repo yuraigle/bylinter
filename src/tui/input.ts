@@ -2,8 +2,6 @@ import readline from "node:readline";
 
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
-  getLayout,
-  getScrollStep,
   redraw,
   redrawTail,
   requestRedraw,
@@ -12,6 +10,7 @@ import {
 } from "./render";
 import { KeyInfo } from "../logic/BindkeyCollection";
 import { AliasCollection } from "../logic";
+import { getLayout, getScrollStep } from "./layout";
 
 let inputHandler: (line: string) => void;
 let keyPressHandler: (key: KeyInfo, str: string) => boolean;

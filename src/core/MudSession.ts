@@ -42,7 +42,9 @@ export class MudSession implements IMudSession {
 
   public setTui = (tui: ITerminalUI) => {
     this.onInfo = tui.showme;
-    this.onError = (err: Error) => tui.showerr(err.message);
+    this.onError = (err: Error) => tui.showerr(`${err.message}`);
+    // verbose:
+    // this.onError = (e: Error) => tui.showerr(`${e.message}\n${e.stack}`);
     this.onStatus = tui.setStatus;
   };
 
@@ -67,7 +69,9 @@ export class MudSession implements IMudSession {
       this.invokeStatus(`Trying to connect to ${host}:${port}...`);
       const sock = await ConnectionProvider.connect(host, port, proxy);
       this.setupSocket(sock);
-      this.invokeStatus(`Connected to ${host}:${port}${proxy ? ' via proxy ' + proxy : ''}`);
+      this.invokeStatus(
+        `Connected to ${host}:${port}${proxy ? " via proxy " + proxy : ""}`,
+      );
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       this.invokeError(err);
@@ -95,8 +99,8 @@ export class MudSession implements IMudSession {
 
   public sendLine = (input: string): void => {
     input.split(/;/).forEach((cmd) => this.sendText(cmd));
-    this.invokeLogger(`[${input}]\r\n`)
-  }
+    this.invokeLogger(`[${input}]\r\n`);
+  };
 
   public sendMsdp = (name: string, value: string): void => {
     try {
