@@ -12,9 +12,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine,
 
   char cmd[4096];
   snprintf(cmd, sizeof(cmd),
-           "\"%s\\wezterm\\wezterm-gui.exe\" --config-file "
-           "\"%s\\wezterm\\termconfig.lua\" "
-           "start --cwd \"%s\" -- \"%s\\bylinter-cli.exe\" %s",
+           "\"%s\\term\\alacritty.exe\" "
+           "--config-file \"%s\\term\\alacritty.toml\" "
+           "--working-directory \"%s\" -e \"%s\\bylinter-cli.exe\" %s",
            exePath, exePath, exePath, exePath, lpCmdLine);
 
   STARTUPINFOA si = {sizeof(si)};

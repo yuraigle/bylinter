@@ -1,6 +1,10 @@
 import { $ } from "bun";
 import { mkdir, cp, rename, rm } from "node:fs/promises";
 
+// ожидаем в /vendor файлы из
+// https://github.com/alacritty/alacritty/releases (win-portable)
+// https://github.com/pkgforge-dev/alacritty-AppImage (linux)
+
 import pkg from "../package.json";
 const VERSION = pkg.version;
 
@@ -22,7 +26,7 @@ async function buildWindows() {
   await $`bun build --compile --target=bun-windows-x64 src/index.ts --outfile ${dir}/bylinter-cli.exe`;
   await buildLauncher(dir);
   await copyDistAssets(dir, "win");
-  await cp("vendor/wezterm-win", `${dir}/wezterm`, { recursive: true });
+  await cp("vendor/alacritty-win", `${dir}/term`, { recursive: true });
   await cp("README.md", `${dir}/README.md`);
   await cp("LICENSE", `${dir}/LICENSE`);
   await $`cd release && 7z a -t7z -m0=lzma2 -mx=9 bylinter-win-${VERSION}.7z bylinter-win-${VERSION}`;
@@ -35,7 +39,7 @@ async function buildLinux() {
   await $`bun build --compile src/index.ts --outfile ${dir}/bylinter-cli`;
   await $`chmod +x ${dir}/bylinter-cli`;
   await copyDistAssets(dir, "linux");
-  await cp("vendor/wezterm-linux", `${dir}/wezterm`, { recursive: true });
+  await cp("vendor/alacritty-linux", `${dir}/term`, { recursive: true });
   await $`chmod +x ${dir}/run.sh`;
   await cp("README.md", `${dir}/README.md`);
   await cp("LICENSE", `${dir}/LICENSE`);

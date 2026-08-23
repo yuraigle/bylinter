@@ -82,7 +82,6 @@ export class MudSession implements IMudSession {
   public disconnect = (): void => {
     if (this.socket) {
       this.socket.destroy();
-      this.invokeInfo("Connection closed");
     } else {
       this.invokeError(new Error("Not connected to a server."));
     }

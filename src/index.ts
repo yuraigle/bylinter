@@ -74,5 +74,3 @@ tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 
 // загрузка пользовательского конфига, если он есть
 await new ConfigLoaderService(tui.showme).loadUserConfig();
-
-tui.echo("\r\nBylinter > ");

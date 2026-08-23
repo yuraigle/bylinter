@@ -3,12 +3,12 @@ set -e
 
 ROOT="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 
-WEZTERM="$ROOT/wezterm/WezTerm.AppImage"
-CONFIG="$ROOT/wezterm/termconfig.lua"
+TERM="$ROOT/term/alacritty.AppImage"
+CONFIG="$ROOT/term/alacritty.toml"
 APP="$ROOT/bylinter-cli"
 
-if [[ ! -x "$WEZTERM" ]]; then
-  echo "error: $WEZTERM not found or not executable"
+if [[ ! -x "$TERM" ]]; then
+  echo "error: $TERM not found or not executable"
   read -p "Press Enter to exit..."
   exit 1
 fi
@@ -19,4 +19,4 @@ if [[ ! -x "$APP" ]]; then
   exit 1
 fi
 
-__NV_DISABLE_EXPLICIT_SYNC=1 "$WEZTERM" --config-file "$CONFIG" start --cwd "$ROOT" -- "$APP" $@
+"$TERM" --config-file "$CONFIG" --working-directory "$ROOT" -e "$APP" $@
