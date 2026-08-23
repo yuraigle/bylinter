@@ -4,6 +4,8 @@ export const SCREEN = {
   hideCursor: "\x1b[?25l",
   showCursor: "\x1b[?25h",
   clearLine: "\x1b[2K",
+  syncStart: "\x1b[?2026h",
+  syncEnd: "\x1b[?2026l",
 } as const;
 
 export const BOX = {

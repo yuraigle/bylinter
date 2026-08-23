@@ -20,7 +20,7 @@ export function getLayout() {
     : width;
   const dividerCol = logWidth + 1;
   const sidebarCol = dividerCol + SIDEBAR_DIVIDER_WIDTH;
-  const logHeight = height - 2;
+  const logHeight = height - 1; // теперь только статус-бар забирает 1 строку
 
   const topHeight = Math.max(
     1,
@@ -32,8 +32,7 @@ export function getLayout() {
     width,
     height,
     logHeight,
-    statusRow: height - 1,
-    inputRow: height,
+    statusRow: height,
     showSidebar,
     logWidth,
     dividerCol,
@@ -58,15 +57,21 @@ export function exitScreen(): void {
 }
 
 let redrawScheduled = false;
+let lastRedrawTime = 0;
+const MIN_REDRAW_INTERVAL_MS = 50;
 
-// запросить полную перерисовку, отложенно
 export function requestRedraw(): void {
   if (redrawScheduled) return;
   redrawScheduled = true;
-  setImmediate(() => {
+
+  const elapsed = Date.now() - lastRedrawTime;
+  const delay = Math.max(0, MIN_REDRAW_INTERVAL_MS - elapsed);
+
+  setTimeout(() => {
     redrawScheduled = false;
+    lastRedrawTime = Date.now();
     redraw();
-  });
+  }, delay);
 }
 
 // полная перерисовка окна (дорого)
@@ -75,7 +80,6 @@ export function redraw(): void {
     width,
     logHeight,
     statusRow,
-    inputRow,
     showSidebar,
     logWidth,
     dividerCol,
@@ -83,33 +87,40 @@ export function redraw(): void {
     topHeight,
     bottomHeight,
   } = getLayout();
-  let out = SCREEN.hideCursor;
 
   const win = getWindow(state.currentWindow);
   const isSplit = win.scrollOffset > 0;
+
   let logRows: string[];
-  const splitDividerRow = isSplit ? topHeight : -1; // № строки с полосой
+  let cursorScreenRow: number;
+  let cursorCol: number;
 
   if (isSplit) {
     const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
     const topStart = Math.max(0, topEnd - topHeight);
     const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
     const dividerLine = CLR_MAIN + BOX.horizontal.repeat(logWidth) + CLR_RESET;
-    const bottomRows = win.wrappedRows.slice(
-      Math.max(0, win.wrappedRows.length - bottomHeight),
-    );
+
+    const tail = buildLiveTail(win, logWidth, bottomHeight);
+    const padCount = bottomHeight - tail.visibleRows.length;
 
     logRows = [
       ...padRows(topRows, topHeight),
       dividerLine,
-      ...padRows(bottomRows, bottomHeight),
+      ...padRows(tail.visibleRows, bottomHeight),
     ];
+    cursorScreenRow = topHeight + 1 + padCount + tail.cursorScreenRow;
+    cursorCol = tail.cursorCol;
   } else {
-    logRows = padRows(
-      win.wrappedRows.slice(Math.max(0, win.wrappedRows.length - logHeight)),
-      logHeight,
-    );
+    const tail = buildLiveTail(win, logWidth, logHeight);
+    const padCount = logHeight - tail.visibleRows.length;
+
+    logRows = padRows(tail.visibleRows, logHeight);
+    cursorScreenRow = padCount + tail.cursorScreenRow;
+    cursorCol = tail.cursorCol;
   }
+
+  let out = SCREEN.hideCursor;
 
   for (let i = 0; i < logHeight; i++) {
     out += moveTo(i + 1, 1) + SCREEN.clearLine;
@@ -117,8 +128,7 @@ export function redraw(): void {
 
     if (showSidebar) {
       out += moveTo(i + 1, dividerCol);
-      const junctionChar = i === splitDividerRow ? BOX.teeLeft : BOX.vertical;
-      out += CLR_MAIN + junctionChar + CLR_RESET;
+      out += CLR_MAIN + BOX.vertical + CLR_RESET;
       const sidebarLine = truncateVisible(
         state.sidebarLines[i] ?? "",
         SIDEBAR_WIDTH,
@@ -136,39 +146,35 @@ export function redraw(): void {
     statusWithWindow.padEnd(width).slice(0, width) +
     CLR_RESET;
 
-  out += moveTo(inputRow, 1) + SCREEN.clearLine;
-
-  let viewStart = 0;
-  if (state.inputBuffer.length >= width) {
-    viewStart = Math.max(0, state.cursorPos - width + 1);
-  }
-  const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
-  const visibleInputClr = CLR_INPUT + visibleInput + CLR_RESET;
-  const visibleCursorCol = state.cursorPos - viewStart;
-
-  out += visibleInputClr;
-  out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
+  out += moveTo(cursorScreenRow + 1, cursorCol + 1) + SCREEN.showCursor;
 
   process.stdout.write(out);
 }
 
-// перерисовка только инпутбокса (дёшево)
-export function redrawInput(): void {
-  const { width, inputRow } = getLayout();
-  let out = SCREEN.hideCursor;
-
-  out += moveTo(inputRow, 1) + SCREEN.clearLine;
-
-  let viewStart = 0;
-  if (state.inputBuffer.length >= width) {
-    viewStart = Math.max(0, state.cursorPos - width + 1);
+export function redrawTail(): void {
+  const win = getWindow(state.currentWindow);
+  if (win.scrollOffset > 0) {
+    redraw();
+    return;
   }
-  const visibleInput = state.inputBuffer.slice(viewStart, viewStart + width);
-  const visibleInputClr = CLR_INPUT + visibleInput + CLR_RESET;
-  const visibleCursorCol = state.cursorPos - viewStart;
 
-  out += visibleInputClr;
-  out += moveTo(inputRow, visibleCursorCol + 1) + SCREEN.showCursor;
+  const { logHeight, width } = getLayout();
+  const tail = buildLiveTail(win, width, logHeight);
+  const padCount = logHeight - tail.visibleRows.length;
+
+  let out = SCREEN.hideCursor + SCREEN.syncStart;
+
+  for (let i = 0; i < tail.visibleRows.length; i++) {
+    const screenRow = padCount + i;
+    out += moveTo(screenRow + 1, 1) + SCREEN.clearLine;
+    out += tail.visibleRows[i];
+  }
+
+  out +=
+    moveTo(padCount + tail.cursorScreenRow + 1, tail.cursorCol + 1) +
+    SCREEN.showCursor;
+
+  out += SCREEN.syncEnd;
 
   process.stdout.write(out);
 }
@@ -321,4 +327,93 @@ export function appendLog(text: string): void {
 
 export function wecho(windowNum: number, line: string): void {
   appendToWindow(windowNum, line + "\r\n");
+}
+
+interface WrapResult {
+  rows: string[];
+  cursorRow: number; // индекс строки в rows
+  cursorCol: number; // видимая колонка внутри этой строки
+}
+
+function wrapWithCursor(
+  text: string,
+  width: number,
+  cursorRawIndex: number,
+): WrapResult {
+  if (width <= 0) return { rows: [text], cursorRow: 0, cursorCol: 0 };
+
+  const tokens = text.match(TOKEN_RE) ?? [];
+  const rows: string[] = [];
+  let current = "";
+  let visibleLen = 0;
+  let carry = "";
+  let rawIndex = 0;
+  let cursorRow = 0;
+  let cursorCol = 0;
+  let cursorFound = false;
+
+  const markIfCursorHere = () => {
+    if (!cursorFound && rawIndex === cursorRawIndex) {
+      cursorRow = rows.length;
+      cursorCol = visibleLen;
+      cursorFound = true;
+    }
+  };
+
+  for (const token of tokens) {
+    markIfCursorHere();
+
+    if (token.startsWith("\x1b[")) {
+      current += token;
+      carry = token === "\x1b[0m" || token === "\x1b[m" ? "" : carry + token;
+      rawIndex += token.length;
+      continue;
+    }
+
+    if (visibleLen >= width) {
+      rows.push(current);
+      current = carry;
+      visibleLen = 0;
+    }
+
+    current += token;
+    visibleLen++;
+    rawIndex += token.length;
+  }
+
+  markIfCursorHere();
+  rows.push(current);
+
+  if (!cursorFound) {
+    cursorRow = rows.length - 1;
+    cursorCol = visibleLen;
+  }
+
+  return { rows, cursorRow, cursorCol };
+}
+
+function buildLiveTail(win: WindowState, width: number, maxHeight: number) {
+  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
+  const priorRows = win.wrappedRows.slice(
+    0,
+    win.wrappedRows.length - lastLineRowCount,
+  );
+  const lastLogicalText = win.logLines[win.logLines.length - 1] ?? "";
+  const combinedText =
+    lastLogicalText + CLR_INPUT + state.inputBuffer + CLR_RESET;
+  const cursorRawIndex =
+    lastLogicalText.length + CLR_INPUT.length + state.cursorPos;
+
+  const {
+    rows: tailRows,
+    cursorRow,
+    cursorCol,
+  } = wrapWithCursor(combinedText, width, cursorRawIndex);
+
+  const allRows = [...priorRows, ...tailRows];
+  const visibleRows = allRows.slice(Math.max(0, allRows.length - maxHeight));
+  const trimmedFromTop = allRows.length - visibleRows.length;
+  const cursorScreenRow = priorRows.length + cursorRow - trimmedFromTop;
+
+  return { visibleRows, cursorScreenRow, cursorCol };
 }

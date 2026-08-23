@@ -5,7 +5,7 @@ import {
   getLayout,
   getScrollStep,
   redraw,
-  redrawInput,
+  redrawTail,
   requestRedraw,
   rewrapAll,
   switchWindow,
@@ -56,6 +56,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
     if (inputHandler) inputHandler(line);
     requestRedraw();
+    // redrawTail();
     return;
   }
 
@@ -70,7 +71,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
         state.inputBuffer.slice(0, state.cursorPos - 1) +
         state.inputBuffer.slice(state.cursorPos);
       state.cursorPos--;
-      redrawInput();
+      redrawTail();
     }
     return;
   }
@@ -80,39 +81,39 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.inputBuffer =
         state.inputBuffer.slice(0, state.cursorPos) +
         state.inputBuffer.slice(state.cursorPos + 1);
-      redrawInput();
+      redrawTail();
     }
     return;
   }
 
   if (key.name === "left" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.max(0, state.cursorPos - 1);
-    redrawInput();
+    redrawTail();
     return;
   }
 
   if (key.name === "right" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.min(state.inputBuffer.length, state.cursorPos + 1);
-    redrawInput();
+    redrawTail();
     return;
   }
 
   if (key.name === "home" && !key.ctrl && !key.meta) {
     state.cursorPos = 0;
-    redrawInput();
+    redrawTail();
     return;
   }
 
   if (key.name === "end" && !key.ctrl && !key.meta) {
     state.cursorPos = state.inputBuffer.length;
-    redrawInput();
+    redrawTail();
     return;
   }
 
   if (key.name === "u" && key.ctrl && !key.meta) {
     state.inputBuffer = "";
     state.cursorPos = 0;
-    redrawInput();
+    redrawTail();
     return;
   }
 
@@ -124,7 +125,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.historyPos--;
       state.inputBuffer = state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redrawInput();
+      redrawTail();
     }
     return;
   }
@@ -137,7 +138,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
           ? state.draft
           : state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redrawInput();
+      redrawTail();
     }
     return;
   }
@@ -184,7 +185,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       str +
       state.inputBuffer.slice(state.cursorPos);
     state.cursorPos += str.length;
-    redrawInput();
+    redrawTail();
   }
 }
 
@@ -195,7 +196,7 @@ export function initInput(
 ): void {
   inputHandler = onInput;
   keyPressHandler = onKeyPress;
-  aliasCollection = aliases
+  aliasCollection = aliases;
 
   readline.emitKeypressEvents(process.stdin);
   if (process.stdin.isTTY) {
@@ -253,5 +254,5 @@ function handleTabCompletion(): void {
 
   state.inputBuffer = value;
   state.cursorPos = value.length;
-  redrawInput();
+  redrawTail();
 }

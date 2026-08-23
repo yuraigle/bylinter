@@ -39,8 +39,7 @@ config.scrollback_lines = 5000
 config.exit_behavior = 'CloseOnCleanExit'
 config.window_close_confirmation = 'NeverPrompt'
 
--- курсор - мигающий зелёный блок
-config.default_cursor_style = 'BlinkingBlock'
+config.default_cursor_style = 'SteadyBlock'
 config.colors = { cursor_bg = '#3da03d', cursor_border = '#3da03d' }
 
 -- заголовок окна

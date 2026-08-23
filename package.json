@@ -1,10 +1,11 @@
 {
   "name": "bylinter",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "",
   "scripts": {
-    "start": "bun run src/index.ts -c dist-assets/common/config/index.ts",
+    "start": "bun run src/index.ts -c /home/orlov/proj/soldaten-conf/config/index.ts -p rene",
     "gui": "__NV_DISABLE_EXPLICIT_SYNC=1 ./vendor/wezterm-linux/WezTerm.AppImage --config-file dist-assets/common/wezterm/termconfig.lua start --cwd \".\" -- bun start",
+    "gui2": "./vendor/alacritty-linux/alacritty.AppImage --config-file ./vendor/alacritty-linux/alacritty.toml -e bash -c 'bun start'",
     "guiw": "cmd /c start \"\" \"vendor\\wezterm-win\\wezterm-gui.exe\" --config-file dist-assets/common/wezterm/termconfig.lua start --cwd \".\" -- bun start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-wezterm": "bun scripts/fetch-wezterm.ts",
