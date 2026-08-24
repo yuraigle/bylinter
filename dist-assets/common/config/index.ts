@@ -11,7 +11,6 @@ const {
   registerSubstitute,
   connect,
   sendText,
-  sendLine,
   sendMsdp,
   echo,
   wecho,
@@ -24,12 +23,12 @@ const CHAR_NAME = ""; // для автологина
 const CHAR_PASS = "";
 
 const showme = (message: string): void => {
-  echo(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
+  echo(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}\r\n`);
 };
 
-const sendline = (message: string): void => {
+const sendLine = (message: string): void => {
   echo("\r\n" + clr("D") + "[" + message + "]" + clr("0"));
-  sendLine(message);
+  globalThis.bylinter.sendLine(message);
 };
 
 let colorsTest: string = "";
@@ -38,7 +37,6 @@ for (let i = 0; i < 15; i++) {
   colorsTest += clr(letter) + letter;
 }
 showme("Colors Palette: " + colorsTest + clr("0"));
-
 showme(`Введите ${clr("D")}кон${clr("0")} для подключения к серверу Былин`);
 
 const PROXY = process.env.HTTP_PROXY || "";
@@ -46,7 +44,7 @@ registerAlias("кон", () => connect("bylins.su", 4000, PROXY));
 
 registerPromptHook((prompt: string) => {
   if (prompt.match(/^Select one :/)) {
-    sendline("0"); // koi8-r, должно соответствовать кодировке в .env
+    sendLine("0"); // koi8-r, должно соответствовать кодировке в .env
     return true;
   }
   if (prompt.match(/^Введите имя персонажа/) && CHAR_NAME && CHAR_PASS) {
@@ -54,7 +52,7 @@ registerPromptHook((prompt: string) => {
     return true;
   }
   if (prompt.match(/ANYKEY нажмите ENTER/)) {
-    sendline("");
+    sendLine("");
     return true;
   }
   return false;
@@ -63,11 +61,11 @@ registerPromptHook((prompt: string) => {
 registerTrigger(/Пересоединяемся\./, () => onConnect());
 registerTrigger(/Ваша душа вновь вернулась в тело/, () => onConnect());
 registerTrigger(/  Добро пожаловать на землю Киевскую/, () => onConnect());
-registerTrigger(/^Вы пропали в пустоте этого мира\./, () => sendline(""));
+registerTrigger(/^Вы пропали в пустоте этого мира\./, () => sendLine(""));
 
 // при подключении узнать всё о себе
 function onConnect(): void {
-  sendline(";афф;сч все;уме;гр;см");
+  sendLine(";афф;сч все;уме;гр;см");
 }
 
 // карта комнат в сайдбаре
@@ -204,22 +202,22 @@ for (const rx of fightFail) {
 }
 
 // Alt+стрелки для ходьбы
-registerBindkey("`", () => sendline("~"));
-registerBindkey("ё", () => sendline("~"));
-registerBindkey("M-up", () => sendline("n"));
-registerBindkey("M-down", () => sendline("s"));
-registerBindkey("M-left", () => sendline("w"));
-registerBindkey("M-right", () => sendline("e"));
-registerBindkey("M-pgup", () => sendline("u"));
-registerBindkey("M-pgdn", () => sendline("d"));
-registerBindkey("M-end", () => sendline("scan"));
+registerBindkey("`", () => sendLine("~"));
+registerBindkey("ё", () => sendLine("~"));
+registerBindkey("M-up", () => sendLine("n"));
+registerBindkey("M-down", () => sendLine("s"));
+registerBindkey("M-left", () => sendLine("w"));
+registerBindkey("M-right", () => sendLine("e"));
+registerBindkey("M-pgup", () => sendLine("u"));
+registerBindkey("M-pgdn", () => sendLine("d"));
+registerBindkey("M-end", () => sendLine("scan"));
 
 // поведение
-registerTrigger(/^Вы готовы сожрать быка\./, () => sendline("пить боч.синим"));
+registerTrigger(/^Вы готовы сожрать быка\./, () => sendLine("пить боч.синим"));
 
 registerAlias("обкаст", () => {
-  sendline("к !в щ!;к !м т!;к !доб!;к !б в!;к !пок!");
-  sendline("к !пок!;к !пок!;к !о н!;к !о я!;к !о с!");
+  sendLine("к !в щ!;к !м т!;к !доб!;к !б в!;к !пок!");
+  sendLine("к !пок!;к !пок!;к !о н!;к !о я!;к !о с!");
 });
 
 // для неумеющих парсить текст есть msdp

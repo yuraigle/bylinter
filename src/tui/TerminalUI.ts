@@ -1,5 +1,12 @@
 import { state } from "./state";
-import { appendLog, enterScreen, exitScreen, redraw, rewrapAll, wecho } from "./render";
+import {
+  appendLog,
+  enterScreen,
+  exitScreen,
+  redraw,
+  rewrapAll,
+  wecho,
+} from "./render";
 import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../logic/BindkeyCollection";
@@ -7,7 +14,6 @@ import { AliasCollection } from "../logic";
 
 export interface ITerminalUI {
   destroy(): void;
-  log(text: string): void;
   setStatus(text: string): void;
   setSidebar(lines: string[], start: number, end: number): void;
   echo(text: string): void;
@@ -25,7 +31,7 @@ export class TerminalUI implements ITerminalUI {
     aliases: AliasCollection,
   ) {
     const echoAndInput = (line: string) => {
-      this.echo(clr("L") + line + clr("0"));
+      appendLog(clr("L") + line + clr("0"));
       onInput(line);
     };
 
@@ -60,19 +66,13 @@ export class TerminalUI implements ITerminalUI {
     redraw();
   };
 
-  // для добавления строк из игры
-  public log = (text: string): void => {
-    appendLog(text);
-  };
-
-  // для показа строк из пользовательского конфига
   public echo = (message: string): void => {
-    appendLog("\r\n" + message);
+    appendLog(message);
   };
 
   // для системных сообщений
   public showme = (message: string): void => {
-    appendLog("\r\n" + prefix + message);
+    appendLog(prefix + message);
   };
 
   public showerr = (message: string): void => {

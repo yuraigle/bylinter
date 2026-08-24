@@ -46,7 +46,7 @@ const tui: TerminalUI = new TerminalUI(
   aliases, // для tab-навигации по алиасам
 );
 
-broadcaster.addConsumer((text: string) => tui.log(text)); // строки из MUD в tui
+broadcaster.addConsumer((text: string) => tui.echo(text)); // строки из MUD в tui
 session.setTui(tui); // для вывода ошибок, статуса и дебага
 inputHandler.setSystemEcho(tui.showme); // куда пишем ошибки и справку
 triggers.setDebugger((s: string) => tui.wecho(5, s));

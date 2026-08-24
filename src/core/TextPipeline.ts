@@ -71,7 +71,7 @@ export class TextPipeline {
 
     completedLines.forEach((lineCL) => {
       this.triggers.dispatch(lineCL); // lineCL - text colored
-      this.invokeLogger(lineCL + "\r\n");
+      this.invokeLogger("\r\n" + lineCL);
       const outLineCL = this.substitutes.dispatch(lineCL);
       if (outLineCL !== null) {
         this.broadcaster.broadcast("\r\n" + outLineCL);
@@ -110,7 +110,7 @@ export class TextPipeline {
     const prompt = this.partialLine;
     this.promptHooks.dispatch(prompt, this.linesFromLastPrompt);
     this.broadcaster.broadcast("\r\n" + prompt, true);
-    this.invokeLogger(prompt + "\r\n");
+    this.invokeLogger("\r\n" + prompt);
     this.partialLine = "";
     this.linesFromLastPrompt = [];
   }
