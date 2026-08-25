@@ -72,7 +72,7 @@ export class TerminalUI implements ITerminalUI {
 
   // для системных сообщений
   public showme = (message: string): void => {
-    appendLog(prefix + message);
+    appendLog("\r\n" + prefix + message);
   };
 
   public showerr = (message: string): void => {

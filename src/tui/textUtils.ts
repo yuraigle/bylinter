@@ -104,3 +104,9 @@ export function wrapWithCursor(
 
   return { rows, cursorRow, cursorCol };
 }
+
+// дополняем массив строк сверху, если строк меньше, чем нужная высота панели
+export function padRows(rows: string[], height: number): string[] {
+  if (rows.length >= height) return rows;
+  return [...new Array(height - rows.length).fill(""), ...rows];
+}

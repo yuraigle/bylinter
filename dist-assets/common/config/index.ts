@@ -23,7 +23,7 @@ const CHAR_NAME = ""; // для автологина
 const CHAR_PASS = "";
 
 const showme = (message: string): void => {
-  echo(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}\r\n`);
+  echo(`\r\n${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
 };
 
 const sendLine = (message: string): void => {
@@ -211,6 +211,7 @@ registerBindkey("M-right", () => sendLine("e"));
 registerBindkey("M-pgup", () => sendLine("u"));
 registerBindkey("M-pgdn", () => sendLine("d"));
 registerBindkey("M-end", () => sendLine("scan"));
+registerBindkey("f1", () => showme("test"));
 
 // поведение
 registerTrigger(/^Вы готовы сожрать быка\./, () => sendLine("пить боч.синим"));

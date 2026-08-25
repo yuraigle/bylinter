@@ -1,7 +1,7 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
 import { getLayout, Layout } from "./layout";
 import { SCREEN, BOX, moveTo, clr } from "../protocol/ansi";
-import { truncateVisible, wrapLine, wrapWithCursor } from "./textUtils";
+import { padRows, truncateVisible, wrapLine, wrapWithCursor } from "./textUtils";
 
 const CLR_RESET = clr("0"); // Reset
 const CLR_INPUT = clr("L"); // Bright Yellow for user input
@@ -103,6 +103,7 @@ export function redraw(): void {
   process.stdout.write(out);
 }
 
+// перерисовка строки ввода (быстро)
 export function redrawTail(): void {
   const win = getWindow(state.currentWindow);
   if (win.scrollOffset > 0) {
@@ -140,12 +141,6 @@ export function redrawTail(): void {
   out += SCREEN.syncEnd;
 
   process.stdout.write(out);
-}
-
-// дополняем массив строк сверху, если строк меньше, чем нужная высота панели
-function padRows(rows: string[], height: number): string[] {
-  if (rows.length >= height) return rows;
-  return [...new Array(height - rows.length).fill(""), ...rows];
 }
 
 export function switchWindow(n: number): void {
