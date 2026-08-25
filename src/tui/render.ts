@@ -237,6 +237,65 @@ export function wecho(windowNum: number, line: string): void {
   appendToWindow(windowNum, line + "\r\n");
 }
 
+// Вставить системное сообщение ДО незавершённой строки
+function insertBeforeLast(windowNum: number, text: string): void {
+  const win = getWindow(windowNum);
+  const { logWidth } = getLayout();
+  if (win.wrapWidth === 0) win.wrapWidth = logWidth;
+
+  const wasSplit = win.scrollOffset > 0;
+  const rowsBefore = win.wrappedRows.length;
+
+  const hasPendingLast = win.logLines.length > 0;
+  const lastLine = hasPendingLast ? win.logLines[win.logLines.length - 1] : "";
+  const lastRowCount = hasPendingLast ? win.rowCounts[win.rowCounts.length - 1] : 0;
+
+  if (hasPendingLast) {
+    win.logLines.pop();
+    win.rowCounts.pop();
+    win.wrappedRows.splice(win.wrappedRows.length - lastRowCount, lastRowCount);
+  }
+
+  const segments = text.split("\n");
+  for (const segment of segments) {
+    win.logLines.push(segment);
+    appendWrappedLine(win, segment);
+  }
+
+  if (hasPendingLast) {
+    win.logLines.push(lastLine);
+    appendWrappedLine(win, lastLine);
+  }
+
+  if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
+    const excess = win.logLines.length - MAX_BUFFER_LINES;
+    let rowsToRemove = 0;
+    for (let i = 0; i < excess; i++) rowsToRemove += win.rowCounts[i];
+
+    win.logLines = win.logLines.slice(excess);
+    win.rowCounts = win.rowCounts.slice(excess);
+    win.wrappedRows = win.wrappedRows.slice(rowsToRemove);
+  }
+
+  if (win.logLines.length > MAX_BUFFER_LINES * 10 && wasSplit) {
+    win.scrollOffset = 0;
+  }
+
+  if (wasSplit) {
+    const rowsAdded = win.wrappedRows.length - rowsBefore;
+    win.scrollOffset = Math.min(
+      win.scrollOffset + Math.max(0, rowsAdded),
+      Math.max(0, win.wrappedRows.length - 1),
+    );
+  }
+
+  if (windowNum === state.currentWindow) requestRedraw();
+}
+
+export function showSystem(text: string): void {
+  insertBeforeLast(1, text);
+}
+
 function buildLiveTail(win: WindowState, width: number, maxHeight: number) {
   const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
   const priorRows = win.wrappedRows.slice(
@@ -261,4 +320,24 @@ function buildLiveTail(win: WindowState, width: number, maxHeight: number) {
   const cursorScreenRow = priorRows.length + cursorRow - trimmedFromTop;
 
   return { visibleRows, cursorScreenRow, cursorCol };
+}
+
+export function commitLine(): void {
+  const win = getWindow(1);
+
+  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
+  const lastLogicalText = win.logLines[win.logLines.length - 1] ?? "";
+
+  // убираем старые физические строки этой логической строки
+  win.wrappedRows.splice(win.wrappedRows.length - lastLineRowCount, lastLineRowCount);
+  win.rowCounts.pop();
+
+  // фиксируем строку с уже вписанным вводом как окончательную
+  const finalText = lastLogicalText + state.inputBuffer;
+  win.logLines[win.logLines.length - 1] = finalText;
+  appendWrappedLine(win, finalText);
+
+  // начинаем новую пустую строку — будущий промпт
+  win.logLines.push("");
+  appendWrappedLine(win, "");
 }

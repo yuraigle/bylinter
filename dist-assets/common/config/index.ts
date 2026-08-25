@@ -23,8 +23,8 @@ const CHAR_NAME = ""; // для автологина
 const CHAR_PASS = "";
 
 const showme = (message: string): void => {
-  echo(`\r\n${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
-};
+  globalThis.bylinter.showme(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
+}
 
 const sendLine = (message: string): void => {
   echo("\r\n" + clr("D") + "[" + message + "]" + clr("0"));

@@ -30,6 +30,7 @@ export class GlobalApi {
     sendMsdp: session.sendMsdp,
     echo: tui.echo,
     wecho: tui.wecho,
+    showme: tui.showme,
     setSidebar: tui.setSidebar,
     registerTrigger: triggers.register,
     registerPromptHook: promptHooks.register,

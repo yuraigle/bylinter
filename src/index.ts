@@ -48,13 +48,13 @@ const tui: TerminalUI = new TerminalUI(
 
 broadcaster.addConsumer((text: string) => tui.echo(text)); // строки из MUD в tui
 session.setTui(tui); // для вывода ошибок, статуса и дебага
-inputHandler.setSystemEcho(tui.showme); // куда пишем ошибки и справку
+inputHandler.setSystemEcho(tui.showme1); // куда пишем ошибки и справку
 triggers.setDebugger((s: string) => tui.wecho(5, s));
 
 // старт локального сервера с проксированием туда контента из клиента
 const port = Number(process.env.LOCAL_PORT || 0);
 if (port > 0) {
-  new LocalServer(port, broadcaster, inputHandler.handle, tui.showme).init();
+  new LocalServer(port, broadcaster, inputHandler.handle, tui.showme1).init();
 }
 
 // все методы API в globalThis для юзер конфига
@@ -70,7 +70,7 @@ const api: GlobalApiContext = new GlobalApi().expose(
 );
 Object.defineProperty(globalThis, "bylinter", { value: api, writable: false });
 
-tui.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
+tui.showme1(`Bylinter v${packageJson.version} by Yuri Orlov`);
 
 // загрузка пользовательского конфига, если он есть
-await new ConfigLoaderService(tui.showme).loadUserConfig();
+await new ConfigLoaderService(tui.showme1).loadUserConfig();

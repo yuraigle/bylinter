@@ -2,17 +2,13 @@ import type { Socket } from "node:net";
 import { createInflate, Inflate } from "node:zlib";
 
 import { ICommandSender, TcpCommandSender } from "./CommandSender";
-import {
-  createTelnetParser,
-  TelnetEvent,
-  MSDP_OPT,
-  COMPRESS2_OPT,
-} from "../protocol/telnet";
+import { createTelnetParser, TelnetEvent, MSDP_OPT, COMPRESS2_OPT} from "../protocol/telnet";
 import { parseMsdp } from "../protocol/msdp";
 import { ConnectionProvider } from "../connect/ConnectionProvider";
 import { ITerminalUI } from "../tui/TerminalUI";
 import { TextPipeline } from "./TextPipeline";
 import { writeLog } from "../shared/logger";
+import { clr } from "../protocol/ansi";
 
 export interface IMudSession {
   isConnected(): boolean;
@@ -41,9 +37,8 @@ export class MudSession implements IMudSession {
   }
 
   public setTui = (tui: ITerminalUI) => {
-    this.onInfo = tui.showme;
-    this.onError = (err: Error) => tui.showerr(`${err.message}`);
-    // verbose:
+    this.onInfo = tui.showme1;
+    this.onError = (err: Error) => tui.showme1(`${clr('B')}${err.message}`);
     // this.onError = (e: Error) => tui.showerr(`${e.message}\n${e.stack}`);
     this.onStatus = tui.setStatus;
   };
@@ -66,12 +61,11 @@ export class MudSession implements IMudSession {
     }
 
     try {
-      this.invokeStatus(`Trying to connect to ${host}:${port}...`);
+      const proxyDescr = proxy ? "via proxy " + proxy : "";
+      this.invokeStatus(`Trying to connect to ${host}:${port} ${proxyDescr}...`);
       const sock = await ConnectionProvider.connect(host, port, proxy);
       this.setupSocket(sock);
-      this.invokeStatus(
-        `Connected to ${host}:${port}${proxy ? " via proxy " + proxy : ""}`,
-      );
+      this.invokeStatus(`Connected to ${host}:${port} ${proxyDescr}`);
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       this.invokeError(err);

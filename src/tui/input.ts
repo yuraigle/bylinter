@@ -2,6 +2,7 @@ import readline from "node:readline";
 
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
+  commitLine,
   redraw,
   redrawTail,
   requestRedraw,
@@ -52,6 +53,8 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     }
     state.historyPos = state.history.length;
     state.draft = "";
+
+    commitLine();
 
     if (inputHandler) inputHandler(line);
     requestRedraw();

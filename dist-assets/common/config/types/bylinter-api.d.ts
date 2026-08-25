@@ -6,6 +6,7 @@ export interface GlobalApiContext {
   sendMsdp: (name: string, value: string) => void;
   echo: (message: string) => void;
   wecho: (windowNum: number, line: string) => void;
+  showme: (message: string) => void;
   registerTrigger: (pattern: RegExp, handler: LineHandler) => void;
   registerPromptHook: (handler: PromptHandler, priority: number) => void;
   registerMsdpHook: (handler: MsdpHandler) => void;
