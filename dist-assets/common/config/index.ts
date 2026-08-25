@@ -212,6 +212,7 @@ registerBindkey("M-pgup", () => sendLine("u"));
 registerBindkey("M-pgdn", () => sendLine("d"));
 registerBindkey("M-end", () => sendLine("scan"));
 registerBindkey("f1", () => showme("test"));
+registerBindkey("f4", () => sendLine("group"));
 
 // поведение
 registerTrigger(/^Вы готовы сожрать быка\./, () => sendLine("пить боч.синим"));

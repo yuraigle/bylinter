@@ -2,7 +2,6 @@ import { GlobalApiContext } from "../types/bylinter-api";
 
 import { clr, getColor } from "../protocol/ansi";
 import { MudSession } from "./MudSession.js";
-import { TerminalUI } from "../tui/TerminalUI";
 import {
   AliasCollection,
   BindkeyCollection,
@@ -11,11 +10,12 @@ import {
   MsdpHookCollection,
   SubstituteCollection,
 } from "../logic";
+import { ITerminalUI } from "../types/ITerminalUI";
 
 export class GlobalApi {
   public expose = (
     session: MudSession,
-    tui: TerminalUI,
+    tui: ITerminalUI,
     aliases: AliasCollection,
     bindkeys: BindkeyCollection,
     triggers: TriggerCollection,

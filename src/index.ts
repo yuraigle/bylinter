@@ -6,6 +6,7 @@ import { MudSession } from "./core/MudSession";
 import { TextPipeline } from "./core/TextPipeline";
 import { TcpCommandSender } from "./core/CommandSender";
 import { Broadcaster } from "./core/Broadcaster";
+import { ConfigLoaderService } from "./core/ConfigLoaderService";
 
 import {
   AliasCollection,
@@ -18,8 +19,7 @@ import {
 
 import { LocalServer } from "./core/LocalServer";
 import { GlobalApi } from "./core/GlobalApi";
-import { ConfigLoaderService } from "./core/ConfigLoaderService";
-import packageJson from "../package.json" with { type: "json" };
+import { ITerminalUI } from "./types/ITerminalUI";
 
 const triggers: TriggerCollection = new TriggerCollection();
 const substitutes: SubstituteCollection = new SubstituteCollection();
@@ -40,27 +40,28 @@ const aliases: AliasCollection = new AliasCollection();
 const inputHandler: InputHandler = new InputHandler(session, aliases);
 
 const bindkeys: BindkeyCollection = new BindkeyCollection();
-const tui: TerminalUI = new TerminalUI(
+const tui2: ITerminalUI = new TerminalUI(
   inputHandler.handle,
   bindkeys.dispatch,
   aliases, // для tab-навигации по алиасам
 );
 
-broadcaster.addConsumer((text: string) => tui.echo(text)); // строки из MUD в tui
-session.setTui(tui); // для вывода ошибок, статуса и дебага
-inputHandler.setSystemEcho(tui.showme1); // куда пишем ошибки и справку
-triggers.setDebugger((s: string) => tui.wecho(5, s));
+broadcaster.addConsumer((text: string) => tui2.echo(text)); // строки из MUD в tui
+session.setSystemEcho(tui2.showme);
+session.setOnStatus(tui2.setStatus);
+inputHandler.setSystemEcho(tui2.showme); // куда пишем ошибки и справку
+triggers.setDebugger((s: string) => tui2.wecho(9, s));
 
 // старт локального сервера с проксированием туда контента из клиента
 const port = Number(process.env.LOCAL_PORT || 0);
 if (port > 0) {
-  new LocalServer(port, broadcaster, inputHandler.handle, tui.showme1).init();
+  new LocalServer(port, broadcaster, inputHandler.handle, tui2.showme).init();
 }
 
 // все методы API в globalThis для юзер конфига
 const api: GlobalApiContext = new GlobalApi().expose(
   session,
-  tui,
+  tui2,
   aliases,
   bindkeys,
   triggers,
@@ -70,7 +71,14 @@ const api: GlobalApiContext = new GlobalApi().expose(
 );
 Object.defineProperty(globalThis, "bylinter", { value: api, writable: false });
 
-tui.showme1(`Bylinter v${packageJson.version} by Yuri Orlov`);
+import packageJson from "../package.json" with { type: "json" };
+tui2.showme(`-:- Bylinter v${packageJson.version} by Yuri Orlov`);
 
 // загрузка пользовательского конфига, если он есть
-await new ConfigLoaderService(tui.showme1).loadUserConfig();
+const loader = new ConfigLoaderService();
+const configPath = loader.findUserConfigPath();
+
+if (configPath) {
+  await import(configPath);
+  tui2.showme("-:- Using file " + configPath);
+}

@@ -1,5 +1,5 @@
-import path from "node:path";
-import { existsSync } from "node:fs";
+import path from "path";
+import { existsSync } from "fs";
 
 /*
  * 1) файл можно передать как параметр -c path_to_config.ts
@@ -9,14 +9,7 @@ import { existsSync } from "node:fs";
 **/
 
 export class ConfigLoaderService {
-
-  private readonly infoLog: (text: string) => void;
-
-  constructor(infoLog: (text: string) => void) {
-    this.infoLog = infoLog;
-  }
-
-  public async loadUserConfig(): Promise<void> {
+  public findUserConfigPath(): string | null {
     const flagIndex = process.argv.indexOf("-c");
     const userSuppliedPath =
       flagIndex !== -1 ? process.argv[flagIndex + 1] : undefined;
@@ -29,11 +22,10 @@ export class ConfigLoaderService {
 
     for (const candidate of candidates) {
       if (existsSync(candidate)) {
-        const absolutePath = path.resolve(candidate);
-        this.infoLog("Using file " + absolutePath);
-        await import(absolutePath);
-        return;
+        return path.resolve(candidate);
       }
     }
+
+    return null;
   }
 }

@@ -12,16 +12,7 @@ import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../logic/BindkeyCollection";
 import { AliasCollection } from "../logic";
-
-export interface ITerminalUI {
-  destroy(): void;
-  setStatus(text: string): void;
-  setSidebar(lines: string[], start: number, end: number): void;
-  echo(text: string): void;
-  wecho(w: number, text: string): void;
-  showme(text: string): void;
-  showme1(text: string): void;
-}
+import { ITerminalUI } from "../types/ITerminalUI";
 
 const prefix = `${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} `;
 
@@ -80,9 +71,5 @@ export class TerminalUI implements ITerminalUI {
   // показать в игровом логе ДО текущего незавершённого промта
   public showme = (message: string): void => {
     showSystem(message);
-  }
-
-  public showme1 = (message: string): void => {
-    showSystem(prefix + message);
-  }
+  };
 }

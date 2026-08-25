@@ -41,8 +41,8 @@ export class InputHandler {
     }
   }
 
-  public setSystemEcho = (f: (text: string) => void): void => {
-    this.systemEcho = f;
+  public setSystemEcho = (cb: (text: string) => void): void => {
+    this.systemEcho = cb;
   }
 
   public handle = (raw: string): void => {
