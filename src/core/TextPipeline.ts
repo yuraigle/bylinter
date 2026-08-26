@@ -74,7 +74,7 @@ export class TextPipeline {
       this.invokeLogger("\r\n" + lineCL);
       const outLineCL = this.substitutes.dispatch(lineCL);
       if (outLineCL !== null) {
-        this.broadcaster.broadcast("\r\n" + outLineCL);
+        this.broadcaster.broadcast(outLineCL);
       }
     });
 
@@ -109,7 +109,7 @@ export class TextPipeline {
   private flushPrompt(): void {
     const prompt = this.partialLine;
     this.promptHooks.dispatch(prompt, this.linesFromLastPrompt);
-    this.broadcaster.broadcast("\r\n" + prompt, true);
+    this.broadcaster.broadcast(prompt, true);
     this.invokeLogger("\r\n" + prompt);
     this.partialLine = "";
     this.linesFromLastPrompt = [];

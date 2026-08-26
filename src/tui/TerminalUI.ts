@@ -1,12 +1,11 @@
 import { state } from "./state";
 import {
-  appendLog,
+  addLog,
   enterScreen,
   exitScreen,
   redraw,
   rewrapAll,
   wecho,
-  showSystem,
 } from "./render";
 import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
@@ -23,7 +22,7 @@ export class TerminalUI implements ITerminalUI {
     aliases: AliasCollection,
   ) {
     const echoAndInput = (line: string) => {
-      appendLog(clr("L") + line + clr("0"));
+      addLog(clr("L") + line + clr("0"));
       onInput(line);
     };
 
@@ -60,11 +59,11 @@ export class TerminalUI implements ITerminalUI {
 
   // дописать что-то в игровой лог, после промта
   public echo = (message: string): void => {
-    appendLog(message);
+    addLog(message);
   };
 
-  public addLog = (text: string): void => {
-    appendLog(text);
+  public addLog = (line: string, hasGA?: boolean): void => {
+    addLog(line, hasGA);
   };
 
   // в отдельное окно alt+2/3/4
@@ -74,6 +73,6 @@ export class TerminalUI implements ITerminalUI {
 
   // показать в игровом логе ДО текущего незавершённого промта
   public showme = (message: string): void => {
-    showSystem(message);
+    addLog(message);
   };
 }

@@ -168,15 +168,6 @@ export function rewrapAll(): void {
   }
 }
 
-function rewrapLastLine(win: WindowState): void {
-  const removeCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
-  win.wrappedRows.splice(win.wrappedRows.length - removeCount, removeCount);
-
-  const rows = wrapLine(win.logLines[win.logLines.length - 1], win.wrapWidth);
-  win.wrappedRows.push(...rows);
-  win.rowCounts[win.rowCounts.length - 1] = rows.length;
-}
-
 function appendWrappedLine(win: WindowState, line: string): void {
   const rows = wrapLine(line, win.wrapWidth);
   win.wrappedRows.push(...rows);
@@ -192,79 +183,9 @@ function appendToWindow(windowNum: number, text: string): void {
   const wasSplit = win.scrollOffset > 0;
 
   const segments = text.split("\n");
-
-  if (win.logLines.length > 0) {
-    const first = segments.shift() ?? "";
-    win.logLines[win.logLines.length - 1] += first;
-    rewrapLastLine(win);
-  }
-
   for (const segment of segments) {
     win.logLines.push(segment);
     appendWrappedLine(win, segment);
-  }
-
-  if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
-    const excess = win.logLines.length - MAX_BUFFER_LINES;
-    let rowsToRemove = 0;
-    for (let i = 0; i < excess; i++) rowsToRemove += win.rowCounts[i];
-
-    win.logLines = win.logLines.slice(excess);
-    win.rowCounts = win.rowCounts.slice(excess);
-    win.wrappedRows = win.wrappedRows.slice(rowsToRemove);
-  }
-
-  if (win.logLines.length > MAX_BUFFER_LINES * 10 && wasSplit) {
-    win.scrollOffset = 0; // слишком много строк добавлено
-  }
-
-  if (wasSplit) {
-    const rowsAdded = win.wrappedRows.length - rowsBefore;
-    win.scrollOffset = Math.min(
-      win.scrollOffset + Math.max(0, rowsAdded),
-      Math.max(0, win.wrappedRows.length - 1),
-    );
-  }
-
-  if (windowNum === state.currentWindow) requestRedraw();
-}
-
-export function appendLog(text: string): void {
-  appendToWindow(1, text);
-}
-
-export function wecho(windowNum: number, line: string): void {
-  appendToWindow(windowNum, line + "\r\n");
-}
-
-// Вставить системное сообщение ДО незавершённой строки
-function insertBeforeLast(windowNum: number, text: string): void {
-  const win = getWindow(windowNum);
-  const { logWidth } = getLayout();
-  if (win.wrapWidth === 0) win.wrapWidth = logWidth;
-
-  const wasSplit = win.scrollOffset > 0;
-  const rowsBefore = win.wrappedRows.length;
-
-  const hasPendingLast = win.logLines.length > 0;
-  const lastLine = hasPendingLast ? win.logLines[win.logLines.length - 1] : "";
-  const lastRowCount = hasPendingLast ? win.rowCounts[win.rowCounts.length - 1] : 0;
-
-  if (hasPendingLast) {
-    win.logLines.pop();
-    win.rowCounts.pop();
-    win.wrappedRows.splice(win.wrappedRows.length - lastRowCount, lastRowCount);
-  }
-
-  const segments = text.split("\n");
-  for (const segment of segments) {
-    win.logLines.push(segment);
-    appendWrappedLine(win, segment);
-  }
-
-  if (hasPendingLast) {
-    win.logLines.push(lastLine);
-    appendWrappedLine(win, lastLine);
   }
 
   if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
@@ -292,52 +213,46 @@ function insertBeforeLast(windowNum: number, text: string): void {
   if (windowNum === state.currentWindow) requestRedraw();
 }
 
-export function showSystem(text: string): void {
-  insertBeforeLast(1, text);
+export function addLog(line: string, hasGA?: boolean): void {
+  appendToWindow(1, line);
+  if (hasGA) {
+    state.currentPrompt = line;
+    if (state.currentWindow === 1) requestRedraw();
+  }
 }
+
+export function wecho(windowNum: number, line: string): void {
+  appendToWindow(windowNum, line + "\r\n");
+}
+
+const MAX_PROMPT_WIDTH = 200; // разумный предел, чтобы не пытаться отрисовать гигантскую строку
 
 function buildLiveTail(win: WindowState, width: number, maxHeight: number) {
-  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
-  const priorRows = win.wrappedRows.slice(
-    0,
-    win.wrappedRows.length - lastLineRowCount,
-  );
-  const lastLogicalText = win.logLines[win.logLines.length - 1] ?? "";
+  const promptText = state.currentPrompt;
+  const truncatedPrompt = truncateVisible(promptText, MAX_PROMPT_WIDTH);
+
   const combinedText =
-    lastLogicalText + CLR_INPUT + state.inputBuffer + CLR_RESET;
+    truncatedPrompt + CLR_INPUT + state.inputBuffer + CLR_RESET;
   const cursorRawIndex =
-    lastLogicalText.length + CLR_INPUT.length + state.cursorPos;
+    truncatedPrompt.length + CLR_INPUT.length + state.cursorPos;
 
-  const {
-    rows: tailRows,
-    cursorRow,
-    cursorCol,
-  } = wrapWithCursor(combinedText, width, cursorRawIndex);
+  const { rows: tailRows, cursorCol } = wrapWithCursor(
+    combinedText,
+    width,
+    cursorRawIndex,
+  );
+  const promptRow = tailRows[0] ?? "";
 
-  const allRows = [...priorRows, ...tailRows];
-  const visibleRows = allRows.slice(Math.max(0, allRows.length - maxHeight));
-  const trimmedFromTop = allRows.length - visibleRows.length;
-  const cursorScreenRow = priorRows.length + cursorRow - trimmedFromTop;
+  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
+  const excludeCount = state.currentPrompt.length > 0 ? lastLineRowCount : 0;
+
+  const logAreaHeight = Math.max(0, maxHeight - 1);
+  const visibleLogRows = win.wrappedRows
+    .slice(0, win.wrappedRows.length - excludeCount)
+    .slice(-logAreaHeight);
+
+  const visibleRows = [...visibleLogRows, promptRow];
+  const cursorScreenRow = visibleRows.length - 1;
 
   return { visibleRows, cursorScreenRow, cursorCol };
-}
-
-export function commitLine(): void {
-  const win = getWindow(1);
-
-  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
-  const lastLogicalText = win.logLines[win.logLines.length - 1] ?? "";
-
-  // убираем старые физические строки этой логической строки
-  win.wrappedRows.splice(win.wrappedRows.length - lastLineRowCount, lastLineRowCount);
-  win.rowCounts.pop();
-
-  // фиксируем строку с уже вписанным вводом как окончательную
-  const finalText = lastLogicalText + state.inputBuffer;
-  win.logLines[win.logLines.length - 1] = finalText;
-  appendWrappedLine(win, finalText);
-
-  // начинаем новую пустую строку — будущий промпт
-  win.logLines.push("");
-  appendWrappedLine(win, "");
 }
