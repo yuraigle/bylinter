@@ -63,6 +63,10 @@ export class TerminalUI implements ITerminalUI {
     appendLog(message);
   };
 
+  public addLog = (text: string): void => {
+    appendLog(text);
+  };
+
   // в отдельное окно alt+2/3/4
   public wecho = (w: number, text: string): void => {
     wecho(w, text);

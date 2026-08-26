@@ -6,6 +6,8 @@ export const SCREEN = {
   clearLine: "\x1b[2K",
   syncStart: "\x1b[?2026h",
   syncEnd: "\x1b[?2026l",
+  clearScreen: "\x1b[2J",
+  home: "\x1b[H",
 } as const;
 
 export const BOX = {

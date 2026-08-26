@@ -46,7 +46,9 @@ const tui2: ITerminalUI = new TerminalUI(
   aliases, // для tab-навигации по алиасам
 );
 
-broadcaster.addConsumer((text: string) => tui2.echo(text)); // строки из MUD в tui
+broadcaster.addConsumer((text: string, hasGA?: boolean) =>
+  tui2.addLog(text, hasGA), // строки из MUD в TUI
+);
 session.setSystemEcho(tui2.showme);
 session.setOnStatus(tui2.setStatus);
 inputHandler.setSystemEcho(tui2.showme); // куда пишем ошибки и справку

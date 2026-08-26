@@ -12,13 +12,20 @@ export class InputManager {
   private history: string[] = [];
   private historyIndex: number = -1;
 
-  constructor(handlers: InputHandler, config?: { prompt?: string; historySize?: number }) {}
+  private onLine: (line: string) => void;
+  private onKeyPress: (key: KeyInfo, str: string) => boolean;
+
+  constructor(
+    handlers: InputHandler,
+    config?: { prompt?: string; historySize?: number },
+  ) {
+    this.onLine = handlers.onLine;
+    this.onKeyPress = handlers.onKeyPress;
+  }
 
   public init = (): void => {
-    // Настройка raw mode для обработки всех клавиш
     this.setupRawMode();
 
-    // Создание readline интерфейса
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -26,24 +33,11 @@ export class InputManager {
       completer: undefined, // Для автодополнения (если включено)
     });
 
-    // Обработка строк (по Enter)
     this.rl.on("line", (line) => {
-      // this.handleLine(line);
-      // this.onInput(line);
-      // this.rl.prompt();
+      this.onLine(line);
+      this.rl?.prompt();
     });
 
-    // Обработка закрытия (Ctrl+D)
-    this.rl.on("close", () => {
-      // this.handleClose();
-    });
-
-    // Обработка SIGINT (Ctrl+C) через readline
-    this.rl.on("SIGINT", () => {
-      // this.handleInterrupt();
-    });
-
-    // Показываем промпт
     this.rl.prompt();
   };
 
@@ -60,7 +54,9 @@ export class InputManager {
     process.stdin.removeAllListeners("keypress");
   };
 
-  public setPrompt = (prompt: string): void => {};
+  public setPrompt = (prompt: string): void => {
+    this.rl?.setPrompt(prompt);
+  };
 
   public getCurrentLine = (): string => {
     return "";
@@ -78,14 +74,6 @@ export class InputManager {
 
   public getHistory = (): string[] => {
     return [];
-  };
-
-  public isActive = (): boolean => {
-    return false;
-  };
-
-  public question = async (query: string): Promise<string> => {
-    return "";
   };
 
   private setupRawMode(): void {
@@ -115,7 +103,7 @@ export class InputManager {
           return;
         }
 
-        // const handled = this.handlers.onKeyPress(keyInfo, str || "");
+        const handled = this.onKeyPress(keyInfo, str || "");
       }
     });
   }

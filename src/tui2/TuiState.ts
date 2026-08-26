@@ -12,11 +12,6 @@ export interface WindowState {
   wrappedRows: string[];
 }
 
-export interface TuiLayout {
-  width: number;
-  height: number;
-}
-
 const createWindow = (): WindowState => ({
   logLines: [],
   wrappedRows: [],
@@ -24,9 +19,11 @@ const createWindow = (): WindowState => ({
 
 export const defPrompt = clr("D") + "Bylinter> " + clr("0");
 
-export const state: TuiState = {
-  windows: new Map<number, WindowState>([[1, createWindow()]]),
-  currentWindow: 1,
-  statusText: "Not connected",
-  savedPrompt: defPrompt,
-};
+export function defaultState(): TuiState {
+  return {
+    windows: new Map<number, WindowState>([[1, createWindow()]]),
+    currentWindow: 1,
+    statusText: "Not connected",
+    savedPrompt: defPrompt,
+  };
+}
