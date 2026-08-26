@@ -4,13 +4,15 @@ import { AliasCollection } from "../logic";
 import { KeyInfo } from "../logic/BindkeyCollection";
 import { SCREEN } from "../protocol/ansi";
 import { ITerminalUI } from "../types/ITerminalUI";
+import { InputManager } from "./InputManager";
 
 export class TerminalUI implements ITerminalUI {
-  private rl: readline.Interface;
   private onInput: (line: string) => void;
   private onKeyPress: (key: KeyInfo, str: string) => boolean;
   private aliases: AliasCollection;
   private isDestroyed: boolean = false;
+
+  private inputManager: InputManager;
 
   constructor(
     onInput: (line: string) => void,
@@ -21,34 +23,14 @@ export class TerminalUI implements ITerminalUI {
     this.onKeyPress = onKeyPress;
     this.aliases = aliases;
 
-    // Настройка readline для raw mode
-    readline.emitKeypressEvents(process.stdin);
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
-    }
-    process.stdin.resume();
+    this.inputManager = new InputManager({
+      onLine: this.onInput,
+      onKeyPress: this.onKeyPress,
+    });
 
     // Очищаем экран и выводим приветствие
     this.clearScreen();
     this.drawHello();
-
-    this.initKeypressHandler();
-
-    this.rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      prompt: "> ",
-    });
-
-    // Обработчик ввода строки (по Enter)
-    this.rl.on("line", (line) => {
-      if (this.isDestroyed) return;
-      this.onInput(line);
-      this.rl.prompt();
-    });
-
-    // Показываем приглашение
-    this.rl.prompt();
   }
 
   // public destroy = (): void => {};
@@ -57,30 +39,6 @@ export class TerminalUI implements ITerminalUI {
   public echo = (text: string): void => {};
   public wecho = (w: number, text: string): void => {};
   public showme = (text: string): void => {};
-
-  private initKeypressHandler = (): void => {
-    process.stdin.on("keypress", (str, key) => {
-      if (this.isDestroyed) return;
-
-      if (key && key.ctrl && key.name === "c") {
-        this.destroy(); // Выход по Ctrl+C
-        process.exit(0);
-        return;
-      }
-
-      // Преобразуем key в KeyInfo
-      const keyInfo: KeyInfo = {
-        name: key?.name || "",
-        ctrl: key?.ctrl || false,
-        shift: key?.shift || false,
-        meta: key?.meta || false,
-        sequence: key?.sequence || str || "",
-      };
-
-      // Вызываем обработчик
-      this.onKeyPress(keyInfo, str || "");
-    });
-  };
 
   private clearScreen(): void {
     process.stdout.write("\x1b[2J\x1b[H");
