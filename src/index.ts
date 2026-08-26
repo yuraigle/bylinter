@@ -1,6 +1,6 @@
 import type { GlobalApiContext } from "./types/bylinter-api";
 
-import { TerminalUI } from "./tui/TerminalUI";
+import { TerminalUI } from "./tui2/TerminalUI";
 import { InputHandler } from "./core/InputHandler";
 import { MudSession } from "./core/MudSession";
 import { TextPipeline } from "./core/TextPipeline";
