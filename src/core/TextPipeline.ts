@@ -94,6 +94,7 @@ export class TextPipeline {
     if (this.promptTimer) clearTimeout(this.promptTimer);
     this.promptTimer = null;
     this.gaSeen = false;
+    this.carrySgr = "";
     this.partialLine = "";
     this.linesFromLastPrompt = [];
   };
@@ -112,6 +113,7 @@ export class TextPipeline {
     this.broadcaster.broadcast(prompt, true);
     this.invokeLogger("\r\n" + prompt);
     this.partialLine = "";
+    this.carrySgr = ""; // промт сбрасывает цвет
     this.linesFromLastPrompt = [];
   }
 
