@@ -5,7 +5,7 @@
   "scripts": {
     "start": "bun run src/index.ts -c ./dist-assets/common/config/index.ts",
     "start2": "bun run src/index.ts -c /home/orlov/proj/soldaten-conf/config/index.ts -p rene",
-    "gui": "./vendor/alacritty-linux/alacritty.AppImage --config-file ./dist-assets/common/term/alacritty.toml -e bash -c 'bun start'",
+    "gui": "./vendor/alacritty-linux/alacritty.AppImage --config-file ./dist-assets/common/term/alacritty.toml -e bash -c 'bun start2'",
     "guiw": "./vendor/alacritty-win/alacritty.exe --config-file ./dist-assets/common/term/alacritty.toml -e 'bun start'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch-term": "bun scripts/patch-term.ts",

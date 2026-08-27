@@ -222,7 +222,7 @@ export function addLog(line: string, hasGA?: boolean): void {
 }
 
 export function wecho(windowNum: number, line: string): void {
-  appendToWindow(windowNum, line + "\r\n");
+  appendToWindow(windowNum, line);
 }
 
 const MAX_PROMPT_WIDTH = 200; // разумный предел, чтобы не пытаться отрисовать гигантскую строку
