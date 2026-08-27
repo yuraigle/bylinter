@@ -1,17 +1,11 @@
 import { state } from "./state";
-import {
-  addLog,
-  enterScreen,
-  exitScreen,
-  redraw,
-  rewrapAll,
-  wecho,
-} from "./render";
+import { addLog, enterScreen, exitScreen, redraw, wecho } from "./render";
 import { initInput, destroyInput } from "./input";
 import { clr } from "../protocol/ansi";
 import { KeyInfo } from "../logic/BindkeyCollection";
 import { AliasCollection } from "../logic";
 import { ITerminalUI } from "../types/ITerminalUI";
+import { rewrapAll } from "./textUtils";
 
 const prefix = `${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} `;
 

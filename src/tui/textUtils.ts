@@ -1,3 +1,6 @@
+import { getLayout } from "./layout";
+import { state, WindowState } from "./state";
+
 const TOKEN_RE = /\x1b\[[0-9;]*m|[\s\S]/g;
 
 export function truncateVisible(str: string, width: number): string {
@@ -48,11 +51,7 @@ export function wrapLine(line: string, width: number): string[] {
   return rows;
 }
 
-export function wrapWithCursor(
-  text: string,
-  width: number,
-  cursorRawIndex: number,
-) {
+export function wrapWithCursor(text: string, width: number, cursorRawIndex: number) {
   if (width <= 0) return { rows: [text], cursorRow: 0, cursorCol: 0 };
 
   const tokens = text.match(TOKEN_RE) ?? [];
@@ -109,4 +108,23 @@ export function wrapWithCursor(
 export function padRows(rows: string[], height: number): string[] {
   if (rows.length >= height) return rows;
   return [...new Array(height - rows.length).fill(""), ...rows];
+}
+
+export function rewrapAll(): void {
+  const { logWidth } = getLayout();
+  for (const win of state.windows.values()) {
+    rewrapWindow(win, logWidth);
+  }
+}
+
+function rewrapWindow(win: WindowState, width: number): void {
+  win.wrapWidth = width;
+  win.wrappedRows = [];
+  win.rowCounts = [];
+
+  for (const line of win.logLines) {
+    const rows = wrapLine(line, width);
+    win.wrappedRows.push(...rows);
+    win.rowCounts.push(rows.length);
+  }
 }

@@ -1,5 +1,5 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
-import { getLayout, Layout } from "./layout";
+import { getLayout } from "./layout";
 import { SCREEN, BOX, moveTo, clr } from "../protocol/ansi";
 import { padRows, truncateVisible, wrapLine, wrapWithCursor } from "./textUtils";
 
@@ -8,14 +8,6 @@ const CLR_INPUT = clr("L"); // Bright Yellow for user input
 const CLR_MAIN = clr(process.env.STATUS_COLOR || "D"); // Yellow
 const STATUS_FG = clr("A"); // Black for statusbar font
 const STATUS_BG = CLR_MAIN.replace(/\[[39]/, "[4");
-
-export function enterScreen(): void {
-  process.stdout.write(SCREEN.enterAlt);
-}
-
-export function exitScreen(): void {
-  process.stdout.write(SCREEN.showCursor + SCREEN.exitAlt);
-}
 
 let redrawScheduled = false;
 let lastRedrawTime = 0;
@@ -35,103 +27,16 @@ export function requestRedraw(): void {
   }, delay);
 }
 
-// полная перерисовка окна (дорого)
 export function redraw(): void {
-  const layout: Layout = getLayout();
-
-  const win = getWindow(state.currentWindow);
-  const isSplit = win.scrollOffset > 0;
-
-  let logRows: string[];
-  let cursorScreenRow: number;
-  let cursorCol: number;
-
-  if (isSplit) {
-    const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
-    const topStart = Math.max(0, topEnd - layout.topHeight);
-    const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
-    const dividerLine =
-      CLR_MAIN + BOX.horizontal.repeat(layout.logWidth) + CLR_RESET;
-
-    const tail = buildLiveTail(win, layout.logWidth, layout.bottomHeight);
-    const padCount = layout.bottomHeight - tail.visibleRows.length;
-
-    logRows = [
-      ...padRows(topRows, layout.topHeight),
-      dividerLine,
-      ...padRows(tail.visibleRows, layout.bottomHeight),
-    ];
-    cursorScreenRow = layout.topHeight + 1 + padCount + tail.cursorScreenRow;
-    cursorCol = tail.cursorCol;
-  } else {
-    const tail = buildLiveTail(win, layout.logWidth, layout.logHeight);
-    const padCount = layout.logHeight - tail.visibleRows.length;
-
-    logRows = padRows(tail.visibleRows, layout.logHeight);
-    cursorScreenRow = padCount + tail.cursorScreenRow;
-    cursorCol = tail.cursorCol;
-  }
-
-  let out = SCREEN.hideCursor;
-
-  for (let i = 0; i < layout.logHeight; i++) {
-    out += moveTo(i + 1, 1) + SCREEN.clearLine;
-    out += logRows[i] ?? "";
-
-    if (layout.showSidebar) {
-      out += moveTo(i + 1, layout.dividerCol);
-      out += CLR_MAIN + BOX.vertical + CLR_RESET;
-      const sidebarLine = truncateVisible(
-        state.sidebarLines[i] ?? "",
-        layout.sidebarWidth,
-      );
-      out += moveTo(i + 1, layout.sidebarCol) + sidebarLine;
-      out += CLR_RESET;
-    }
-  }
-
-  out += moveTo(layout.statusRow, 1) + SCREEN.clearLine;
-  const statusWithWindow = `[${state.currentWindow}] ${state.statusText}`;
-  out +=
-    STATUS_BG +
-    STATUS_FG +
-    statusWithWindow.padEnd(layout.width).slice(0, layout.width) +
-    CLR_RESET;
-
-  out += moveTo(cursorScreenRow + 1, cursorCol + 1) + SCREEN.showCursor;
-
-  process.stdout.write(out);
+  redrawLog();
+  redrawStatus();
+  redrawPrompt();
 }
 
 export function switchWindow(n: number): void {
   if (n < 1 || n > 9) return;
   state.currentWindow = n;
   redraw();
-}
-
-function rewrapWindow(win: WindowState, width: number): void {
-  win.wrapWidth = width;
-  win.wrappedRows = [];
-  win.rowCounts = [];
-
-  for (const line of win.logLines) {
-    const rows = wrapLine(line, width);
-    win.wrappedRows.push(...rows);
-    win.rowCounts.push(rows.length);
-  }
-}
-
-export function rewrapAll(): void {
-  const { logWidth } = getLayout();
-  for (const win of state.windows.values()) {
-    rewrapWindow(win, logWidth);
-  }
-}
-
-function appendWrappedLine(win: WindowState, line: string): void {
-  const rows = wrapLine(line, win.wrapWidth);
-  win.wrappedRows.push(...rows);
-  win.rowCounts.push(rows.length);
 }
 
 function appendToWindow(windowNum: number, text: string): void {
@@ -173,6 +78,12 @@ function appendToWindow(windowNum: number, text: string): void {
   if (windowNum === state.currentWindow) requestRedraw();
 }
 
+function appendWrappedLine(win: WindowState, line: string): void {
+  const rows = wrapLine(line, win.wrapWidth);
+  win.wrappedRows.push(...rows);
+  win.rowCounts.push(rows.length);
+}
+
 export function addLog(line: string, hasGA?: boolean): void {
   appendToWindow(1, line);
   if (hasGA) {
@@ -185,53 +96,68 @@ export function wecho(windowNum: number, line: string): void {
   appendToWindow(windowNum, line);
 }
 
-const MAX_PROMPT_WIDTH = 200; // разумный предел, чтобы не пытаться отрисовать гигантскую строку
+export function enterScreen(): void {
+  process.stdout.write(SCREEN.enterAlt);
+}
 
-function buildLiveTail(win: WindowState, width: number, maxHeight: number) {
-  const promptText = state.currentPrompt;
-  const truncatedPrompt = truncateVisible(promptText, MAX_PROMPT_WIDTH);
+export function exitScreen(): void {
+  process.stdout.write(SCREEN.showCursor + SCREEN.exitAlt);
+}
 
-  const combinedText =
-    truncatedPrompt + CLR_INPUT + state.inputBuffer + CLR_RESET;
-  const cursorRawIndex =
-    truncatedPrompt.length + CLR_INPUT.length + state.cursorPos;
+function getVisibleLogRows(win: WindowState, maxHeight: number): string[] {
+  return win.wrappedRows.slice(Math.max(0, win.wrappedRows.length - maxHeight));
+}
 
-  const { rows: tailRows, cursorCol } = wrapWithCursor(
-    combinedText,
-    width,
-    cursorRawIndex,
-  );
-  const promptRow = tailRows[0] ?? "";
+export function redrawLog(): void {
+  const layout = getLayout();
+  const win = getWindow(state.currentWindow);
+  const isSplit = win.scrollOffset > 0;
 
-  const lastLineRowCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
-  const excludeCount = state.currentPrompt.length > 0 ? lastLineRowCount : 0;
+  let logRows: string[];
 
-  const logAreaHeight = Math.max(0, maxHeight - 1);
-  const visibleLogRows = win.wrappedRows
-    .slice(0, win.wrappedRows.length - excludeCount)
-    .slice(-logAreaHeight);
+  if (isSplit) {
+    const topEnd = Math.max(0, win.wrappedRows.length - win.scrollOffset);
+    const topStart = Math.max(0, topEnd - layout.topHeight);
+    const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
+    const dividerLine = CLR_MAIN + BOX.horizontal.repeat(layout.logWidth) + CLR_RESET;
 
-  const visibleRows = [...visibleLogRows, promptRow];
-  const cursorScreenRow = visibleRows.length - 1;
+    const bottomRows = getVisibleLogRows(win, layout.bottomHeight);
 
-  return { visibleRows, cursorScreenRow, cursorCol };
+    logRows = [
+      ...padRows(topRows, layout.topHeight),
+      dividerLine,
+      ...padRows(bottomRows, layout.bottomHeight),
+    ];
+  } else {
+    logRows = padRows(getVisibleLogRows(win, layout.logHeight), layout.logHeight);
+  }
+
+  let out = SCREEN.hideCursor;
+
+  for (let i = 0; i < layout.logHeight; i++) {
+    out += moveTo(i + 1, 1) + SCREEN.clearLine;
+    out += logRows[i] ?? "";
+
+    if (layout.showSidebar) {
+      out += moveTo(i + 1, layout.dividerCol);
+      out += CLR_MAIN + BOX.vertical + CLR_RESET;
+      const sidebarLine = truncateVisible(state.sidebarLines[i] ?? "", layout.sidebarWidth);
+      out += moveTo(i + 1, layout.sidebarCol) + sidebarLine;
+      out += CLR_RESET;
+    }
+  }
+
+  process.stdout.write(out);
 }
 
 export function redrawPrompt(): void {
-  const win = getWindow(state.currentWindow);
-  if (win.scrollOffset > 0) {
-    redraw(); // при просмотре истории — сплит-экран, дешёвый путь не применим
-    return;
-  }
-
   const layout = getLayout();
   const promptText = state.currentPrompt;
+  const MAX_PROMPT_WIDTH = 200; // wtf
   const truncatedPrompt = truncateVisible(promptText, MAX_PROMPT_WIDTH);
 
-  const combinedText =
-    truncatedPrompt + CLR_INPUT + state.inputBuffer + CLR_RESET;
-  const cursorRawIndex =
-    truncatedPrompt.length + CLR_INPUT.length + state.cursorPos;
+  const combinedText = truncatedPrompt + CLR_INPUT + state.inputBuffer + CLR_RESET;
+  const cursorRawIndex = truncatedPrompt.length + CLR_INPUT.length + state.cursorPos;
 
   const { rows: tailRows, cursorCol } = wrapWithCursor(
     combinedText,
@@ -239,17 +165,7 @@ export function redrawPrompt(): void {
     cursorRawIndex,
   );
   const promptRow = tailRows[0] ?? "";
-
-  // сколько реально строк лога сейчас видно (может быть меньше logHeight-1,
-  // если лог ещё не заполнил экран)
-  const excludeCount = win.rowCounts[win.rowCounts.length - 1] ?? 0;
-  const logAreaHeight = Math.max(0, layout.logHeight - 1);
-  const visibleLogCount = Math.min(
-    win.wrappedRows.length - excludeCount,
-    logAreaHeight,
-  );
-  const padCount = logAreaHeight - visibleLogCount;
-  const screenRow = padCount + visibleLogCount; // строка промпта — сразу после видимого лога
+  const screenRow = layout.statusRow - 2;
 
   let out = SCREEN.hideCursor + SCREEN.syncStart;
   out += moveTo(screenRow + 1, 1) + SCREEN.clearLine;
@@ -258,10 +174,7 @@ export function redrawPrompt(): void {
   if (layout.showSidebar) {
     out += moveTo(screenRow + 1, layout.dividerCol);
     out += CLR_MAIN + BOX.vertical + CLR_RESET;
-    const sidebarLine = truncateVisible(
-      state.sidebarLines[screenRow] ?? "",
-      layout.sidebarWidth,
-    );
+    const sidebarLine = truncateVisible(state.sidebarLines[screenRow] ?? "", layout.sidebarWidth);
     out += moveTo(screenRow + 1, layout.sidebarCol) + sidebarLine;
     out += CLR_RESET;
   }

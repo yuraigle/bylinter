@@ -1,16 +1,11 @@
 import readline from "node:readline";
 
 import { state, MAX_HISTORY, getWindow } from "./state";
-import {
-  redraw,
-  redrawPrompt,
-  requestRedraw,
-  rewrapAll,
-  switchWindow,
-} from "./render";
+import { redraw, redrawPrompt, requestRedraw, switchWindow } from "./render";
 import { KeyInfo } from "../logic/BindkeyCollection";
 import { AliasCollection } from "../logic";
 import { getLayout, getScrollStep } from "./layout";
+import { rewrapAll } from "./textUtils";
 
 let inputHandler: (line: string) => void;
 let keyPressHandler: (key: KeyInfo, str: string) => boolean;
@@ -41,10 +36,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     state.inputBuffer = "";
     state.cursorPos = 0;
 
-    if (
-      line.trim().length > 0 &&
-      line !== state.history[state.history.length - 1]
-    ) {
+    if (line.trim().length > 0 && line !== state.history[state.history.length - 1]) {
       state.history.push(line);
       if (state.history.length > MAX_HISTORY) {
         state.history = state.history.slice(state.history.length - MAX_HISTORY);
@@ -68,8 +60,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   if (key.name === "backspace") {
     if (state.cursorPos > 0) {
       state.inputBuffer =
-        state.inputBuffer.slice(0, state.cursorPos - 1) +
-        state.inputBuffer.slice(state.cursorPos);
+        state.inputBuffer.slice(0, state.cursorPos - 1) + state.inputBuffer.slice(state.cursorPos);
       state.cursorPos--;
       redrawPrompt();
     }
@@ -79,8 +70,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
   if (key.name === "delete") {
     if (state.cursorPos < state.inputBuffer.length) {
       state.inputBuffer =
-        state.inputBuffer.slice(0, state.cursorPos) +
-        state.inputBuffer.slice(state.cursorPos + 1);
+        state.inputBuffer.slice(0, state.cursorPos) + state.inputBuffer.slice(state.cursorPos + 1);
       redrawPrompt();
     }
     return;
@@ -134,9 +124,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     if (state.historyPos < state.history.length) {
       state.historyPos++;
       state.inputBuffer =
-        state.historyPos === state.history.length
-          ? state.draft
-          : state.history[state.historyPos];
+        state.historyPos === state.history.length ? state.draft : state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
       redrawPrompt();
     }
@@ -147,10 +135,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
     const win = getWindow(state.currentWindow);
     const isFirstPress = win.scrollOffset === 0;
     const step = isFirstPress ? getLayout().logHeight - 1 : getScrollStep();
-    const newOffset = Math.min(
-      win.scrollOffset + step,
-      Math.max(0, win.wrappedRows.length - 1),
-    );
+    const newOffset = Math.min(win.scrollOffset + step, Math.max(0, win.wrappedRows.length - 1));
 
     if (newOffset !== win.scrollOffset) {
       win.scrollOffset = newOffset;
@@ -181,9 +166,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
 
   if (!key.ctrl && !key.meta && isPrintable(str)) {
     state.inputBuffer =
-      state.inputBuffer.slice(0, state.cursorPos) +
-      str +
-      state.inputBuffer.slice(state.cursorPos);
+      state.inputBuffer.slice(0, state.cursorPos) + str + state.inputBuffer.slice(state.cursorPos);
     state.cursorPos += str.length;
     redrawPrompt();
   }
