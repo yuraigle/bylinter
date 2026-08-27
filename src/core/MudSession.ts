@@ -100,7 +100,7 @@ export class MudSession implements IMudSession {
 
   public sendLine = (input: string): void => {
     input.split(/;/).forEach((cmd) => this.sendText(cmd));
-    this.invokeLogger(`[${input}]\r\n`);
+    this.invokeLogger(`\r\n[${input}]`);
   };
 
   public sendMsdp = (name: string, value: string): void => {
@@ -167,7 +167,7 @@ export class MudSession implements IMudSession {
     if (ev.option === MSDP_OPT) {
       const msdpData = parseMsdp(ev.payload);
       this.textPipeline.handleIncomingMsdp(msdpData);
-      this.invokeLogger(`[msdp] ${JSON.stringify(msdpData)}\r\n`);
+      this.invokeLogger(`\r\n[msdp] ${JSON.stringify(msdpData)}\r\n`);
     }
   }
 

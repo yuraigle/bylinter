@@ -26,7 +26,7 @@ export function getLayout(): Layout {
     : width;
   const dividerCol = logWidth + 1;
   const sidebarCol = dividerCol + SIDEBAR_DIVIDER_WIDTH;
-  const logHeight = height - 1; // теперь только статус-бар забирает 1 строку
+  const logHeight = height - 2; // 1 статусбар, 1 промт
 
   const topHeight = Math.max(
     1,

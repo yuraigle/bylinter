@@ -51,21 +51,23 @@ export class TerminalUI implements ITerminalUI {
     redraw();
   };
 
-  // дописать что-то в игровой лог, после промта
-  public echo = (message: string): void => {
-    addLog(message);
-  };
-
+  // дописать строку из игры
   public addLog = (line: string, hasGA?: boolean): void => {
     addLog(line, hasGA);
   };
 
-  // в отдельное окно alt+2/3/4
-  public wecho = (w: number, text: string): void => {
-    wecho(w, text);
+  // дописать что-то в окно игры
+  public echo = (message: string): void => {
+    wecho(1, message);
   };
 
+  // дописать с префиксом -:-
   public showme = (message: string): void => {
-    addLog(prefix + message);
+    wecho(1, prefix + message);
+  };
+
+  // вывести строку в отдельное окно alt+2/3/4
+  public wecho = (w: number, text: string): void => {
+    wecho(w, text);
   };
 }

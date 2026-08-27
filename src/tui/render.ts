@@ -11,7 +11,7 @@ const STATUS_BG = CLR_MAIN.replace(/\[[39]/, "[4");
 
 let redrawScheduled = false;
 let lastRedrawTime = 0;
-const MIN_REDRAW_INTERVAL_MS = 50;
+const MIN_REDRAW_INTERVAL_MS = 30;
 
 export function requestRedraw(): void {
   if (redrawScheduled) return;
@@ -30,7 +30,9 @@ export function requestRedraw(): void {
 export function redraw(): void {
   redrawLog();
   redrawStatus();
+  // if (state.currentWindow === 1) {
   redrawPrompt();
+  // }
 }
 
 export function switchWindow(n: number): void {
@@ -50,7 +52,9 @@ function appendToWindow(windowNum: number, text: string): void {
   const segments = text.split("\n");
   for (const segment of segments) {
     win.logLines.push(segment);
-    appendWrappedLine(win, segment);
+    const rows = wrapLine(segment, win.wrapWidth);
+    win.wrappedRows.push(...rows);
+    win.rowCounts.push(rows.length);
   }
 
   if (win.logLines.length > MAX_BUFFER_LINES && !wasSplit) {
@@ -78,17 +82,17 @@ function appendToWindow(windowNum: number, text: string): void {
   if (windowNum === state.currentWindow) requestRedraw();
 }
 
-function appendWrappedLine(win: WindowState, line: string): void {
-  const rows = wrapLine(line, win.wrapWidth);
-  win.wrappedRows.push(...rows);
-  win.rowCounts.push(rows.length);
-}
-
+let pendingPrompt: string | null = null;
 export function addLog(line: string, hasGA?: boolean): void {
-  appendToWindow(1, line);
-  if (hasGA) {
-    state.currentPrompt = line;
-    if (state.currentWindow === 1) requestRedraw();
+  if (pendingPrompt && !hasGA) {
+    appendToWindow(1, pendingPrompt); // висит промт, который ещё не добавили в лог
+    appendToWindow(1, line); // и показать входящую строку следом
+    pendingPrompt = null;
+  } else if (hasGA) {
+    state.currentPrompt = pendingPrompt = line; // сохранить промт
+    requestRedraw(); // и перерисовать
+  } else {
+    appendToWindow(1, line);
   }
 }
 
@@ -120,7 +124,6 @@ export function redrawLog(): void {
     const topStart = Math.max(0, topEnd - layout.topHeight);
     const topRows = win.wrappedRows.slice(topStart, topEnd || undefined);
     const dividerLine = CLR_MAIN + BOX.horizontal.repeat(layout.logWidth) + CLR_RESET;
-
     const bottomRows = getVisibleLogRows(win, layout.bottomHeight);
 
     logRows = [
@@ -200,3 +203,5 @@ export function redrawStatus(): void {
 
   process.stdout.write(out);
 }
+
+// todo промт должен сбрасывать цвет. реж сжат + сн все.тьма
