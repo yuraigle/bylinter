@@ -45,7 +45,6 @@ async function buildLinux() {
   await buildLauncherLinux(dir);
   await copyDistAssets(dir, "linux");
   await cp("vendor/alacritty-linux", `${dir}/term`, { recursive: true });
-  await $`chmod +x ${dir}/run.sh`;
   await cp("README.md", `${dir}/README.md`);
   await cp("LICENSE", `${dir}/LICENSE`);
   await $`cd release && tar -cJf bylinter-linux-${VERSION}.tar.xz bylinter-linux-${VERSION}`;
