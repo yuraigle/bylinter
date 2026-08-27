@@ -71,8 +71,7 @@ export class TerminalUI implements ITerminalUI {
     wecho(w, text);
   };
 
-  // показать в игровом логе ДО текущего незавершённого промта
   public showme = (message: string): void => {
-    addLog(message);
+    addLog(prefix + message);
   };
 }

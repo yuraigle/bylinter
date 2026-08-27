@@ -12,6 +12,7 @@ const {
   connect,
   sendText,
   sendMsdp,
+  showme,
   echo,
   wecho,
   setSidebar,
@@ -22,12 +23,8 @@ const {
 const CHAR_NAME = ""; // для автологина
 const CHAR_PASS = "";
 
-const showme = (message: string): void => {
-  globalThis.bylinter.showme(`${clr("B")}-${clr("C")}:${clr("B")}-${clr("0")} ${message}`);
-}
-
 const sendLine = (message: string): void => {
-  echo("\r\n" + clr("D") + "[" + message + "]" + clr("0"));
+  echo(clr("D") + "[" + message + "]" + clr("0"));
   globalThis.bylinter.sendLine(message);
 };
 

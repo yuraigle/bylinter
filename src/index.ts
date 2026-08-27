@@ -74,7 +74,7 @@ const api: GlobalApiContext = new GlobalApi().expose(
 Object.defineProperty(globalThis, "bylinter", { value: api, writable: false });
 
 import packageJson from "../package.json" with { type: "json" };
-tui2.showme(`-:- Bylinter v${packageJson.version} by Yuri Orlov`);
+tui2.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
 
 // загрузка пользовательского конфига, если он есть
 const loader = new ConfigLoaderService();
@@ -82,5 +82,5 @@ const configPath = loader.findUserConfigPath();
 
 if (configPath) {
   await import(configPath);
-  tui2.showme("-:- Using file " + configPath);
+  tui2.showme("Using file " + configPath);
 }
