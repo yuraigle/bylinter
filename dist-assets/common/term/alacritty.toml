@@ -14,38 +14,37 @@ dynamic_title = false
 save_to_clipboard = true
 
 [font]
-size = 12
+size = 13
 normal = { family = "Liberation Mono", style = "Regular" }
 bold = { family = "Liberation Mono", style = "Regular" }
 
 # https://github.com/alacritty/alacritty-theme/tree/master/themes
 
-# Theme: enfocado_dark
-# Source:  https://github.com/wuelnerdotexe/vim-enfocado
+# Colors (iTerm 2 default theme)
 
 # Default colors
 [colors.primary]
-background =  '#080808'
-foreground =  '#b9b9b9'
+background = '#101421'
+foreground = '#fffbf6'
 
 # Normal colors
 [colors.normal]
-black   = '#3b3b3b'
-red     = '#ed4a46'
-green   = '#70b433'
-yellow  = '#dbb32d'
-blue    = '#368aeb'
-magenta = '#eb6eb7'
-cyan    = '#3fc5b7'
-white   = '#b9b9b9'
+black   = '#555555'
+red     = '#eb4129'
+green   = '#abe047'
+yellow  = '#f6c744'
+blue    = '#47a0f3'
+magenta = '#7b5cb0'
+cyan    = '#64dbed'
+white   = '#e5e9f0'
 
 # Bright colors
 [colors.bright]
 black   = '#777777'
-red     = '#ff5e56'
-green   = '#83c746'
-yellow  = '#efc541'
-blue    = '#4f9cfe'
-magenta = '#ff81ca'
-cyan    = '#56d8c9'
-white   = '#dedede'
+red     = '#ec5357'
+green   = '#c0e17d'
+yellow  = '#f9da6a'
+blue    = '#49a4f8'
+magenta = '#a47de9'
+cyan    = '#99faf2'
+white   = '#ffffff'

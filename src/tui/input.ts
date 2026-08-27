@@ -3,7 +3,7 @@ import readline from "node:readline";
 import { state, MAX_HISTORY, getWindow } from "./state";
 import {
   redraw,
-  redrawTail,
+  redrawPrompt,
   requestRedraw,
   rewrapAll,
   switchWindow,
@@ -71,7 +71,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
         state.inputBuffer.slice(0, state.cursorPos - 1) +
         state.inputBuffer.slice(state.cursorPos);
       state.cursorPos--;
-      redrawTail();
+      redrawPrompt();
     }
     return;
   }
@@ -81,39 +81,39 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.inputBuffer =
         state.inputBuffer.slice(0, state.cursorPos) +
         state.inputBuffer.slice(state.cursorPos + 1);
-      redrawTail();
+      redrawPrompt();
     }
     return;
   }
 
   if (key.name === "left" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.max(0, state.cursorPos - 1);
-    redrawTail();
+    redrawPrompt();
     return;
   }
 
   if (key.name === "right" && !key.ctrl && !key.meta) {
     state.cursorPos = Math.min(state.inputBuffer.length, state.cursorPos + 1);
-    redrawTail();
+    redrawPrompt();
     return;
   }
 
   if (key.name === "home" && !key.ctrl && !key.meta) {
     state.cursorPos = 0;
-    redrawTail();
+    redrawPrompt();
     return;
   }
 
   if (key.name === "end" && !key.ctrl && !key.meta) {
     state.cursorPos = state.inputBuffer.length;
-    redrawTail();
+    redrawPrompt();
     return;
   }
 
   if (key.name === "u" && key.ctrl && !key.meta) {
     state.inputBuffer = "";
     state.cursorPos = 0;
-    redrawTail();
+    redrawPrompt();
     return;
   }
 
@@ -125,7 +125,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       state.historyPos--;
       state.inputBuffer = state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redrawTail();
+      redrawPrompt();
     }
     return;
   }
@@ -138,7 +138,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
           ? state.draft
           : state.history[state.historyPos];
       state.cursorPos = state.inputBuffer.length;
-      redrawTail();
+      redrawPrompt();
     }
     return;
   }
@@ -185,7 +185,7 @@ function handleKeypress(str: string, key: KeyInfo | undefined): void {
       str +
       state.inputBuffer.slice(state.cursorPos);
     state.cursorPos += str.length;
-    redrawTail();
+    redrawPrompt();
   }
 }
 
@@ -254,5 +254,5 @@ function handleTabCompletion(): void {
 
   state.inputBuffer = value;
   state.cursorPos = value.length;
-  redrawTail();
+  redrawPrompt();
 }
