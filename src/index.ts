@@ -1,4 +1,5 @@
 import type { GlobalApiContext } from "./types/bylinter-api";
+import ts from "typescript";
 
 import { TerminalUI } from "./tui/TerminalUI";
 import { InputHandler } from "./core/InputHandler";
@@ -75,6 +76,7 @@ Object.defineProperty(globalThis, "bylinter", { value: api, writable: false });
 
 import packageJson from "../package.json" with { type: "json" };
 tui2.showme(`Bylinter v${packageJson.version} by Yuri Orlov`);
+tui2.showme(`Bun ${Bun.version} | TypeScript ${ts.version}`);
 
 // загрузка пользовательского конфига, если он есть
 const loader = new ConfigLoaderService();
