@@ -27,7 +27,8 @@ async function buildWindows() {
   const dir = `release/bylinter-win-${VERSION}`;
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
-  await $`bun build --compile --target=bun-windows-x64 src/index.ts --outfile ${dir}/bylinter-cli.exe`;
+  // -baseline для поддержки архитектуры старых процессоров
+  await $`bun build --compile --target=bun-windows-x64-baseline src/index.ts --outfile ${dir}/bylinter-cli.exe`;
   await buildLauncherWin(dir);
   await copyDistAssets(dir, "win");
   await cp("vendor/alacritty-win", `${dir}/term`, { recursive: true });
