@@ -20,8 +20,6 @@ bold = { family = "Liberation Mono", style = "Regular" }
 
 # https://github.com/alacritty/alacritty-theme/tree/master/themes
 
-# Colors (iTerm 2 default theme)
-
 # Default colors
 [colors.primary]
 background = '#101421'

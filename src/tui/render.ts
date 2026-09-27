@@ -1,7 +1,7 @@
 import { state, getWindow, MAX_BUFFER_LINES, type WindowState } from "./state";
 import { getLayout } from "./layout";
 import { SCREEN, BOX, moveTo, clr } from "../protocol/ansi";
-import { padRows, truncateVisible, wrapLine, wrapWithCursor } from "./textUtils";
+import { padRows, truncateVisible, wrapLine, visibleLength } from "./textUtils";
 
 const CLR_RESET = clr("0"); // Reset
 const CLR_INPUT = clr("L"); // Bright Yellow for user input
@@ -28,11 +28,9 @@ export function requestRedraw(): void {
 }
 
 export function redraw(): void {
-  redrawLog();
   redrawStatus();
-  // if (state.currentWindow === 1) {
+  redrawLog();
   redrawPrompt();
-  // }
 }
 
 export function switchWindow(n: number): void {
@@ -153,26 +151,30 @@ export function redrawLog(): void {
   process.stdout.write(out);
 }
 
+const RESERVED_INPUT_WIDTH = 15;
+
 export function redrawPrompt(): void {
   const layout = getLayout();
-  const promptText = state.currentPrompt;
-  const MAX_PROMPT_WIDTH = 200; // wtf
-  const truncatedPrompt = truncateVisible(promptText, MAX_PROMPT_WIDTH);
+  const promptVisibleLen = visibleLength(state.currentPrompt);
+  const fitsTogether = promptVisibleLen + RESERVED_INPUT_WIDTH <= layout.logWidth;
+  const promptWidth = fitsTogether ? promptVisibleLen : Math.max(0, layout.logWidth - RESERVED_INPUT_WIDTH);
+  const inputWidth = Math.max(0, layout.logWidth - promptWidth);
+  const promptDisplay = truncateVisible(state.currentPrompt, promptWidth);
 
-  const combinedText = truncatedPrompt + CLR_INPUT + state.inputBuffer + CLR_RESET;
-  const cursorRawIndex = truncatedPrompt.length + CLR_INPUT.length + state.cursorPos;
-
-  const { rows: tailRows, cursorCol } = wrapWithCursor(
-    combinedText,
-    layout.logWidth,
-    cursorRawIndex,
-  );
-  const promptRow = tailRows[0] ?? "";
+  let viewStart = 0;
+  if (state.inputBuffer.length >= inputWidth) {
+    viewStart = Math.max(0, state.cursorPos - inputWidth + 1);
+  }
+  const visibleInput = state.inputBuffer.slice(viewStart, viewStart + inputWidth);
+  const cursorColInInput = state.cursorPos - viewStart;
   const screenRow = layout.statusRow - 2;
 
   let out = SCREEN.hideCursor + SCREEN.syncStart;
   out += moveTo(screenRow + 1, 1) + SCREEN.clearLine;
-  out += promptRow;
+  out += promptDisplay + CLR_RESET;
+
+  out += moveTo(screenRow + 1, promptWidth + 1);
+  out += CLR_INPUT + visibleInput + CLR_RESET;
 
   if (layout.showSidebar) {
     out += moveTo(screenRow + 1, layout.dividerCol);
@@ -182,7 +184,7 @@ export function redrawPrompt(): void {
     out += CLR_RESET;
   }
 
-  out += moveTo(screenRow + 1, cursorCol + 1) + SCREEN.showCursor;
+  out += moveTo(screenRow + 1, promptWidth + cursorColInInput + 1) + SCREEN.showCursor;
   out += SCREEN.syncEnd;
 
   process.stdout.write(out);
@@ -199,9 +201,7 @@ export function redrawStatus(): void {
     STATUS_FG +
     statusWithWindow.padEnd(layout.width).slice(0, layout.width) +
     CLR_RESET;
-  out += SCREEN.showCursor;
+  // out += SCREEN.showCursor;
 
   process.stdout.write(out);
 }
-
-// todo промт должен сбрасывать цвет. реж сжат + сн все.тьма
