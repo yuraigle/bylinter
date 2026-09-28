@@ -8,7 +8,6 @@
     "gui": "./vendor/alacritty-linux/alacritty.AppImage --config-file ./dist-assets/common/term/alacritty.toml -e bash -c 'bun start'",
     "guiw": "./vendor/alacritty-win/alacritty.exe --config-file ./dist-assets/common/term/alacritty.toml -e 'bun start'",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "patch-term": "bun scripts/patch-term.ts",
     "package": "bun scripts/package.ts"
   },
   "keywords": [],

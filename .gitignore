@@ -3,4 +3,5 @@ vendor
 release
 logs
 .env
-launcher.res.o
+native/*.o
+.bun-cache

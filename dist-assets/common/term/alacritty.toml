@@ -15,8 +15,12 @@ save_to_clipboard = true
 
 [font]
 size = 13
-normal = { family = "Liberation Mono", style = "Regular" }
-bold = { family = "Liberation Mono", style = "Regular" }
+normal = { style = "Regular" }
+bold = { style = "Regular" }
+
+# указать шрифт, рекомендую "Liberation Mono" или "GeistMono Nerd Font"
+# normal = { family = "Liberation Mono", style = "Regular" }
+# bold = { family = "Liberation Mono", style = "Regular" }
 
 # https://github.com/alacritty/alacritty-theme/tree/master/themes
 
