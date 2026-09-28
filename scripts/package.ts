@@ -11,6 +11,9 @@ import { rcedit } from "rcedit";
 // rustup target add x86_64-unknown-linux-musl
 // rustup toolchain install stable-x86_64-pc-windows-gnu
 
+// чтобы билдить из linux:
+// rustup target add x86_64-pc-windows-gnu
+
 import pkg from "../package.json";
 const VERSION = pkg.version;
 
@@ -21,13 +24,22 @@ async function copyDistAssets(dir: string, platform: "win" | "linux") {
 }
 
 async function buildLauncherForWin(dir: string) {
-  const windres = process.platform === "win32" ? "windres" : "x86_64-w64-mingw32-windres";
+  const isWin = process.platform === "win32";
+  const windres = isWin ? "windres" : "x86_64-w64-mingw32-windres";
   await $`${windres} native/launcher-win.rc -O coff -o native/launcher-win.res.o`;
 
-  await $`rustup run stable-x86_64-pc-windows-gnu rustc --edition 2021 \
-    -C opt-level=z -C lto=yes -C codegen-units=1 -C strip=symbols -C debuginfo=0 \
-    -C link-arg=native/launcher-win.res.o \
-    ./native/launcher-win.rs -o ${dir}/bylinter.exe`;
+  if (isWin) {
+    await $`rustup run stable-x86_64-pc-windows-gnu rustc --edition 2021 \
+      -C opt-level=z -C lto=yes -C codegen-units=1 -C strip=symbols -C debuginfo=0 \
+      -C link-arg=native/launcher-win.res.o \
+      ./native/launcher-win.rs -o ${dir}/bylinter.exe`;
+  } else {
+    await $`rustup run stable rustc --edition 2021 --target x86_64-pc-windows-gnu \
+      -C linker=x86_64-w64-mingw32-gcc \
+      -C opt-level=z -C lto=yes -C codegen-units=1 -C strip=symbols -C debuginfo=0 \
+      -C link-arg=native/launcher-win.res.o \
+      ./native/launcher-win.rs -o ${dir}/bylinter.exe`;
+  }
 }
 
 async function buildLauncherForLinux(dir: string) {
@@ -46,7 +58,9 @@ async function buildWindowsApp() {
 
   await copyDistAssets(dir, "win");
 
-  await rcedit("vendor/alacritty-win/alacritty.exe", { icon: "native/icon.ico" });
+  await rcedit("vendor/alacritty-win/alacritty.exe", {
+    icon: "native/icon.ico",
+  });
   await cp("vendor/alacritty-win", `${dir}/term`, { recursive: true });
   await cp("README.md", `${dir}/README.md`);
   await cp("LICENSE", `${dir}/LICENSE`);
